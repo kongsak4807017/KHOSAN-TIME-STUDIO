@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Concept Hypothesis",
+  "type": "object",
+  "required": ["concept_id","title","hook","player_fantasy","core_verbs","emotional_promise","distinctive_premise","visual_identity","major_unknowns","prototype_questions"],
+  "properties": {
+    "concept_id": {"type":"string"},
+    "title": {"type":"string"},
+    "hook": {"type":"string"},
+    "player_fantasy": {"type":"string"},
+    "core_verbs": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "emotional_promise": {"type":"array","items":{"type":"string"}},
+    "distinctive_premise": {"type":"array","items":{"type":"string"}},
+    "visual_identity": {"type":"string"},
+    "social_share_potential": {"type":"string"},
+    "audience_hypotheses": {"type":"array","items":{"type":"string"}},
+    "reference_context": {"type":"array","items":{"type":"string"}},
+    "derivative_risks": {"type":"array","items":{"type":"string"}},
+    "major_unknowns": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "prototype_questions": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "production_risks": {"type":"array","items":{"type":"string"}},
+    "notes": {"type":"string"}
+  },
+  "additionalProperties": false
+}
