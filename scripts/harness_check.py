@@ -18,6 +18,15 @@ required = [
     "studio/contracts/work-item.schema.json",
     "studio/contracts/handoff.schema.json",
     "studio/contracts/evidence.schema.json",
+    "studio/creative-intelligence/creative-constitution.schema.json",
+    "studio/creative-intelligence/concept-hypothesis.schema.json",
+    "studio/creative-intelligence/prototype-experiment.schema.json",
+    "studio/creative-intelligence/community-insight.schema.json",
+    "studio/creative-intelligence/telemetry-finding.schema.json",
+    "docs/12-CREATIVE-INTELLIGENCE.md",
+    "docs/13-CREATIVE-CONSTITUTION.md",
+    "docs/14-PROTOTYPE-ARENA.md",
+    "docs/15-COMMUNITY-INTELLIGENCE.md",
     "docs/06-LOCAL-DEPLOYMENT.md",
     "deploy/README.md",
 ]
@@ -37,6 +46,14 @@ json_files = [
     "studio/templates/work-item.json",
     "studio/templates/handoff.json",
     "studio/templates/evidence.json",
+    "studio/creative-intelligence/creative-constitution.schema.json",
+    "studio/creative-intelligence/concept-hypothesis.schema.json",
+    "studio/creative-intelligence/prototype-experiment.schema.json",
+    "studio/creative-intelligence/community-insight.schema.json",
+    "studio/creative-intelligence/telemetry-finding.schema.json",
+    "studio/creative-intelligence/templates/creative-constitution.json",
+    "studio/creative-intelligence/templates/concept-hypothesis.json",
+    "studio/creative-intelligence/templates/prototype-experiment.json",
 ]
 
 for rel in json_files:
@@ -47,8 +64,8 @@ for rel in json_files:
 
 agent_dir = ROOT / "studio" / "agents"
 agents = sorted(agent_dir.glob("*.md")) if agent_dir.exists() else []
-if len(agents) != 13:
-    errors.append(f"expected 13 agent role files, found {len(agents)}")
+if len(agents) != 21:
+    errors.append(f"expected 21 agent role files, found {len(agents)}")
 
 if errors:
     print("[KHOSAN HARNESS] FAIL")
