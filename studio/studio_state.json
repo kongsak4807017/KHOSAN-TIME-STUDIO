@@ -2,19 +2,23 @@
   "schema_version": 1,
   "project": "KHOSAN-TIME-STUDIO",
   "phase": "FOUNDATION_MASTER_REPOSITORY",
-  "active_feature_id": null,
-  "active_work_item_id": null,
-  "active_roles": [],
+  "active_feature_id": "ASSET-001",
+  "active_work_item_id": "TASK-ASSET-BLENDER-001",
+  "active_roles": [
+    "04-asset-synthesizer",
+    "06-technical-architect"
+  ],
   "pending_human_gate": null,
   "last_verification": null,
   "known_blockers": [
     "Visual Studio Shell is not yet implemented",
     "Idea/Concept Lab and Prototype Arena UI are not yet implemented",
     "Community/telemetry connectors are not yet implemented",
-    "P0 external tools require formal evaluation and pinned integration"
+    "P0 external tools require formal evaluation and pinned integration",
+    "Blender adapter requires local DevSpace doctor/unit-test/real fixture evidence before acceptance"
   ],
   "next_milestone": "Phase 1 Studio Shell + CI1 Idea/Concept Lab",
-  "last_updated": "2026-09-28",
+  "last_updated": "2026-09-29",
   "creative_intelligence": {
     "foundation": "specified",
     "council_roles": 8,
