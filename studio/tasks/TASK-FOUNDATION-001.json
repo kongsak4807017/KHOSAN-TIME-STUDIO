@@ -1,0 +1,37 @@
+{
+  "task_id": "TASK-FOUNDATION-001",
+  "feature_id": "FOUNDATION-001",
+  "title": "Establish KHOSAN TIME STUDIO master repository",
+  "status": "verify",
+  "owner_role": "00-studio-orchestrator",
+  "contributors": ["06-technical-architect","11-independent-reviewer","12-release-ops"],
+  "objective": "Create a restartable master repository containing architecture, agent harness, tool registry, deployment guidance, knowledge manifest and executable bootstrap verification.",
+  "context_files": [
+    "README.md",
+    "docs/MASTER-SUMMARY.md",
+    "knowledge/source-manifest.yaml"
+  ],
+  "allowed_paths": ["**"],
+  "forbidden_paths": [".git/**",".env*"],
+  "acceptance_criteria": [
+    "Master product/architecture/deployment docs exist",
+    "13 agent role contracts exist",
+    "Graph/human-gates/state/tool-registry exist",
+    "Work-item/handoff/evidence schemas and templates exist",
+    "Bootstrap scripts and structural checker exist",
+    "Legacy research sources are explicitly indexed and any not yet mirrored are not falsely marked complete",
+    "GitHub backlog tracks remaining foundational milestones"
+  ],
+  "verification": [
+    "python scripts/harness_check.py",
+    "Review repository README and docs/MASTER-SUMMARY.md",
+    "Confirm knowledge/source-manifest.yaml lists pending raw sources"
+  ],
+  "human_gates": [],
+  "dependencies": [],
+  "risks": [
+    "Legacy research documents are indexed but not yet mirrored verbatim",
+    "Visual Studio Shell is not yet implemented"
+  ],
+  "notes": "Master bootstrap performed directly on GitHub main. Raw-source mirror remains a tracked issue."
+}
