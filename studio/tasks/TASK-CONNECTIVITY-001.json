@@ -1,0 +1,40 @@
+{
+  "task_id": "TASK-CONNECTIVITY-001",
+  "feature_id": "CONNECTIVITY-001",
+  "title": "Package DevSpace MCP connectivity for deploy readiness",
+  "status": "verify",
+  "owner_role": "12-release-ops",
+  "contributors": ["00-studio-orchestrator","10-qa-playtester","11-independent-reviewer"],
+  "objective": "Make ChatGPT-to-local DevSpace connectivity a documented, provider-agnostic, secret-safe deployment profile without exposing the Studio Web/API publicly by default.",
+  "context_files": [
+    "docs/18-DEVSPACE-CONNECTIVITY.md",
+    "docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md",
+    "deploy/connectivity/README.md"
+  ],
+  "allowed_paths": ["docs/**","deploy/**","config/**","tools/devspace-connectivity/**","scripts/**",".env.example",".gitignore","README.md","README_TH.md","feature_list.json","studio/**","progress.md","session-handoff.md"],
+  "forbidden_paths": [".git/**",".env","secrets/**","~/.devspace/auth.json","*.pem","*credentials*.json"],
+  "acceptance_criteria": [
+    "DevSpace tunnel is modeled as an optional ChatGPT+DevSpace deployment profile",
+    "DevSpace port 7676 and Studio port 8080 are separated by policy",
+    "ngrok and Cloudflare provider options are documented",
+    "example config contains no real credentials",
+    "connectivity doctor does not print owner secrets",
+    "persistent workspaceId reuse contract is documented",
+    "public MCP smoke test is recorded on a real development PC before acceptance"
+  ],
+  "verification": [
+    "python -m py_compile tools/devspace-connectivity/doctor.py",
+    "python tools/devspace-connectivity/doctor.py",
+    "python tools/devspace-connectivity/doctor.py --require-public",
+    "verify ChatGPT opens one workspace and reuses the same workspaceId",
+    "verify bounded DevSpace read/write/test task succeeds"
+  ],
+  "human_gates": [],
+  "dependencies": ["DEPLOY-001"],
+  "risks": [
+    "A public tunnel increases attack surface",
+    "Provider-specific account/domain state remains machine-dependent",
+    "ChatGPT host capability can fail before requests reach DevSpace"
+  ],
+  "notes": "Source pack is on main. Task remains verify until local/public MCP acceptance is executed on the target PC."
+}
