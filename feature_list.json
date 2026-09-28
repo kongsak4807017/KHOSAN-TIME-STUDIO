@@ -127,6 +127,27 @@
         "docker compose config",
         "manual local smoke test"
       ]
+    },
+    {
+      "id": "CONNECTIVITY-001",
+      "title": "DevSpace MCP connectivity and tunnel deployment profile",
+      "status": "verify",
+      "owner_role": "12-release-ops",
+      "acceptance_criteria": [
+        "DevSpace example config is versioned without secrets",
+        "Connectivity doctor checks local and optional public MCP reachability",
+        "ngrok and Cloudflare are documented as provider options",
+        "Studio port 8080 is not published by default",
+        "Persistent workspace contract is documented",
+        "No auth token, owner token or tunnel credential is committed",
+        "Fresh-machine public MCP smoke test is recorded before acceptance"
+      ],
+      "verification": [
+        "python tools/devspace-connectivity/doctor.py",
+        "python tools/devspace-connectivity/doctor.py --require-public",
+        "verify ChatGPT can open one workspace and reuse the same workspaceId",
+        "verify a bounded read/write/test task through DevSpace"
+      ]
     }
   ]
 }
