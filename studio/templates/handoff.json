@@ -1,0 +1,13 @@
+{
+  "task_id": "TASK-EXAMPLE-001",
+  "from_role": "07-gameplay-programmer",
+  "to_role": "10-qa-playtester",
+  "status": "completed",
+  "summary": "State what was done without hidden assumptions.",
+  "artifacts": ["src/example/file.ts"],
+  "decisions": ["Decision and rationale"],
+  "verification": [{"command":"test command","result":"pass/fail with concise output"}],
+  "known_risks": [],
+  "open_questions": [],
+  "next_action": "Run independent verification against acceptance criteria."
+}
