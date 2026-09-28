@@ -1,0 +1,44 @@
+{
+  "task_id": "TASK-DEPLOY-V0-1-001",
+  "feature_id": "DEPLOY-001",
+  "title": "Ship deployable KHOSAN Studio source baseline v0.1.0",
+  "status": "verify",
+  "owner_role": "12-release-ops",
+  "contributors": ["00-studio-orchestrator","04-asset-synthesizer","07-gameplay-programmer","10-qa-playtester","11-independent-reviewer"],
+  "objective": "Make main contain the latest runnable trusted-local Studio shell, project persistence, deployment packaging and bounded SkinTokens/UniRig adapter source.",
+  "context_files": [
+    "docs/17-DEPLOYABLE-STUDIO-V0.1.md",
+    "docs/16-3D-AUTO-RIGGING.md",
+    "deploy/README.md"
+  ],
+  "allowed_paths": ["apps/**","config/**","tools/**","scripts/**","deploy/**","docs/**","studio/**","projects/README.md","Dockerfile","compose.yaml","package.json","VERSION",".env.example",".dockerignore",".gitignore","README.md","README_TH.md","feature_list.json","progress.md","session-handoff.md"],
+  "forbidden_paths": [".git/**",".env","secrets/**"],
+  "acceptance_criteria": [
+    "Node.js local Studio source exists",
+    "Project creation persists Blueprint and Creative Constitution on disk",
+    "Agent Workboard reads durable work items",
+    "Docker and direct-run deployment paths exist",
+    "HTTP server exposes no generic shell execution endpoint",
+    "SkinTokens and UniRig source revisions are pinned",
+    "Rigging adapter has doctor/rig/validate boundaries",
+    "Windows and Linux/macOS lifecycle scripts exist",
+    "Fresh-machine runtime verification is recorded before acceptance"
+  ],
+  "verification": [
+    "node scripts/verify-source.mjs",
+    "python scripts/harness_check.py",
+    "node --check apps/studio-server/server.mjs",
+    "python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py",
+    "docker compose config",
+    "GET /api/health",
+    "POST /api/projects then GET /api/projects/:id"
+  ],
+  "human_gates": [],
+  "dependencies": ["FOUNDATION-001","CREATIVE-001"],
+  "risks": [
+    "Fresh local runtime acceptance not yet executed",
+    "Remote/team deployment is not security-approved",
+    "GPU rigging environment remains machine-dependent"
+  ],
+  "notes": "Source is shipped to main. Task intentionally remains verify until fresh DevSpace/local evidence exists."
+}
