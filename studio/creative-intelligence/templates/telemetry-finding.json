@@ -1,0 +1,16 @@
+{
+  "finding_id": "TELEMETRY-EXAMPLE",
+  "project_id": "GAME-EXAMPLE",
+  "metric_definition": "",
+  "population": "",
+  "time_window": "",
+  "observation": "",
+  "segments": [],
+  "data_quality": "",
+  "limitations": [],
+  "candidate_explanations": [],
+  "contradictory_signals": [],
+  "qualitative_evidence_refs": [],
+  "proposed_discriminating_experiment": null,
+  "causal_claim": false
+}
