@@ -119,6 +119,19 @@ Clone repository แล้วเปิด local workspace จากนั้น�
 - routing helper
 - SkinTokens/UniRig adapter boundary
 - Docker/self-host สำหรับ trusted local machine
+- DevSpace Connectivity Pack สำหรับ ChatGPT → local DevSpace ผ่าน ngrok/Cloudflare แบบ optional
+
+ถ้าใช้ ChatGPT + DevSpace จากภายนอกเครื่อง:
+```text
+ChatGPT → HTTPS tunnel → DevSpace MCP 127.0.0.1:7676
+```
+
+ส่วน Studio Web/API ยังคง `127.0.0.1:8080` และไม่ควรถูก tunnel ออก public โดยปริยาย
+
+ตรวจ connectivity:
+```powershell
+python tools\devspace-connectivity\doctor.py --require-public
+```
 
 ยังไม่ production-complete:
 - ChatGPT LLM ไม่ได้ฝังอยู่ใน local web server; ChatGPT ยังเป็น agent reasoning layer และ DevSpace เป็น execution layer
