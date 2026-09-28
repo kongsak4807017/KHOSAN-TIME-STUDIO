@@ -24,4 +24,4 @@ jobs:
       - name: Verify harness
         run: python scripts/harness_check.py
       - name: Check Python adapter syntax
-        run: python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py
+        run: python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py tools/devspace-connectivity/doctor.py
