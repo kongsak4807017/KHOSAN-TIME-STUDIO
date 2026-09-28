@@ -1,0 +1,8 @@
+{
+  "task_id": "TASK-EXAMPLE-001",
+  "role": "10-qa-playtester",
+  "timestamp": "YYYY-MM-DDTHH:MM:SSZ",
+  "checks": [{"name":"unit tests","status":"pass","evidence":"command + summary"}],
+  "verdict": "PASS",
+  "limitations": []
+}
