@@ -1,70 +1,85 @@
 # KHOSAN TIME STUDIO Progress
 
 ## Current phase
-FOUNDATION / MASTER REPOSITORY
+**DEPLOYABLE STUDIO BASELINE v0.1.0**
 
-## Master repository completed
+## Source shipped on GitHub main
+
+### Master / Harness
 - English and Thai master README
-- Canonical Studio vision and architecture
-- Create Game workflow
-- 21 specialized agent role contracts (13 production/governance + 8 Creative Intelligence Council)
-- Explicit execution graph and human gates
-- Machine-readable tool registry
-- Asset Pipeline and UG-IR direction
-- Work-item / handoff / evidence schemas and templates
-- ChatGPT + DevSpace local-workspace workflow
-- Local/self-host deployment strategy
-- Bootstrap scripts for Bash and PowerShell
-- Structural harness checker
-- Knowledge-management policy and source manifest
-- Canonical master summary
-- GitHub backlog issues #1–#11
-- Creative Intelligence architecture, Creative Constitution, Prototype Arena and Community Intelligence specifications
-- Creative Intelligence artifact schemas/templates
-- Foundation task, evidence and handoff
+- Canonical Studio architecture
+- 21 specialized role contracts
+- Creative Intelligence Discovery + Live loops
+- typed work-item / handoff / evidence contracts
+- human gates and maker/checker model
+- Tool Registry
+- Asset IR / UG-IR direction
+- knowledge/source manifest
 
-## Creative Intelligence foundation
-**Specified in repository, not yet a product UI.**
+### Runnable Studio v0.1
+- zero-dependency Node.js 20 Studio Web/API
+- Studio Home
+- Idea / Concept Lab project creation
+- durable local project state
+- Blueprint persistence
+- Creative Constitution persistence
+- project event log
+- Agent Workboard backed by `studio/tasks/*.json`
+- Tool Registry/provenance view
+- deterministic intent-to-role routing helper
+- localhost-first trust boundary
 
-Completed:
-- Council roles 13–20
-- Discovery + Live Intelligence execution graph
-- Creative Constitution contract
-- Concept Hypothesis contract
-- Prototype Experiment contract
-- Community Insight and Telemetry Finding contracts
-- Idea/Taste/Prototype/Community capabilities registered in Tool Registry
+### Deployment
+- `Dockerfile`
+- `compose.yaml`
+- Bash and PowerShell run scripts
+- source verification script
+- manual-only GitHub Actions verification workflow
+- deployment documentation
 
-Still open:
-- Idea/Concept Lab UI
-- Prototype Arena runtime/workspace generation
-- community source connectors
-- telemetry/event infrastructure
-- Experiment Board / creative evolution UI
-- Fresh local execution of scripts/harness_check.py for TASK-CREATIVE-FOUNDATION-001
+### 3D rigging integration source
+- SkinTokens preferred EVALUATE P0 candidate
+- UniRig expert/fallback EVALUATE P0 candidate
+- pinned upstream fork commits in `config/external-tools.lock.json`
+- bounded `doctor.py`, `rig.py`, `validate.py`
+- rigging source setup scripts
+- CUDA/VRAM/flash-attn/checkpoint readiness checks
+
+## Verification status
+
+### Verified at GitHub/source level
+- source files created on `main`
+- core JSON files remain parseable through GitHub inspection
+- Creative Intelligence role/graph structure previously verified
+- deployment/source state is persisted and traceable
+
+### Pending local environment evidence
+The following must be executed from a fresh local checkout/DevSpace before `DEPLOY-001` becomes accepted:
+- `node scripts/verify-source.mjs`
+- `python scripts/harness_check.py`
+- `node --check apps/studio-server/server.mjs`
+- Python adapter compile check
+- Studio browser smoke test
+- `docker compose config` and container health
+- rigging doctor on the actual GPU machine
 
 ## Correctly still open
-- Issue #1: mirror all legacy research source documents verbatim into knowledge/research/
-- Run scripts/bootstrap from a fresh local checkout and record execution evidence
-- Phase 1 Studio Shell
-- P0 tool evaluation/adoption
-- UG-IR v0.1 executable schema/fixtures
+- Issue #1: mirror legacy research archive verbatim
+- Concept Lab full artifact editor
+- Prototype Arena
+- Asset Registry
+- UG-IR v0.1 executable fixtures
+- WebGPU live preview/runtime bridge
+- community/telemetry connectors
+- remote/team auth/security hardening
+- animation-retargeting tool selection
 
-## Foundation verification status
-**BLOCKED, not falsely marked Done.**
-
-Reason: the master operating structure exists, but raw legacy research documents are indexed rather than mirrored verbatim, and local bootstrap has not yet been executed from a fresh checkout.
-
-See:
-- `studio/evidence/TASK-FOUNDATION-001.json`
-- `studio/handoffs/TASK-FOUNDATION-001-to-next.json`
-- `knowledge/source-manifest.yaml`
-
-## Next implementation decision
-After local mirror/bootstrap, begin:
-1. Studio Shell + Idea/Concept Lab,
-2. Prototype Arena,
-3. Issue #4 — UG-IR v0.1 canonical fixtures.
+## Next execution order
+1. Fresh DevSpace checkout → run full v0.1 acceptance matrix.
+2. Fix any environment/runtime defects found.
+3. Promote `DEPLOY-001` from `verify` to `accepted`.
+4. Continue Issue #8 Concept Lab and #9 Prototype Arena.
+5. Build Asset Registry + UG-IR fixtures/live preview.
 
 ## Rule
 Update this file from evidence, not optimism.
