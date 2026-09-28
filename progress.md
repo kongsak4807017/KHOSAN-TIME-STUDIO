@@ -7,7 +7,7 @@ FOUNDATION / MASTER REPOSITORY
 - English and Thai master README
 - Canonical Studio vision and architecture
 - Create Game workflow
-- 13 specialized agent role contracts
+- 21 specialized agent role contracts (13 production/governance + 8 Creative Intelligence Council)
 - Explicit execution graph and human gates
 - Machine-readable tool registry
 - Asset Pipeline and UG-IR direction
@@ -19,7 +19,28 @@ FOUNDATION / MASTER REPOSITORY
 - Knowledge-management policy and source manifest
 - Canonical master summary
 - GitHub backlog issues #1–#7
+- Creative Intelligence architecture, Creative Constitution, Prototype Arena and Community Intelligence specifications
+- Creative Intelligence artifact schemas/templates
 - Foundation task, evidence and handoff
+
+## Creative Intelligence foundation
+**Specified in repository, not yet a product UI.**
+
+Completed:
+- Council roles 13–20
+- Discovery + Live Intelligence execution graph
+- Creative Constitution contract
+- Concept Hypothesis contract
+- Prototype Experiment contract
+- Community Insight and Telemetry Finding contracts
+- Idea/Taste/Prototype/Community capabilities registered in Tool Registry
+
+Still open:
+- Idea/Concept Lab UI
+- Prototype Arena runtime/workspace generation
+- community source connectors
+- telemetry/event infrastructure
+- Experiment Board / creative evolution UI
 
 ## Correctly still open
 - Issue #1: mirror all legacy research source documents verbatim into knowledge/research/
@@ -40,8 +61,9 @@ See:
 
 ## Next implementation decision
 After local mirror/bootstrap, begin:
-1. Issue #2 — Studio Shell, and/or
-2. Issue #4 — UG-IR v0.1 canonical fixtures.
+1. Studio Shell + Idea/Concept Lab,
+2. Prototype Arena,
+3. Issue #4 — UG-IR v0.1 canonical fixtures.
 
 ## Rule
 Update this file from evidence, not optimism.
