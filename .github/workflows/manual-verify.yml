@@ -1,0 +1,27 @@
+name: Manual source verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify deployable source
+        run: node scripts/verify-source.mjs
+      - name: Check Node syntax
+        run: node --check apps/studio-server/server.mjs
+      - name: Verify harness
+        run: python scripts/harness_check.py
+      - name: Check Python adapter syntax
+        run: python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py
