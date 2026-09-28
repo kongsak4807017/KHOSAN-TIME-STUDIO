@@ -30,6 +30,14 @@ required = [
     "docs/14-PROTOTYPE-ARENA.md",
     "docs/15-COMMUNITY-INTELLIGENCE.md",
     "docs/06-LOCAL-DEPLOYMENT.md",
+    "docs/17-DEPLOYABLE-STUDIO-V0.1.md",
+    "apps/studio-server/server.mjs",
+    "apps/studio-web/public/index.html",
+    "config/external-tools.lock.json",
+    "tools/adapters/rigging/doctor.py",
+    "Dockerfile",
+    "compose.yaml",
+    "VERSION",
     "deploy/README.md",
 ]
 
