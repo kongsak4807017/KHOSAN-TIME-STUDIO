@@ -1,0 +1,17 @@
+{
+  "insight_id": "INSIGHT-EXAMPLE",
+  "project_id": "GAME-EXAMPLE",
+  "evidence_class": "stated_feedback",
+  "source_channels": [],
+  "collection_period": "",
+  "population_or_sample": null,
+  "language_region": null,
+  "theme": "",
+  "supporting_evidence": [],
+  "contrary_evidence": [],
+  "uncertainty": "",
+  "emerging_fantasy": null,
+  "response_level": "no_action",
+  "proposed_experiment": null,
+  "privacy_notes": null
+}
