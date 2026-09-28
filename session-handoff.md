@@ -2,63 +2,87 @@
 
 **Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
 **Branch:** `main`
-**Status:** MASTER STRUCTURE CREATED / FOUNDATION VERIFICATION BLOCKED
+**Studio source version:** `0.1.0`
+**Status:** RUNNABLE SOURCE SHIPPED / LOCAL ACCEPTANCE PENDING
 
-## What is now authoritative in GitHub
-- Product vision and architecture
-- Create-game workflow
-- 21-role harness and graph (13 production/governance + 8 Creative Intelligence Council)
+## What is now authoritative on GitHub
+
+- Product vision and Creative Intelligence architecture
+- 21-role Harness
+- execution graph / human gates
 - Tool Registry
-- Asset pipeline
-- UG-IR direction
-- local/self-host deployment strategy
-- ChatGPT + DevSpace workflow
-- roadmap
-- Creative Intelligence / Creative Constitution / Prototype Arena / Community Intelligence specifications
-- work-item/handoff/evidence contracts
-- bootstrap scripts/checker
-- knowledge/source manifest
-- GitHub issues #1–#11
+- Asset/UG-IR direction
+- local/self-host deployment guidance
+- runnable Studio Web/API source
+- Docker/Compose deployment source
+- durable project-state API
+- Agent Workboard API/UI
+- pinned SkinTokens/UniRig provenance
+- bounded rigging adapters and setup/doctor scripts
+- source verification scripts
 
-## Creative Intelligence decisions
-- Game generation is treated as a production subsystem; competitive advantage is expected to come from taste, point of view, experimentation and community learning.
-- Creative Intelligence has two loops: Discovery before Concept Lock and Live Intelligence after players exist.
-- Council roles are advisory; Human + Creative Director own vision.
-- No universal creativity/winner score.
-- Community sentiment never directly edits production.
-- Telemetry findings must state metric definition, population/time window and data limitations.
-- Vision-level live changes route back to HG-01.
+## Runtime baseline
 
-## Core decisions
-- Human = Executive Producer.
-- Studio Orchestrator routes work.
-- Agents use specialized tools; they are not expected to implement every capability from scratch.
-- sprite-gen = Core 2D Production.
-- img2threejs = Core 3D Reconstruction.
-- Asset IR / UG-IR remain canonical above backend-specific representations.
-- Native WebGPU is first-class but does not own game semantics.
-- Maker/checker separation is mandatory.
-- Git LFS is planned but deliberately not force-enabled until local machines have git-lfs installed.
-- Do not fake Docker/service deployment before real service entrypoints exist.
+Direct:
+```bash
+node scripts/verify-source.mjs
+node apps/studio-server/server.mjs
+```
 
-## Creative Intelligence implementation backlog
-- #8 Idea/Taste Engine + Concept Lab
-- #9 Prototype Arena + Creative Evolution Ledger
-- #10 Community Pulse + Telemetry Intelligence
-- #11 Live Experiment Board + Creative Constitution guard
+Windows:
+```powershell
+.\scripts\bootstrap.ps1
+.\scripts\run-studio.ps1
+```
 
-## Known blocker
-The legacy research reports listed in `knowledge/source-manifest.yaml` are **not yet mirrored verbatim**. This is tracked as GitHub issue #1 and prevents claiming the foundation archive is fully complete.
+Docker:
+```bash
+docker compose up --build
+```
+
+Open:
+`http://127.0.0.1:8080`
+
+## Important architecture boundary
+
+The v0.1 web server is **not the ChatGPT LLM**.
+
+- ChatGPT = role reasoning / agent behavior
+- DevSpace = bounded local execution
+- Studio Web/API = creator UI, project persistence, routing/state surface
+- GitHub = master Studio source of truth
+- external GPU tools = registered/pinned workers through adapters
+
+No generic shell execution is exposed over HTTP.
+
+## Rigging decision
+
+- SkinTokens / TokenRig: preferred EVALUATE P0 candidate.
+- UniRig: expert/fallback staged path.
+- External fork commits are pinned in `config/external-tools.lock.json`.
+- Do not promote to ADOPT until humanoid + non-humanoid + runtime deformation fixtures pass.
+
+## What remains unverified
+
+A fresh local DevSpace checkout still needs to run:
+1. `node scripts/verify-source.mjs`
+2. `python scripts/harness_check.py`
+3. `node --check apps/studio-server/server.mjs`
+4. Python adapter syntax check
+5. browser/API project-create smoke test
+6. Docker Compose config/health test
+7. GPU rigging doctor on the actual target PC
+
+Therefore `DEPLOY-001` remains `verify`, not `accepted`.
+
+## Legacy blocker
+
+The research reports in `knowledge/source-manifest.yaml` are still indexed rather than mirrored verbatim. Issue #1 remains open.
 
 ## Exact next action in DevSpace
-1. Clone/open this repository as a local workspace.
-2. Run:
-   - Windows: `.\scripts\bootstrap.ps1`
-   - Linux/macOS: `./scripts/bootstrap.sh`
-3. Record the checker result.
-4. Copy the legacy source documents into `knowledge/research/` verbatim and record hashes.
-5. Update source-manifest statuses.
-6. Then start a bounded work item for Studio Shell + Idea/Concept Lab, Prototype Arena, or Issue #4 (UG-IR v0.1).
 
-## Specialist startup prompt
-> Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, studio/graph.md, progress.md and this handoff. Select exactly one bounded work item. Do not widen scope or claim Done without evidence.
+Open/clone this repository, preserve the tree, run the acceptance matrix above, persist evidence, and patch only defects found. After acceptance, proceed with Concept Lab / Prototype Arena / UG-IR work.
+
+## Startup instruction
+
+> Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, feature_list.json, progress.md and this handoff. Run v0.1 source/runtime verification before feature work. Preserve unrelated changes and record exact evidence.
