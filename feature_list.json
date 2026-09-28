@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "project": "KHOSAN-TIME-STUDIO",
+  "active_feature_id": null,
+  "features": [
+    {
+      "id": "FOUNDATION-001",
+      "title": "Master architecture and AI harness",
+      "status": "in_progress",
+      "owner_role": "00-studio-orchestrator",
+      "acceptance_criteria": [
+        "Master documentation exists",
+        "Role contracts exist",
+        "Graph/state/contracts/templates exist",
+        "Bootstrap verification exists",
+        "Local deployment path is documented"
+      ],
+      "verification": ["python scripts/harness_check.py"]
+    },
+    {
+      "id": "STUDIO-001",
+      "title": "Studio Shell: Create Game, Blueprint, Workspace and Workboard",
+      "status": "proposed",
+      "owner_role": "07-gameplay-programmer",
+      "acceptance_criteria": []
+    },
+    {
+      "id": "ASSET-001",
+      "title": "Asset Lab integration: sprite-gen + img2threejs + Asset Registry",
+      "status": "proposed",
+      "owner_role": "04-asset-synthesizer",
+      "acceptance_criteria": []
+    },
+    {
+      "id": "RUNTIME-001",
+      "title": "Playable WebGPU vertical slice from UG-IR",
+      "status": "proposed",
+      "owner_role": "06-technical-architect",
+      "acceptance_criteria": []
+    }
+  ]
+}
