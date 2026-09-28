@@ -9,6 +9,8 @@ This directory owns durable artifacts for idea discovery, prototype learning and
 - prototype-experiment.schema.json
 - community-insight.schema.json
 - telemetry-finding.schema.json
+- creative-evolution.schema.json
+- live-experiment.schema.json
 
 ## Rule
 
