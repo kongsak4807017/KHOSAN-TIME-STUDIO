@@ -1,0 +1,35 @@
+{
+  "task_id": "TASK-CONNECTIVITY-001",
+  "from_role": "12-release-ops",
+  "to_role": "10-qa-playtester",
+  "status": "partial",
+  "summary": "DevSpace MCP tunnel/connectivity is now part of deploy readiness as an optional profile. Validate the real local/public MCP endpoint, workspace reuse and bounded write/test flow on the target development PC.",
+  "artifacts": [
+    "docs/18-DEVSPACE-CONNECTIVITY.md",
+    "docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md",
+    "config/devspace.example.json",
+    "config/cloudflared.devspace.example.yml",
+    "tools/devspace-connectivity/doctor.py",
+    "scripts/run-devspace.ps1",
+    "scripts/run-devspace-ngrok.ps1",
+    "scripts/run-devspace-cloudflare.ps1"
+  ],
+  "decisions": [
+    "Tunnel DevSpace MCP only, not the Studio Web/API.",
+    "Keep provider credentials and machine-specific state outside Git.",
+    "Support ngrok and Cloudflare as replaceable transport providers.",
+    "Reuse one valid workspaceId per project root/session.",
+    "Do not treat ChatGPT host capability failures as proof that tunnel or workspace is down."
+  ],
+  "verification": [
+    {"command":"GitHub source publication","result":"PASS"},
+    {"command":"Target-machine connectivity acceptance","result":"PENDING"}
+  ],
+  "known_risks": [
+    "Public tunnel attack surface",
+    "Provider-specific account configuration",
+    "Conversation/runtime may not expose Developer MCP even when tunnel is healthy"
+  ],
+  "open_questions": [],
+  "next_action": "Run the connectivity doctor locally and with --require-public, then verify one ChatGPT DevSpace workspace can be reused for a bounded read/write/test task."
+}
