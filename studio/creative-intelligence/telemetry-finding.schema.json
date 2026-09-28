@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Telemetry Finding",
+  "type": "object",
+  "required": ["finding_id","project_id","metric_definition","population","time_window","observation","data_quality","candidate_explanations"],
+  "properties": {
+    "finding_id": {"type":"string"},
+    "project_id": {"type":"string"},
+    "metric_definition": {"type":"string"},
+    "population": {"type":"string"},
+    "time_window": {"type":"string"},
+    "observation": {"type":"string"},
+    "segments": {"type":"array","items":{"type":"string"}},
+    "data_quality": {"type":"string"},
+    "limitations": {"type":"array","items":{"type":"string"}},
+    "candidate_explanations": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "contradictory_signals": {"type":"array","items":{"type":"string"}},
+    "qualitative_evidence_refs": {"type":"array","items":{"type":"string"}},
+    "proposed_discriminating_experiment": {"type":["string","null"]},
+    "causal_claim": {"type":"boolean"}
+  },
+  "additionalProperties": false
+}
