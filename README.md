@@ -1,8 +1,8 @@
 # KHOSAN TIME STUDIO
 
-**Master repository for the KHOSAN AI-native Game Studio**
+**Master repository for the KHOSAN AI-native Creative Intelligence & Game Studio**
 
-KHOSAN TIME STUDIO is designed as a game-creation environment where a human creator works with an AI Studio Orchestrator, specialized production agents, deterministic tools, a shared intermediate representation (UG-IR), verification gates, and export adapters.
+KHOSAN TIME STUDIO is designed as a creative-intelligence and game-production environment where a human creator works with an AI Studio Orchestrator, a Creative Intelligence Council, specialized production agents, deterministic tools, a shared intermediate representation (UG-IR), verification gates, and export adapters.
 
 > **Human = Executive Producer · Agents = specialists · Tools = production machines · UG-IR = common language · Studio = orchestrator**
 
@@ -28,13 +28,15 @@ The interactive Studio application itself is **not yet production-complete**. De
 The creator should not manually choose 13 agents.
 
 ```text
-Create New Game
+Explore / Create New Game
       ↓
-Describe the game in natural language
+Describe intent, emotion, culture, fantasy or problem space
       ↓
-Studio Orchestrator
+Creative Intelligence Council
       ↓
-Game Blueprint
+Concept Portfolio + Micro-prototypes
+      ↓
+Creative Constitution
       ↓
 Human Concept Approval
       ↓
@@ -72,6 +74,22 @@ KHOSAN converts that intent into bounded work items, routes only the required sp
 | `knowledge/` | research/source registry |
 | `scripts/` | bootstrap and verification helpers |
 | `deploy/` | local/self-host deployment guidance |
+
+## Creative Intelligence
+
+KHOSAN treats “game generation” as only one subsystem. Before expensive production, the Studio can explore a concept space, critique derivative or incoherent ideas, build micro-prototypes, observe players and lock a **Creative Constitution**.
+
+After release, a separate live loop combines community evidence and telemetry into experiment proposals without allowing the loudest community channel to rewrite the game's vision automatically.
+
+The full roster is now **21 roles**:
+- 13 production/governance roles (00–12),
+- 8 Creative Intelligence advisory roles (13–20).
+
+See:
+- [docs/12-CREATIVE-INTELLIGENCE.md](docs/12-CREATIVE-INTELLIGENCE.md)
+- [docs/13-CREATIVE-CONSTITUTION.md](docs/13-CREATIVE-CONSTITUTION.md)
+- [docs/14-PROTOTYPE-ARENA.md](docs/14-PROTOTYPE-ARENA.md)
+- [docs/15-COMMUNITY-INTELLIGENCE.md](docs/15-COMMUNITY-INTELLIGENCE.md)
 
 ## Core tools already adopted
 
