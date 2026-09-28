@@ -1,0 +1,14 @@
+.git
+.github
+external
+tool-data
+cache
+artifacts
+logs
+projects
+knowledge
+*.zip
+*.pdf
+node_modules
+.venv
+__pycache__
