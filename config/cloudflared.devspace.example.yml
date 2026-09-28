@@ -1,0 +1,9 @@
+# Copy to a machine-local path such as ~/.cloudflared/config.yml.
+# Do not commit the real tunnel id, hostname or credential file path.
+tunnel: YOUR_TUNNEL_ID
+credentials-file: C:/Users/YOU/.cloudflared/YOUR_TUNNEL_ID.json
+
+ingress:
+  - hostname: YOUR_DEVSPACE_HOSTNAME
+    service: http://127.0.0.1:7676
+  - service: http_status:404
