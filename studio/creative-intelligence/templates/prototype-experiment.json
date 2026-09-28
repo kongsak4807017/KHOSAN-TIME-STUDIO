@@ -1,0 +1,20 @@
+{
+  "experiment_id": "EXP-EXAMPLE",
+  "concept_id": "CONCEPT-EXAMPLE",
+  "hypothesis": "",
+  "target_experience": "",
+  "prototype_scope": [],
+  "intentionally_absent": [],
+  "test_context": "",
+  "population": null,
+  "observation_plan": [],
+  "telemetry_plan": [],
+  "success_signals": [],
+  "failure_signals": [],
+  "guardrails": [],
+  "confounders": [],
+  "status": "planned",
+  "result": null,
+  "evidence_refs": [],
+  "next_decision": null
+}
