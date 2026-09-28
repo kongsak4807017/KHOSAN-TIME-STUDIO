@@ -18,7 +18,7 @@ FOUNDATION / MASTER REPOSITORY
 - Structural harness checker
 - Knowledge-management policy and source manifest
 - Canonical master summary
-- GitHub backlog issues #1–#7
+- GitHub backlog issues #1–#11
 - Creative Intelligence architecture, Creative Constitution, Prototype Arena and Community Intelligence specifications
 - Creative Intelligence artifact schemas/templates
 - Foundation task, evidence and handoff
@@ -41,6 +41,7 @@ Still open:
 - community source connectors
 - telemetry/event infrastructure
 - Experiment Board / creative evolution UI
+- Fresh local execution of scripts/harness_check.py for TASK-CREATIVE-FOUNDATION-001
 
 ## Correctly still open
 - Issue #1: mirror all legacy research source documents verbatim into knowledge/research/
