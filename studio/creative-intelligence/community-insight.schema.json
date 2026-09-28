@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Community Insight",
+  "type": "object",
+  "required": ["insight_id","project_id","evidence_class","source_channels","collection_period","theme","uncertainty","response_level"],
+  "properties": {
+    "insight_id": {"type":"string"},
+    "project_id": {"type":"string"},
+    "evidence_class": {"enum":["stated_feedback","observed_behavior","created_culture","market_cultural_context"]},
+    "source_channels": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "collection_period": {"type":"string"},
+    "population_or_sample": {"type":["string","null"]},
+    "language_region": {"type":["string","null"]},
+    "theme": {"type":"string"},
+    "supporting_evidence": {"type":"array","items":{"type":"string"}},
+    "contrary_evidence": {"type":"array","items":{"type":"string"}},
+    "uncertainty": {"type":"string"},
+    "emerging_fantasy": {"type":["string","null"]},
+    "response_level": {"enum":["acknowledge","fix_friction","experiment","constitution_review","reject_request","no_action"]},
+    "proposed_experiment": {"type":["string","null"]},
+    "privacy_notes": {"type":["string","null"]}
+  },
+  "additionalProperties": false
+}
