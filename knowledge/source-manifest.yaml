@@ -1,0 +1,64 @@
+version: 1
+project: KHOSAN-TIME-STUDIO
+policy:
+  raw_sources: preserve_verbatim
+  canonical_decisions: docs_and_adrs
+  summaries_do_not_replace_sources: true
+
+github_references:
+  - name: learn-harness-engineering
+    url: https://github.com/kongsak4807017/learn-harness-engineering
+    role: harness_loop_graph_reference
+  - name: sprite-gen
+    url: https://github.com/kongsak4807017/sprite-gen
+    role: core_2d_production
+  - name: img2threejs
+    url: https://github.com/kongsak4807017/img2threejs
+    role: core_3d_reconstruction
+
+project_source_documents:
+  - file: KHOSAN_Studio_Deployment_and_Operations_Manual.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_Executive_Research_and_Architecture_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Advanced_Compute_and_Instancing_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Clustered_Forward_Lighting_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Shadow_Mapping_and_PCF_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Local_Workspace_Guide.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_PostProcessing_and_Texture_Pipeline_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Procedural_Terrain_and_Biomes_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_Technical_Architecture_and_Mathematical_Specification.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_SSAO_and_Contact_Shadows_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_3D_PBR_and_Lighting_Pipeline_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_CrossPlatform_Packaging_and_Benchmarking_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Skeletal_Skinning_and_Animation_Report.md
+    status: pending_verbatim_mirror
+  - file: KHOSAN_Studio_WebGPU_Unified_Master_Report.md
+    status: pending_verbatim_mirror
+  - file: "สร้าง Harness AI Agent Studio.txt"
+    status: pending_verbatim_mirror
+
+legacy_deployable_archives:
+  note: "Large ZIP deliverables are intentionally not declared authoritative until provenance/version checksums are recorded."
+  items:
+    - KHOSAN_Studio_Platform_Codebase_Deployable_v1.0.0.zip
+    - KHOSAN_Studio_WebGPU_3D_PBR_v1.3.0.zip
+    - KHOSAN_Studio_WebGPU_Advanced_Compute_v1.2.0.zip
+    - KHOSAN_Studio_WebGPU_Clustered_Lighting_v1.7.0.zip
+    - KHOSAN_Studio_WebGPU_CrossPlatform_Packaging_v1.9.0.zip
+    - KHOSAN_Studio_WebGPU_PostProcessing_v1.4.0.zip
+    - KHOSAN_Studio_WebGPU_Procedural_Terrain_v1.5.0.zip
+    - KHOSAN_Studio_WebGPU_Shadow_PCF_v2.0.0.zip
+    - KHOSAN_Studio_WebGPU_Skeletal_Skinning_v1.6.0.zip
+    - KHOSAN_Studio_WebGPU_SSAO_v2.1.0.zip
+    - KHOSAN_Studio_WebGPU_Local_Deployable_v1.1.0.zip
