@@ -1,0 +1,39 @@
+{
+  "task_id": "TASK-DEPLOY-V0-1-001",
+  "from_role": "12-release-ops",
+  "to_role": "10-qa-playtester",
+  "status": "partial",
+  "summary": "Studio v0.1.0 runnable source is on main. Perform fresh DevSpace/local acceptance; patch only observed defects, then route to Independent Reviewer.",
+  "artifacts": [
+    "apps/studio-server/server.mjs",
+    "apps/studio-web/public/",
+    "Dockerfile",
+    "compose.yaml",
+    "tools/adapters/rigging/",
+    "config/external-tools.lock.json",
+    "docs/17-DEPLOYABLE-STUDIO-V0.1.md"
+  ],
+  "decisions": [
+    "Use a zero-dependency Node 20 local server for the first deployable shell.",
+    "Keep ChatGPT reasoning outside the local web server.",
+    "Keep GPU rigging on host/DevSpace instead of the Studio web container.",
+    "Use SkinTokens as preferred EVALUATE candidate and UniRig as expert fallback.",
+    "Do not expose v0.1 to public/remote networks."
+  ],
+  "verification": [
+    {
+      "command": "GitHub source publication and review",
+      "result": "PASS at source level"
+    },
+    {
+      "command": "Fresh local acceptance matrix",
+      "result": "PENDING"
+    }
+  ],
+  "known_risks": [
+    "Machine-specific Node/Docker/GPU behavior remains unverified.",
+    "No remote authentication in v0.1."
+  ],
+  "open_questions": [],
+  "next_action": "Open fresh local checkout in DevSpace and execute TASK-DEPLOY-V0-1-001 verification commands exactly."
+}
