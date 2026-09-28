@@ -16,7 +16,8 @@ await mkdir(PROJECTS, { recursive: true });
 
 function send(res, status, body, type = "application/json; charset=utf-8") {
   res.writeHead(status, {"content-type": type, "cache-control": "no-store", "x-content-type-options": "nosniff"});
-  res.end(typeof body === "string" ? body : JSON.stringify(body, null, 2));
+  if (Buffer.isBuffer(body) || body instanceof Uint8Array) res.end(body);
+  else res.end(typeof body === "string" ? body : JSON.stringify(body, null, 2));
 }
 async function jsonFile(file, fallback = null) {
   try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; }
