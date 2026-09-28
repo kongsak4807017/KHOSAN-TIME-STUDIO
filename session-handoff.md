@@ -18,7 +18,7 @@
 - work-item/handoff/evidence contracts
 - bootstrap scripts/checker
 - knowledge/source manifest
-- GitHub issues #1–#7
+- GitHub issues #1–#11
 
 ## Creative Intelligence decisions
 - Game generation is treated as a production subsystem; competitive advantage is expected to come from taste, point of view, experimentation and community learning.
@@ -40,6 +40,12 @@
 - Maker/checker separation is mandatory.
 - Git LFS is planned but deliberately not force-enabled until local machines have git-lfs installed.
 - Do not fake Docker/service deployment before real service entrypoints exist.
+
+## Creative Intelligence implementation backlog
+- #8 Idea/Taste Engine + Concept Lab
+- #9 Prototype Arena + Creative Evolution Ledger
+- #10 Community Pulse + Telemetry Intelligence
+- #11 Live Experiment Board + Creative Constitution guard
 
 ## Known blocker
 The legacy research reports listed in `knowledge/source-manifest.yaml` are **not yet mirrored verbatim**. This is tracked as GitHub issue #1 and prevents claiming the foundation archive is fully complete.
