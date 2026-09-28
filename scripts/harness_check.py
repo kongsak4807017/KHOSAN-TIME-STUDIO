@@ -23,6 +23,8 @@ required = [
     "studio/creative-intelligence/prototype-experiment.schema.json",
     "studio/creative-intelligence/community-insight.schema.json",
     "studio/creative-intelligence/telemetry-finding.schema.json",
+    "studio/creative-intelligence/creative-evolution.schema.json",
+    "studio/creative-intelligence/live-experiment.schema.json",
     "docs/12-CREATIVE-INTELLIGENCE.md",
     "docs/13-CREATIVE-CONSTITUTION.md",
     "docs/14-PROTOTYPE-ARENA.md",
@@ -51,9 +53,15 @@ json_files = [
     "studio/creative-intelligence/prototype-experiment.schema.json",
     "studio/creative-intelligence/community-insight.schema.json",
     "studio/creative-intelligence/telemetry-finding.schema.json",
+    "studio/creative-intelligence/creative-evolution.schema.json",
+    "studio/creative-intelligence/live-experiment.schema.json",
     "studio/creative-intelligence/templates/creative-constitution.json",
     "studio/creative-intelligence/templates/concept-hypothesis.json",
     "studio/creative-intelligence/templates/prototype-experiment.json",
+    "studio/creative-intelligence/templates/community-insight.json",
+    "studio/creative-intelligence/templates/telemetry-finding.json",
+    "studio/creative-intelligence/templates/creative-evolution.json",
+    "studio/creative-intelligence/templates/live-experiment.json",
 ]
 
 for rel in json_files:
