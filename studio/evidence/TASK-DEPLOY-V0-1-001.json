@@ -9,6 +9,11 @@
       "evidence": "Runnable Studio Web/API, Docker/Compose, lifecycle scripts, rigging adapters and deployment docs were written to main through the connected GitHub repository."
     },
     {
+      "name": "GitHub integrity pass",
+      "status": "pass",
+      "evidence": "Fetched 15 critical files from main; all were non-empty, package/runtime/task/evidence JSON parsed without errors, VERSION is 0.1.0, server source contains /api/health and /api/tasks, no /api/shell endpoint exists, Compose binds 127.0.0.1:8080, and the GitHub verification workflow is workflow_dispatch-only."
+    },
+    {
       "name": "Trust-boundary source review",
       "status": "pass",
       "evidence": "v0.1 binds localhost by default, limits request bodies, validates project IDs and exposes no generic shell HTTP endpoint. Tool execution remains outside the web server."
