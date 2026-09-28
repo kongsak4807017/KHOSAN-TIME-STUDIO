@@ -2,12 +2,15 @@
 
 ## Important status
 
-The repository currently provides the **master architecture/harness and deployment plan**. It is not yet a complete executable KHOSAN Studio UI/service distribution.
+The repository now provides both the master architecture/harness **and a runnable local Studio Web/API baseline (v0.1.0)**.
 
-The usable mode today is:
-**Git repository + ChatGPT + DevSpace local workspace + connected production tools.**
+Usable modes today:
+1. Git repository + ChatGPT + DevSpace local workspace.
+2. Local Studio Web/API via Node.js 20.
+3. Trusted-local Docker deployment of the Studio Web/API.
+4. Registered local tool adapters such as the SkinTokens/UniRig rigging boundary.
 
-As executable Studio services are added, this document becomes the canonical self-host guide.
+This is not yet a production remote/team service. Authentication, full tool-worker isolation, Asset Registry, UG-IR live runtime and WebGPU preview remain roadmap work.
 
 ## Stage 0 — Prerequisites
 
@@ -80,9 +83,9 @@ Wrap via the KHOSAN 3D asset adapter; normalize outputs into Asset IR.
 ### P0 candidates
 Physics/nav/material/optimization/QA tools are not “installed by assumption.” Each must receive an integration ADR and pinned version.
 
-## Stage 5 — Local Studio shell (target)
+## Stage 5 — Local Studio shell (available baseline)
 
-Expected local topology:
+Current v0.1 topology:
 
 ```text
 Browser / Desktop shell
@@ -99,22 +102,33 @@ tools  tools   runtime    / Playwright
    Local project workspace
 ```
 
-The Studio service must never expose unrestricted shell execution to untrusted browser clients.
+The Studio service exposes no generic shell endpoint. Tool execution remains behind DevSpace/registered adapters.
 
-## Stage 6 — Docker/self-host target
+Run directly:
+```bash
+node apps/studio-server/server.mjs
+```
 
-Docker Compose becomes the preferred reproducible deployment only after executable services exist.
+or use `scripts/run-studio.*`.
 
-Planned service classes:
-- `studio-web`
-- `studio-api`
-- `tool-worker`
-- `preview`
-- `qa-runner`
+## Stage 6 — Docker/self-host baseline
 
-GPU-dependent tools may need host-specific deployment rather than a universal container.
+A local-only Compose stack now exists:
+```bash
+docker compose up --build
+```
 
-See `deploy/README.md`.
+It binds to `127.0.0.1:8080` and persists projects through `./projects`.
+
+The current container intentionally excludes CUDA/Blender/model checkpoints. GPU tools remain host workers until a dedicated GPU-worker image is validated.
+
+Future service classes still planned:
+- dedicated tool worker,
+- WebGPU preview runtime,
+- QA runner,
+- authenticated team/remote gateway.
+
+See `docs/17-DEPLOYABLE-STUDIO-V0.1.md` and `deploy/docker/README.md`.
 
 ## Configuration
 
