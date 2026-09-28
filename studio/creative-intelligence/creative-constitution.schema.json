@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Creative Constitution",
+  "type": "object",
+  "required": ["constitution_id","project_id","status","player_fantasy","emotional_promise","core_verbs","world_point_of_view","art_constitution","mechanical_identity","sacred_constraints","flexible_implementation","audience_hypothesis","falsification"],
+  "properties": {
+    "constitution_id": {"type":"string"},
+    "project_id": {"type":"string"},
+    "version": {"type":"integer","minimum":1},
+    "status": {"enum":["draft","prototype-tested","human-locked","amended"]},
+    "player_fantasy": {"type":"string"},
+    "emotional_promise": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "core_verbs": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "world_point_of_view": {"type":"string"},
+    "art_constitution": {
+      "type":"object",
+      "required":["shape_language","color_grammar","material_vocabulary","camera_language","lighting_identity","animation_personality","ui_personality"],
+      "properties":{
+        "shape_language":{"type":"string"},
+        "proportion":{"type":"string"},
+        "color_grammar":{"type":"string"},
+        "material_vocabulary":{"type":"string"},
+        "architecture_vocabulary":{"type":"string"},
+        "camera_language":{"type":"string"},
+        "lighting_identity":{"type":"string"},
+        "animation_personality":{"type":"string"},
+        "ui_personality":{"type":"string"}
+      },
+      "additionalProperties": false
+    },
+    "mechanical_identity": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "sacred_constraints": {"type":"array","items":{"type":"string"}},
+    "flexible_implementation": {"type":"array","items":{"type":"string"}},
+    "audience_hypothesis": {"type":"array","items":{"type":"string"}},
+    "falsification": {"type":"array","items":{"type":"string"}},
+    "approved_by_human": {"type":"boolean"},
+    "approval_reference": {"type":["string","null"]}
+  },
+  "additionalProperties": false
+}
