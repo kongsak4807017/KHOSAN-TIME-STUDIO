@@ -11,6 +11,12 @@ else
   echo "[KHOSAN] Python not found; structural verification skipped."
 fi
 
+if command -v node >/dev/null 2>&1; then
+  node scripts/verify-source.mjs
+else
+  echo "[KHOSAN] Node not found; deployable Studio source verification skipped."
+fi
+
 echo
 echo "[KHOSAN] Git state"
 git status --short || true
