@@ -39,3 +39,20 @@ external/
 # Local game workspaces are not part of the Studio master source history
 projects/*
 !projects/README.md
+
+# DevSpace/tunnel machine-local state and secrets
+ngrok_state.json
+tunnel_state.json
+devspace-config.yml
+*.pem
+cert.pem
+*.credentials.json
+.ngrok-supervisor.lock
+.devspace-stopped
+.tunnel-stopped
+ngrok.exe
+cloudflared.exe
+ngrok.zip
+devspace.log*
+ngrok.log*
+connectivity-state/
