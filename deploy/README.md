@@ -6,10 +6,11 @@ KHOSAN TIME STUDIO now has a runnable trusted-local Web/API shell.
 
 Available:
 1. repository + ChatGPT + DevSpace mode,
-2. Node.js local Studio server,
-3. Docker Compose local Studio server,
-4. durable project persistence,
-5. SkinTokens/UniRig local rigging adapter boundary.
+2. optional DevSpace MCP tunnel/connectivity pack for ChatGPT access,
+3. Node.js local Studio server,
+4. Docker Compose local Studio server,
+5. durable project persistence,
+6. SkinTokens/UniRig local rigging adapter boundary.
 
 Not yet production remote-ready:
 - authentication/authorization,
@@ -67,6 +68,32 @@ Stop:
 docker compose down
 ~~~
 
+## ChatGPT + DevSpace connectivity
+
+For local-only Studio use, no tunnel is required.
+
+When ChatGPT needs to access the local DevSpace workspace:
+
+~~~text
+ChatGPT -> HTTPS tunnel -> DevSpace MCP 127.0.0.1:7676
+~~~
+
+The KHOSAN Studio Web/API remains on `127.0.0.1:8080` and is **not** published by this tunnel.
+
+Verify local connectivity:
+
+~~~bash
+python tools/devspace-connectivity/doctor.py
+~~~
+
+Verify public MCP connectivity:
+
+~~~bash
+python tools/devspace-connectivity/doctor.py --require-public
+~~~
+
+See `docs/18-DEVSPACE-CONNECTIVITY.md`.
+
 ## Rigging worker on host
 
 Clone pinned source revisions:
@@ -100,7 +127,9 @@ v0.1:
 - project IDs/path traversal guarded,
 - secrets stay outside git,
 - local game projects are not committed to the Master repo by default,
-- tool execution stays in DevSpace/registered local adapters.
+- tool execution stays in DevSpace/registered local adapters,
+- DevSpace tunnel publishes only the MCP service, not the Studio Web/API,
+- DevSpace/tunnel credentials and machine-specific state stay outside Git.
 
 Do not expose v0.1 directly to the public internet.
 
