@@ -22,9 +22,22 @@
     {
       "id": "STUDIO-001",
       "title": "Studio Shell: Create Game, Blueprint, Workspace and Workboard",
-      "status": "proposed",
+      "status": "in_progress",
       "owner_role": "07-gameplay-programmer",
-      "acceptance_criteria": []
+      "acceptance_criteria": [
+        "Local Studio Web/API starts from repository source",
+        "User can create and reopen durable local game projects",
+        "Blueprint and Creative Constitution persist on disk",
+        "Agent Workboard reads durable studio/tasks JSON work items",
+        "Tool Registry provenance is visible",
+        "Idea/Concept Lab can create a project from a creative brief",
+        "Human Gate UX and full editable Constitution remain future work"
+      ],
+      "verification": [
+        "node scripts/verify-source.mjs",
+        "node --check apps/studio-server/server.mjs",
+        "manual browser smoke test at http://127.0.0.1:8080"
+      ]
     },
     {
       "id": "ASSET-001",
@@ -90,6 +103,29 @@
         "Every insight includes source context/time window/population when known and uncertainty",
         "Insights become governed experiments or no-action decisions",
         "Vision-level changes route through HG-01"
+      ]
+    },
+    {
+      "id": "DEPLOY-001",
+      "title": "Deployable local Studio baseline v0.1.0",
+      "status": "verify",
+      "owner_role": "12-release-ops",
+      "acceptance_criteria": [
+        "Node.js 20 local server source exists",
+        "Dockerfile and compose.yaml exist",
+        "Localhost is the default exposure boundary",
+        "Project state persists outside browser storage",
+        "No arbitrary-shell HTTP endpoint exists",
+        "Rigging sources are pinned and adapter commands are bounded",
+        "Windows and Linux/macOS run scripts exist"
+      ],
+      "verification": [
+        "node scripts/verify-source.mjs",
+        "python scripts/harness_check.py",
+        "node --check apps/studio-server/server.mjs",
+        "python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py",
+        "docker compose config",
+        "manual local smoke test"
       ]
     }
   ]
