@@ -1,8 +1,8 @@
 # Session Handoff
 
 **Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
-**Branch:** `main`
-**Status:** MASTER STRUCTURE CREATED / FOUNDATION VERIFICATION BLOCKED
+**Branch:** `feature/blender-character-pipeline`
+**Status:** BLENDER CHARACTER ASSET PIPELINE IMPLEMENTED IN BRANCH / LOCAL VERIFICATION BLOCKED
 
 ## What is now authoritative in GitHub
 - Product vision and architecture
@@ -35,6 +35,10 @@
 - Agents use specialized tools; they are not expected to implement every capability from scratch.
 - sprite-gen = Core 2D Production.
 - img2threejs = Core 3D Reconstruction.
+- Blender = Core editable 3D DCC/master-asset stage.
+- For 3D characters, `.blend` is the editable DCC master and `.glb` is a derived runtime artifact.
+- ChatGPT remains the conversational orchestration surface; DevSpace performs bounded tool execution.
+- Blender jobs are allowlisted data contracts and do not accept arbitrary Python execution.
 - Asset IR / UG-IR remain canonical above backend-specific representations.
 - Native WebGPU is first-class but does not own game semantics.
 - Maker/checker separation is mandatory.
@@ -51,14 +55,17 @@
 The legacy research reports listed in `knowledge/source-manifest.yaml` are **not yet mirrored verbatim**. This is tracked as GitHub issue #1 and prevents claiming the foundation archive is fully complete.
 
 ## Exact next action in DevSpace
-1. Clone/open this repository as a local workspace.
+1. Open/checkout branch `feature/blender-character-pipeline`.
 2. Run:
-   - Windows: `.\scripts\bootstrap.ps1`
-   - Linux/macOS: `./scripts/bootstrap.sh`
-3. Record the checker result.
-4. Copy the legacy source documents into `knowledge/research/` verbatim and record hashes.
-5. Update source-manifest statuses.
-6. Then start a bounded work item for Studio Shell + Idea/Concept Lab, Prototype Arena, or Issue #4 (UG-IR v0.1).
+   - `python scripts/harness_check.py`
+   - `python -m unittest discover -s tools/adapters/blender/tests -p "test_*.py"`
+   - `python tools/adapters/blender/doctor.py --json`
+3. Prepare one non-sensitive local character fixture with known mesh/armature/object names.
+4. Create a fixture job based on `tools/adapters/blender/examples/ploy_character_edit.json`.
+5. Run the job without `--dry-run`.
+6. Reopen the generated `.blend`, validate the exported GLB, inspect materials, morphs, skeleton and representative deformation.
+7. Record QA evidence in `studio/evidence/TASK-ASSET-BLENDER-001.json`.
+8. Route to Agent 11 Independent Reviewer. Do not mark accepted before reviewer evidence exists.
 
 ## Specialist startup prompt
 > Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, studio/graph.md, progress.md and this handoff. Select exactly one bounded work item. Do not widen scope or claim Done without evidence.

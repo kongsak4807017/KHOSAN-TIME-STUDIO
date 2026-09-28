@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Blender Character Edit Job",
+  "type": "object",
+  "required": ["schema_version", "asset_id", "source", "outputs", "operations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "asset_id": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string", "pattern": "(?i)\\.(blend|glb|gltf)$"}
+      },
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "object",
+      "required": ["master_blend", "runtime_glb"],
+      "properties": {
+        "master_blend": {"type": "string", "pattern": "(?i)\\.blend$"},
+        "runtime_glb": {"type": "string", "pattern": "(?i)\\.glb$"}
+      },
+      "additionalProperties": false
+    },
+    "preserve": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "intent": {"type": "string"},
+    "metadata": {"type": "object"},
+    "operations": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "object", "key", "value"],
+            "properties": {
+              "type": {"const": "set_shape_key_value"},
+              "object": {"type": "string", "minLength": 1},
+              "key": {"type": "string", "minLength": 1},
+              "value": {"type": "number", "minimum": 0, "maximum": 1}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "object", "visible"],
+            "properties": {
+              "type": {"const": "set_object_visibility"},
+              "object": {"type": "string", "minLength": 1},
+              "visible": {"type": "boolean"}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "object"],
+            "properties": {
+              "type": {"const": "set_object_transform"},
+              "object": {"type": "string", "minLength": 1},
+              "location": {"$ref": "#/$defs/vec3"},
+              "rotation_euler_degrees": {"$ref": "#/$defs/vec3"},
+              "scale": {"$ref": "#/$defs/vec3"}
+            },
+            "anyOf": [
+              {"required": ["location"]},
+              {"required": ["rotation_euler_degrees"]},
+              {"required": ["scale"]}
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "object", "armature", "bone"],
+            "properties": {
+              "type": {"const": "parent_object_to_bone"},
+              "object": {"type": "string", "minLength": 1},
+              "armature": {"type": "string", "minLength": 1},
+              "bone": {"type": "string", "minLength": 1},
+              "keep_world": {"type": "boolean"}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "target_type", "target", "property", "value"],
+            "properties": {
+              "type": {"const": "set_custom_property"},
+              "target_type": {"enum": ["object", "bone"]},
+              "target": {"type": "string", "minLength": 1},
+              "armature": {"type": "string", "minLength": 1},
+              "property": {"type": "string", "minLength": 1},
+              "value": {}
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"target_type": {"const": "bone"}}},
+                "then": {"required": ["armature"]}
+              }
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "data_type", "from", "to"],
+            "properties": {
+              "type": {"const": "rename_data_block"},
+              "data_type": {"enum": ["object", "mesh", "armature", "material"]},
+              "from": {"type": "string", "minLength": 1},
+              "to": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "vec3": {
+      "type": "array",
+      "prefixItems": [
+        {"type": "number"},
+        {"type": "number"},
+        {"type": "number"}
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    }
+  },
+  "additionalProperties": false
+}

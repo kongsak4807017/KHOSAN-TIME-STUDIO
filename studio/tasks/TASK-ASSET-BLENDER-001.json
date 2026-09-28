@@ -1,0 +1,73 @@
+{
+  "task_id": "TASK-ASSET-BLENDER-001",
+  "feature_id": "ASSET-001",
+  "title": "Blender core editable character asset pipeline",
+  "status": "verify",
+  "owner_role": "04-asset-synthesizer",
+  "contributors": [
+    "06-technical-architect",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Promote Blender from rigging-only fallback to the core editable 3D DCC/master-asset stage for KHOSAN characters, document the Spawn-inspired workflow without claiming proprietary internals, and add a safe headless Blender adapter contract that ChatGPT can drive through DevSpace.",
+  "context_files": [
+    "AGENTS.md",
+    "docs/03-TOOL-REGISTRY.md",
+    "docs/16-3D-AUTO-RIGGING.md",
+    "studio/tool-registry.yaml",
+    "studio/agents/04-asset-synthesizer.md"
+  ],
+  "allowed_paths": [
+    "docs/03-TOOL-REGISTRY.md",
+    "docs/16-3D-AUTO-RIGGING.md",
+    "docs/17-BLENDER-CHARACTER-ASSET-PIPELINE.md",
+    "studio/tool-registry.yaml",
+    "studio/agents/04-asset-synthesizer.md",
+    "studio/contracts/blender-character-edit-job.schema.json",
+    "studio/decisions/ADR-0001-BLENDER-CORE-DCC.md",
+    "studio/tasks/TASK-ASSET-BLENDER-001.json",
+    "studio/evidence/TASK-ASSET-BLENDER-001.json",
+    "studio/studio_state.json",
+    "tools/adapters/blender/**",
+    "feature_list.json",
+    "progress.md",
+    "session-handoff.md"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env*",
+    "external/**",
+    "projects/**/assets/**"
+  ],
+  "acceptance_criteria": [
+    "Blender is registered as a core Asset Synthesizer tool for editable 3D master assets rather than only a rigging fallback.",
+    "The architecture keeps Asset IR and UG-IR canonical above Blender-specific representation.",
+    "Editable .blend master assets and runtime .glb artifacts have distinct roles and paths.",
+    "A versioned JSON character-edit contract exists for allowlisted semantic operations and does not permit arbitrary Python execution.",
+    "A headless adapter can validate a job, invoke Blender background mode, apply supported semantic edits, save the .blend master, and export GLB.",
+    "Documentation separates publicly verified Spawn capabilities from KHOSAN design inference and does not claim knowledge of proprietary Spawn internals.",
+    "Local DevSpace verification includes harness check, adapter unit tests, Blender doctor, and at least one real GLB or BLEND round-trip before acceptance."
+  ],
+  "verification": [
+    "python scripts/harness_check.py",
+    "python -m unittest discover -s tools/adapters/blender/tests -p \"test_*.py\"",
+    "python tools/adapters/blender/doctor.py --json",
+    "python tools/adapters/blender/run_job.py --job tools/adapters/blender/examples/ploy_character_edit.json --dry-run",
+    "Run a real local Blender fixture round-trip and inspect the produced .blend and .glb before changing this task to accepted."
+  ],
+  "human_gates": [
+    "Human owner explicitly approved Blender as a core KHOSAN Asset Lab direction and requested the documentation/code be persisted to the project GitHub on 2026-09-29."
+  ],
+  "dependencies": [
+    "ASSET-001",
+    "SkinTokens/UniRig evaluation remains separate for automatic rig generation"
+  ],
+  "risks": [
+    "Blender Python API compatibility varies by version; supported versions remain provisional until local fixture evidence exists.",
+    "Semantic morph edits require existing shape keys or a separate modeling/sculpt generation path.",
+    "Corrective muscle deformation and secondary motion require authored rig/morph/driver data; this adapter must not pretend those capabilities exist on arbitrary meshes.",
+    "No local DevSpace/Blender execution evidence has been recorded in this branch yet."
+  ],
+  "notes": "Implementation scaffold is present, but task remains in verify until traceable local execution and maker/checker separation are completed."
+}

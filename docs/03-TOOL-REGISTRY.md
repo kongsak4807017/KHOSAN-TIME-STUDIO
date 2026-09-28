@@ -17,6 +17,7 @@
 | Harness reference | learn-harness-engineering | ADOPT/reference | Orchestrator | harness/loop/graph engineering patterns |
 | 2D assets | sprite-gen | ADOPT | Asset Synthesizer | sprite atlas, animation loops, manifests, curation, QA |
 | 3D assets | img2threejs | ADOPT | Asset Synthesizer | reference → structured/procedural 3D |
+| 3D DCC / editable master | Blender | ADOPT CORE | Asset Synthesizer | modeling, UV, rig refinement, shape keys, animation, constraints, QA render, GLB export |
 | Physics | Rapier | EVALUATE P0 | Gameplay/Architect | rigid bodies, colliders, queries, joints |
 | Navigation | Recast + Detour | EVALUATE P0 | Gameplay/Architect | navmesh, pathfinding, crowds |
 | glTF processing | glTF Transform | EVALUATE P0 | Asset/Adapter | validate/process/dedup/simplify pipeline |
@@ -24,7 +25,7 @@
 | Texture compression | Basis Universal / KTX2 | EVALUATE P0 | Rendering | GPU texture delivery |
 | PBR authoring | Material Maker | EVALUATE P0 | Asset/Rendering | procedural PBR materials |
 | Generative workflows | ComfyUI | EVALUATE P0 | Asset | extensible image/material/media workflows |
-| 3D rigging | UniRig + Blender fallback | EVALUATE P0 | Asset | skeleton/skin generation |
+| 3D auto-rigging | SkinTokens / UniRig | EVALUATE P0 | Asset | generated skeleton/skin; Blender is the core DCC for inspection/refinement |
 | Animation retarget | production retarget tool | TO-FIND P0 | Asset/Adapter | reuse motion across skeletons |
 | Node editor | Rete.js | EVALUATE P0 | Studio Shell | logic/quest/audio/shader graph UI foundation |
 | Dialogue | Yarn Spinner | EVALUATE P0 | Narrative | dialogue and command runtime |
@@ -44,27 +45,35 @@
 ## Core asset pipeline target
 
 ```text
-                     ASSET LAB
-             ┌──────────┴──────────┐
-             ▼                     ▼
-       2D Production          3D Production
-         sprite-gen            img2threejs
-             │                     │
-             │                rig / retarget
-             │                     │
-             ├──── material / texture ────┐
-             │                     │       │
-             ▼                     ▼       ▼
-        Sprite IR              Mesh IR   PBR IR
-             └──────────┬──────────┘
-                        ▼
-                  KHOSAN Asset IR
-                        │
-        optimize / compress / validate
-                        │
-                        ▼
-                  Asset Registry
+                         ASSET LAB
+             +---------------+---------------+
+             |                               |
+             v                               v
+       2D Production                   3D Production
+         sprite-gen                       sources
+             |                  img2threejs / import / generate
+             |                               |
+             |                               v
+             |                        Blender Master Asset
+             |                     (.blend editable source)
+             |                               |
+             |                 rig / skin / morph / animation
+             |                    SkinTokens / UniRig + DCC
+             |                               |
+             +---------------+---------------+
+                             v
+                      KHOSAN Asset IR
+                             |
+                 optimize / compress / validate
+                             |
+                             v
+                       Asset Registry
+                             |
+                             v
+                           UG-IR
 ```
+
+For 3D character assets, `.blend` is the editable DCC master and `.glb` is a derived runtime artifact. Asset IR / UG-IR remain canonical above Blender-specific representation.
 
 ## Acquisition rule
 

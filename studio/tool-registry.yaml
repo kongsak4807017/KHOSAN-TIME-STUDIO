@@ -55,7 +55,14 @@ tools:
     owner: 04-asset-synthesizer
     capability: staged_skeleton_and_skinning
     notes: fallback_expert_path_for_skeleton_inspection_and_manual_refinement
-  - {id: blender-rig-fallback, name: Blender Rigging Fallback, status: evaluate, priority: p1, capability: deterministic_manual_rigging_support}
+  - id: blender
+    name: Blender
+    source: https://www.blender.org/
+    status: adopt
+    priority: core
+    owner: 04-asset-synthesizer
+    capability: editable_3d_dcc_character_master_asset
+    notes: blend_is_editable_master_glb_is_runtime_artifact_headless_bpy_adapter_version_matrix_pending_local_fixture
   - {id: animation-retarget, name: Animation Retargeting Tool, status: to_find, priority: p0}
   - {id: retejs, name: Rete.js, status: evaluate, priority: p0, capability: visual_graph_editor}
   - {id: yarn-spinner, name: Yarn Spinner, status: evaluate, priority: p0, capability: dialogue}

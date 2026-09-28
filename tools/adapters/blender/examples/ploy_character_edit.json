@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "asset_id": "character.ploy",
+  "source": {
+    "path": "../../../../projects/demo/assets/source/ploy.glb"
+  },
+  "outputs": {
+    "master_blend": "../../../../projects/demo/assets/source-master/ploy.blend",
+    "runtime_glb": "../../../../projects/demo/assets/approved/ploy.glb"
+  },
+  "preserve": [
+    "identity",
+    "face",
+    "hair",
+    "clothing",
+    "skeleton"
+  ],
+  "operations": [
+    {
+      "type": "set_shape_key_value",
+      "object": "Body",
+      "key": "Smile",
+      "value": 0.15
+    },
+    {
+      "type": "parent_object_to_bone",
+      "object": "Glasses",
+      "armature": "Armature",
+      "bone": "Head",
+      "keep_world": true
+    },
+    {
+      "type": "set_custom_property",
+      "target_type": "bone",
+      "target": "Hair_01",
+      "armature": "Armature",
+      "property": "khosan.secondary_motion",
+      "value": "hair"
+    },
+    {
+      "type": "set_custom_property",
+      "target_type": "bone",
+      "target": "Skirt_01",
+      "armature": "Armature",
+      "property": "khosan.secondary_motion",
+      "value": "cloth"
+    }
+  ],
+  "intent": "Keep Ploy's identity; refine facial expression and mark hair/skirt bones for secondary-motion authoring."
+}

@@ -6,6 +6,8 @@ KHOSAN will evaluate **SkinTokens as the preferred P0 auto-rigging candidate** a
 
 This is not yet an ADOPT decision. Promotion to ADOPT requires a local integration fixture, reproducible command, license/provenance note, GPU/resource measurement, output validation and animation test.
 
+> **Blender status clarification (2026-09-29):** Blender is now an ADOPT / CORE DCC for editable 3D master assets. SkinTokens and UniRig remain EVALUATE candidates for *automatic rig generation*. References in this document to Blender as a fallback mean fallback/manual rig correction inside the broader Blender master-asset workflow, not that Blender itself is a fallback tool.
+
 ## Why SkinTokens is preferred
 
 SkinTokens / TokenRig accepts a single 3D mesh and produces a complete skeleton hierarchy plus skinning weights in one autoregressive pipeline.
