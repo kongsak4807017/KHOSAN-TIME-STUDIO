@@ -1,0 +1,32 @@
+{
+  "task_id": "TASK-DEPLOY-V0-1-001",
+  "role": "10-qa-playtester",
+  "timestamp": "2026-09-29T02:29:00+07:00",
+  "checks": [
+    {
+      "name": "GitHub source publication",
+      "status": "pass",
+      "evidence": "Runnable Studio Web/API, Docker/Compose, lifecycle scripts, rigging adapters and deployment docs were written to main through the connected GitHub repository."
+    },
+    {
+      "name": "Trust-boundary source review",
+      "status": "pass",
+      "evidence": "v0.1 binds localhost by default, limits request bodies, validates project IDs and exposes no generic shell HTTP endpoint. Tool execution remains outside the web server."
+    },
+    {
+      "name": "External rigging provenance",
+      "status": "pass",
+      "evidence": "config/external-tools.lock.json pins SkinTokens 273b691d35989d71cd17ff2895fdc735097b92d1 and UniRig 6793c6640ff01c8fb389f3993434124bb43d2933."
+    },
+    {
+      "name": "Local Node/Python/runtime execution",
+      "status": "blocked",
+      "evidence": "No specific DevSpace local checkout/path was selected in this turn; fresh-machine source, browser, Docker and GPU checks have not been executed."
+    }
+  ],
+  "verdict": "BLOCKED",
+  "limitations": [
+    "GitHub publication/source review does not substitute for executing Node, Docker and GPU checks on the target computer.",
+    "Remote/team deployment is intentionally outside the v0.1 trust boundary."
+  ]
+}
