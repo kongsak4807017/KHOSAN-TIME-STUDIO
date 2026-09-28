@@ -52,3 +52,14 @@ tools:
   - {id: ui-editor, name: KHOSAN UI/HUD Editor, status: build_khosan, priority: p0}
   - {id: save-ir, name: KHOSAN Save IR, status: build_khosan, priority: p1}
   - {id: multiplayer, name: Nakama / Colyseus adapters, status: optional, priority: p1}
+
+  - {id: creative-constitution, name: KHOSAN Creative Constitution, status: build_khosan, priority: core, capability: creative_vision_contract}
+  - {id: idea-engine, name: KHOSAN Idea Engine, status: build_khosan, priority: p0, capability: concept_space_generation}
+  - {id: taste-engine, name: KHOSAN Taste Engine, status: build_khosan, priority: p0, capability: qualitative_creative_diagnosis}
+  - {id: prototype-arena, name: KHOSAN Prototype Arena, status: build_khosan, priority: p0, capability: micro_prototype_experiments}
+  - {id: creative-evolution-ledger, name: KHOSAN Creative Evolution Ledger, status: build_khosan, priority: p0, capability: concept_experiment_history}
+  - {id: community-pulse, name: KHOSAN Community Pulse, status: build_khosan, priority: p1, capability: community_evidence_synthesis}
+  - {id: telemetry-contract, name: KHOSAN Telemetry Contract, status: build_khosan, priority: p1, capability: player_behavior_evidence}
+  - {id: experiment-board, name: KHOSAN Experiment Board, status: build_khosan, priority: p1, capability: live_experiment_governance}
+  - {id: community-connectors, name: Community Source Connectors, status: to_find, priority: p1, capability: permitted_feedback_ingestion}
+  - {id: product-analytics-adapter, name: Product Analytics Adapter, status: to_find, priority: p1, capability: telemetry_ingestion}
