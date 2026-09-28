@@ -1,0 +1,13 @@
+{
+  "evolution_id": "EVOLUTION-EXAMPLE",
+  "project_id": "GAME-EXAMPLE",
+  "new_concept_id": "CONCEPT-NEW",
+  "parent_concepts": [],
+  "evidence_refs": [],
+  "carried_forward": [],
+  "discarded": [],
+  "new_hypotheses": [],
+  "rationale": "",
+  "human_decision": "prototype",
+  "decision_reference": null
+}
