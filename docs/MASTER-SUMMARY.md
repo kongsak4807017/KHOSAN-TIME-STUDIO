@@ -2,16 +2,19 @@
 
 ## 1. Product identity
 
-KHOSAN TIME STUDIO is an AI-native game-production environment.
+KHOSAN TIME STUDIO is an AI-native **creative-intelligence and game-production environment**.
 
 The creator is the Executive Producer. The Studio handles decomposition, specialist routing, tool invocation, durable state, verification and export.
 
-The creator-facing experience should be:
+The creator-facing experience can begin before a game concept exists:
 
 ```text
-Create New Game
- → describe intent in natural language
- → Game Blueprint
+creative brief / emotion / culture / fantasy / mechanic
+ → Creative Intelligence Council
+ → concept portfolio
+ → micro-prototypes
+ → player evidence
+ → Creative Constitution
  → human concept approval
  → design + architecture
  → asset/gameplay/world/render/audio production
@@ -59,7 +62,19 @@ Key principle:
 12. Independent Reviewer
 13. Release & Operations
 
-The human remains above the graph as Executive Producer.
+Creative Intelligence Council:
+14. Cultural & Trend Researcher
+15. Player Experience Researcher
+16. Concept Inventor
+17. Creative Critic
+18. Audience Researcher
+19. Community Intelligence
+20. Telemetry Analyst
+21. Live Game Designer
+
+File role IDs remain 00–20. Total: **21 roles**.
+
+The human remains above the graph as Executive Producer. Creative Intelligence roles are advisory.
 
 ## 4. Harness rules
 
@@ -87,7 +102,27 @@ Non-negotiables:
 - critical project state lives in repository files, not chat memory,
 - destructive/external actions require human approval.
 
-## 5. Core adopted production tools
+## 5. Creative Intelligence
+
+KHOSAN treats game generation as a production subsystem, not the final source of creative advantage.
+
+The Creative Intelligence layer supports:
+- concept-space exploration,
+- player fantasy / emotional promise hypotheses,
+- qualitative taste diagnosis without one universal score,
+- Creative Constitution,
+- Prototype Arena,
+- community evidence synthesis,
+- telemetry findings,
+- governed live experiments.
+
+Two loops:
+1. **Discovery:** research → concepts → critique → micro-prototypes → evidence → human concept lock.
+2. **Live:** community + telemetry → experiment proposal → normal production work or HG-01 if vision-level.
+
+The system protects human taste and point of view rather than optimizing blindly toward popularity.
+
+## 6. Core adopted production tools
 
 ### sprite-gen — Core 2D Production
 Use for:
@@ -115,7 +150,7 @@ Use for:
 
 Its output is normalized into KHOSAN Asset IR. Three.js is not the canonical project data model.
 
-## 6. P0 capabilities to integrate
+## 7. P0 capabilities to integrate
 
 - Physics — Rapier
 - Navigation — Recast + Detour
@@ -140,7 +175,7 @@ P1/optional:
 - mocap/video-to-motion,
 - cloud save.
 
-## 7. Components KHOSAN should build itself
+## 8. Components KHOSAN should build itself
 
 Do not outsource the Studio's canonical authoring surfaces:
 - Studio Shell
@@ -157,7 +192,7 @@ Do not outsource the Studio's canonical authoring surfaces:
 
 External tools plug into these boundaries.
 
-## 8. Asset architecture
+## 9. Asset architecture
 
 ### 2D
 Reference → sprite-gen → curation → deterministic extraction/compose/QA → Sprite Adapter → Asset IR → Registry.
@@ -167,7 +202,7 @@ Reference → img2threejs → inspect uncertainty → Asset IR → material → 
 
 Generated assets must preserve provenance and uncertainty rather than hiding inferred content.
 
-## 9. Runtime architecture
+## 10. Runtime architecture
 
 Native WebGPU remains a first-class target with research/implementation direction covering:
 - PBR,
@@ -182,7 +217,7 @@ Native WebGPU remains a first-class target with research/implementation directio
 
 However, UG-IR must remain engine-neutral.
 
-## 10. Local deployment philosophy
+## 11. Local deployment philosophy
 
 The Studio is local-first.
 
@@ -202,7 +237,7 @@ Target local app:
 
 Docker becomes a reproducibility layer only after executable service entrypoints exist. Do not create pretend deployment stacks.
 
-## 11. Knowledge policy
+## 12. Knowledge policy
 
 Research reports are evidence, not automatically current project truth.
 
@@ -212,17 +247,19 @@ Old ZIP deliverables are artifacts; they require provenance/checksum/reproducibi
 
 See `knowledge/source-manifest.yaml` for the legacy source archive list.
 
-## 12. Next product sequence
+## 13. Next product sequence
 
 1. Finish Master Repository mirror of legacy research.
-2. Build Studio Shell.
-3. Build Asset Registry + Asset Lab integrations.
-4. Define UG-IR v0.1 + canonical fixtures.
-5. Produce a native WebGPU vertical slice.
-6. Add World/Logic authoring.
-7. Add automated QA.
-8. Add export/package targets.
-9. Add optional online services.
-10. Production hardening.
+2. Build Studio Shell with Idea/Concept Lab + Creative Constitution.
+3. Implement Creative Intelligence CI1 and Prototype Arena CI2.
+4. Build Asset Registry + Asset Lab integrations.
+5. Define UG-IR v0.1 + canonical fixtures.
+6. Produce a native WebGPU vertical slice.
+7. Add World/Logic authoring.
+8. Add automated QA.
+9. Add Community/Telemetry live loop.
+10. Add export/package targets.
+11. Add optional online services.
+12. Production hardening.
 
 This document is a navigation summary. Detailed contracts in `docs/`, `studio/` and ADRs take precedence when more specific.
