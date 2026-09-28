@@ -11,7 +11,19 @@
 ## Load on demand
 
 ### Creative / Game Design / Narrative
-Product vision, GDD/world/narrative docs. Avoid renderer reports unless feasibility requires them.
+Product vision, Creative Constitution, GDD/world/narrative docs. Avoid renderer reports unless feasibility requires them.
+
+### Creative Intelligence Council
+Load docs/12-CREATIVE-INTELLIGENCE.md plus only the evidence domain needed for the task.
+- Cultural/Trend: research question + source set/time window.
+- Player Experience: Creative Constitution + prototype/playtest observations.
+- Concept Inventor/Critic: bounded concept brief + relevant research; do not preload production internals.
+- Audience Researcher: audience question + source context; avoid sensitive-trait inference.
+- Community Intelligence: approved community sources + collection period/population.
+- Telemetry Analyst: metric definitions + event schema + population/time window + data-quality notes.
+- Live Game Designer: Constitution + community/telemetry findings + experiment history.
+
+Community and telemetry agents must not treat chat memory as evidence.
 
 ### Asset Synthesizer
 Asset pipeline, 2D/3D tool docs, material/animation constraints.
