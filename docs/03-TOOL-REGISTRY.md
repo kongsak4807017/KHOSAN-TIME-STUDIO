@@ -24,7 +24,8 @@
 | Texture compression | Basis Universal / KTX2 | EVALUATE P0 | Rendering | GPU texture delivery |
 | PBR authoring | Material Maker | EVALUATE P0 | Asset/Rendering | procedural PBR materials |
 | Generative workflows | ComfyUI | EVALUATE P0 | Asset | extensible image/material/media workflows |
-| 3D rigging | UniRig + Blender fallback | EVALUATE P0 | Asset | skeleton/skin generation |
+| 3D rigging | SkinTokens / TokenRig | EVALUATE P0 preferred | Asset | unified mesh → skeleton + skin weights; requires local GPU fixture |
+| 3D rigging | UniRig | EVALUATE P0 fallback | Asset | staged skeleton → inspect/refine → skin → merge |
 | Animation retarget | production retarget tool | TO-FIND P0 | Asset/Adapter | reuse motion across skeletons |
 | Node editor | Rete.js | EVALUATE P0 | Studio Shell | logic/quest/audio/shader graph UI foundation |
 | Dialogue | Yarn Spinner | EVALUATE P0 | Narrative | dialogue and command runtime |
@@ -40,6 +41,8 @@
 | Localization | Weblate or equivalent | OPTIONAL P1 | Narrative/Release | translation workflow |
 | Voice/TTS | project-specific | TO-FIND P1 | Audio/Narrative | voices and localization |
 | Mocap/video→motion | project-specific | TO-FIND P1 | Asset | motion acquisition |
+
+See `docs/16-3D-AUTO-RIGGING.md` for the pinned SkinTokens/UniRig integration path.
 
 ## Core asset pipeline target
 
