@@ -16,13 +16,65 @@ Exit criteria:
 - repository is restartable by a fresh agent,
 - no critical decision depends only on chat history.
 
+## Creative Intelligence Track — CI0 to CI3
+**Status: foundation contracts added; product surfaces not yet implemented**
+
+### CI0 — Creative Constitution & Concept artifacts
+Deliver:
+- Creative Constitution schema/editor,
+- Concept Hypothesis artifacts,
+- Creative Intelligence Council routing,
+- human concept lock.
+
+Exit:
+A creator can persist a concept and its non-negotiable creative identity.
+
+### CI1 — Idea / Taste Engine
+Build:
+- creative brief intake,
+- bounded research context,
+- concept-space generation,
+- creative critique,
+- audience/player-experience hypotheses,
+- portfolio view without a universal winner score.
+
+Exit:
+A creator can explore meaningfully different concepts and understand trade-offs before production.
+
+### CI2 — Prototype Arena
+Build:
+- one-click experiment project from concept hypothesis,
+- micro-prototype scope generator,
+- observation/telemetry plan,
+- side-by-side experiment evidence,
+- recombination/evolution history.
+
+Exit:
+High-risk creative assumptions can be tested cheaply before full production.
+
+### CI3 — Community & Live Intelligence
+Build:
+- Community Pulse ingestion adapters,
+- telemetry definitions/quality checks,
+- insight synthesis,
+- Experiment Board,
+- Creative Constitution conflict detection.
+
+Exit:
+Player/community evidence produces governed experiments without automatic vision drift.
+
+---
+
 ## Phase 1 — Studio Shell
 Build:
 - Home/Projects,
+- Idea / Concept Lab,
 - Create New Game,
 - Game Blueprint,
+- Creative Constitution,
 - Game Workspace,
 - Agent Workboard,
+- Prototype/Experiment surfaces,
 - Human Gates,
 - project/state persistence.
 
