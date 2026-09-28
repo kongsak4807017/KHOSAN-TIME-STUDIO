@@ -1,0 +1,54 @@
+version: 1
+project: KHOSAN-TIME-STUDIO
+principles:
+  - agents_are_workers
+  - tools_are_production_machines
+  - asset_ir_and_ugir_are_canonical
+  - deterministic_validation_after_generation
+  - least_privilege
+  - no_evidence_no_done
+tools:
+  - id: harness
+    name: KHOSAN Agent Harness
+    status: adopt
+    priority: core
+    owner: 00-studio-orchestrator
+  - id: harness-reference
+    name: learn-harness-engineering
+    source: https://github.com/kongsak4807017/learn-harness-engineering
+    status: reference
+    priority: core
+  - id: sprite-gen
+    name: sprite-gen
+    source: https://github.com/kongsak4807017/sprite-gen
+    status: adopt
+    priority: core
+    owner: 04-asset-synthesizer
+    capability: 2d_sprite_animation_pipeline
+  - id: img2threejs
+    name: img2threejs
+    source: https://github.com/kongsak4807017/img2threejs
+    status: adopt
+    priority: core
+    owner: 04-asset-synthesizer
+    capability: reference_to_structured_3d
+  - {id: rapier, name: Rapier, status: evaluate, priority: p0, capability: physics}
+  - {id: recast-detour, name: Recast + Detour, status: evaluate, priority: p0, capability: navigation}
+  - {id: gltf-transform, name: glTF Transform, status: evaluate, priority: p0, capability: gltf_processing}
+  - {id: meshoptimizer, name: meshoptimizer, status: evaluate, priority: p0, capability: mesh_optimization}
+  - {id: basis-universal, name: Basis Universal / KTX2, status: evaluate, priority: p0, capability: texture_compression}
+  - {id: material-maker, name: Material Maker, status: evaluate, priority: p0, capability: pbr_authoring}
+  - {id: comfyui, name: ComfyUI, status: evaluate, priority: p0, capability: generative_workflows}
+  - {id: unirig, name: UniRig + Blender fallback, status: evaluate, priority: p0, capability: auto_rigging}
+  - {id: animation-retarget, name: Animation Retargeting Tool, status: to_find, priority: p0}
+  - {id: retejs, name: Rete.js, status: evaluate, priority: p0, capability: visual_graph_editor}
+  - {id: yarn-spinner, name: Yarn Spinner, status: evaluate, priority: p0, capability: dialogue}
+  - {id: tonejs, name: Web Audio / Tone.js, status: evaluate, priority: p0, capability: audio_runtime}
+  - {id: ai-audio, name: AI SFX/Music Tool, status: to_find, priority: p1}
+  - {id: playwright, name: Playwright, status: evaluate, priority: p0, capability: automated_qa}
+  - {id: git-lfs, name: Git LFS, status: evaluate, priority: p0, capability: large_asset_versioning}
+  - {id: world-editor, name: KHOSAN World Editor, status: build_khosan, priority: p0}
+  - {id: asset-registry, name: KHOSAN Asset Registry, status: build_khosan, priority: p0}
+  - {id: ui-editor, name: KHOSAN UI/HUD Editor, status: build_khosan, priority: p0}
+  - {id: save-ir, name: KHOSAN Save IR, status: build_khosan, priority: p1}
+  - {id: multiplayer, name: Nakama / Colyseus adapters, status: optional, priority: p1}
