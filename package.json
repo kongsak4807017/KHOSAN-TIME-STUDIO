@@ -1,0 +1,14 @@
+{
+  "name": "khosan-time-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KHOSAN TIME STUDIO local-first Creative Intelligence and Game Studio",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "studio": "node apps/studio-server/server.mjs",
+    "verify:source": "node scripts/verify-source.mjs",
+    "verify:harness": "python scripts/harness_check.py",
+    "doctor:rigging": "python tools/adapters/rigging/doctor.py --json"
+  }
+}
