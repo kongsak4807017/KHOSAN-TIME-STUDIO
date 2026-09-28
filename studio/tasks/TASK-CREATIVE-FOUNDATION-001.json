@@ -1,0 +1,60 @@
+{
+  "task_id": "TASK-CREATIVE-FOUNDATION-001",
+  "feature_id": "CREATIVE-001",
+  "title": "Establish KHOSAN Creative Intelligence foundation",
+  "status": "verify",
+  "owner_role": "00-studio-orchestrator",
+  "contributors": [
+    "01-creative-director",
+    "13-cultural-trend-researcher",
+    "14-player-experience-researcher",
+    "15-concept-inventor",
+    "16-creative-critic",
+    "17-audience-researcher",
+    "18-community-intelligence",
+    "19-telemetry-analyst",
+    "20-live-game-designer"
+  ],
+  "objective": "Make idea discovery, taste diagnosis, prototyping, community intelligence and live experimentation first-class governed layers of KHOSAN TIME STUDIO.",
+  "context_files": [
+    "docs/12-CREATIVE-INTELLIGENCE.md",
+    "docs/13-CREATIVE-CONSTITUTION.md",
+    "docs/14-PROTOTYPE-ARENA.md",
+    "docs/15-COMMUNITY-INTELLIGENCE.md",
+    "studio/graph.md"
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "studio/**",
+    "scripts/harness_check.py",
+    "README.md",
+    "README_TH.md",
+    "AGENTS.md",
+    "feature_list.json",
+    "progress.md",
+    "session-handoff.md"
+  ],
+  "forbidden_paths": [".git/**",".env*"],
+  "acceptance_criteria": [
+    "Creative Intelligence is documented as a first-class architecture layer",
+    "Council roles 13-20 exist and are advisory",
+    "Execution graph contains Discovery and Live Intelligence loops",
+    "Creative Constitution is human-controlled via HG-01",
+    "Concept, prototype, community, telemetry, creative-evolution and live-experiment contracts exist",
+    "Harness checker expects 21 roles and validates Creative Intelligence artifacts",
+    "Implementation backlog exists for Concept Lab, Prototype Arena, Community/Telemetry and Live Experiment Board"
+  ],
+  "verification": [
+    "GitHub connector verifies Council role files and graph/checker contents",
+    "JSON.parse succeeds for Creative Intelligence schemas",
+    "python scripts/harness_check.py from a fresh local checkout"
+  ],
+  "human_gates": [],
+  "dependencies": ["FOUNDATION-001"],
+  "risks": [
+    "Creative Intelligence product UI is not implemented yet",
+    "Community/telemetry connectors are not selected or implemented",
+    "Local harness checker has not yet been executed on a fresh checkout"
+  ],
+  "notes": "Architecture and contracts are persisted on main; runtime/product implementation remains in issues #8-#11."
+}
