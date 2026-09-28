@@ -2,18 +2,20 @@
 
 Repository นี้คือ **Master Project** ของ KHOSAN TIME STUDIO ทั้งหมด
 
-เป้าหมายคือให้ผู้ใช้สร้างเกมโดยไม่ต้องคุยกับ Agent ทีละตัว และไม่ต้องเรียก CLI ของเครื่องมือเอง
+เป้าหมายไม่ใช่เพียง “สร้างเกมให้ได้” แต่ช่วยค้นหา **เกมที่สมควรถูกสร้าง** ด้วยระบบ Creative Intelligence ก่อนเข้าสายการผลิต และให้ผู้ใช้สร้าง/ทดลอง/เรียนรู้จากผู้เล่นโดยไม่ต้องคุยกับ Agent ทีละตัวหรือเรียก CLI ของเครื่องมือเอง
 
 ```text
 ผู้ใช้
   ↓
-Create New Game
+Idea / Emotion / Culture / Player Fantasy
   ↓
-อธิบายเกมด้วยภาษาคน
+Creative Intelligence Council
   ↓
-Studio Orchestrator
+Concept Portfolio
   ↓
-Game Blueprint
+Micro Prototype / Player Evidence
+  ↓
+Creative Constitution
   ↓
 ผู้ใช้อนุมัติ Concept
   ↓
@@ -34,7 +36,7 @@ Build / Export / Deploy
 
 - แนวคิดและ architecture ของ Studio
 - Harness สำหรับ AI Agent
-- Agent 13 บทบาท
+- Agent 21 บทบาท: Production/Governance 13 บทบาท + Creative Intelligence Council 8 บทบาท
 - Workflow และ Graph การส่งงาน
 - Tool Registry
 - Asset Pipeline 2D/3D
@@ -45,6 +47,28 @@ Build / Export / Deploy
 - วิธีทำงานกับ ChatGPT + DevSpace local workspace
 - วิธี bootstrap/deploy บนคอมพิวเตอร์
 - Roadmap
+
+## Creative Intelligence Layer
+
+เพิ่ม Council 8 บทบาท:
+- Cultural & Trend Researcher
+- Player Experience Researcher
+- Concept Inventor
+- Creative Critic
+- Audience Researcher
+- Community Intelligence
+- Telemetry Analyst
+- Live Game Designer
+
+ระบบนี้ใช้เพื่อ:
+- สำรวจ concept space หลายแนวแทนการรีบเลือกไอเดียเดียว
+- วิเคราะห์ novelty / hook / fantasy / emotion / visual identity แบบไม่ยุบเป็นคะแนนเดียว
+- ทำ micro-prototype เพื่อทดสอบสมมติฐาน
+- ล็อก Creative Constitution โดยมนุษย์
+- รับ community + telemetry หลังเกมมีผู้เล่น
+- เปลี่ยน feedback เป็น experiment ไม่ใช่คำสั่งแก้เกมโดยตรง
+
+รายละเอียดดู `docs/12-CREATIVE-INTELLIGENCE.md`
 
 ## เครื่องมือ Core ที่มีแล้ว
 
