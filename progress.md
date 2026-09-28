@@ -30,6 +30,8 @@
 - localhost-first trust boundary
 
 ### Deployment
+- DevSpace MCP Connectivity Pack (ngrok/Cloudflare provider-neutral profile)
+- persistent ChatGPT workspace contract
 - `Dockerfile`
 - `compose.yaml`
 - Bash and PowerShell run scripts
@@ -62,6 +64,8 @@ The following must be executed from a fresh local checkout/DevSpace before `DEPL
 - Studio browser smoke test
 - `docker compose config` and container health
 - rigging doctor on the actual GPU machine
+- DevSpace local/public MCP connectivity doctor on the actual development PC
+- ChatGPT workspaceId reuse and bounded DevSpace read/write/test smoke
 
 ## Correctly still open
 - Issue #1: mirror legacy research archive verbatim
