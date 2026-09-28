@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Agent Handoff",
+  "type": "object",
+  "required": ["task_id","from_role","to_role","status","summary","artifacts","verification","known_risks","next_action"],
+  "properties": {
+    "task_id": {"type":"string"},
+    "from_role": {"type":"string"},
+    "to_role": {"type":"string"},
+    "status": {"enum":["completed","partial","blocked","rework_requested"]},
+    "summary": {"type":"string"},
+    "artifacts": {"type":"array","items":{"type":"string"}},
+    "decisions": {"type":"array","items":{"type":"string"}},
+    "verification": {"type":"array","items":{"type":"object","required":["command","result"],"properties":{"command":{"type":"string"},"result":{"type":"string"}}}},
+    "known_risks": {"type":"array","items":{"type":"string"}},
+    "open_questions": {"type":"array","items":{"type":"string"}},
+    "next_action": {"type":"string"}
+  },
+  "additionalProperties": false
+}
