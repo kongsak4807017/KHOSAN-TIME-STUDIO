@@ -1,0 +1,32 @@
+{
+  "task_id": "TASK-CONNECTIVITY-001",
+  "role": "10-qa-playtester",
+  "timestamp": "2026-09-29T02:29:00+07:00",
+  "checks": [
+    {
+      "name": "Source packaging",
+      "status": "pass",
+      "evidence": "Master repository includes DevSpace connectivity docs, example configs, provider wrappers, connectivity doctor and persistent workspace contract."
+    },
+    {
+      "name": "Secret separation",
+      "status": "pass",
+      "evidence": "Repository policy excludes DevSpace auth, ngrok token/state, Cloudflare cert/credentials, tunnel binaries, logs and machine-specific launcher state."
+    },
+    {
+      "name": "Port separation",
+      "status": "pass",
+      "evidence": "Canonical docs separate DevSpace MCP 127.0.0.1:7676 from KHOSAN Studio Web/API 127.0.0.1:8080 and prohibit publishing the Studio port through the DevSpace tunnel by default."
+    },
+    {
+      "name": "Target-machine public MCP verification",
+      "status": "blocked",
+      "evidence": "The target DevSpace/ngrok or Cloudflare environment has not been executed from this GitHub-only patch pass."
+    }
+  ],
+  "verdict": "BLOCKED",
+  "limitations": [
+    "Source-level packaging does not prove the user's actual tunnel/account/OAuth configuration.",
+    "WorkspaceId reuse must be verified from a ChatGPT conversation with callable DevSpace MCP tools."
+  ]
+}
