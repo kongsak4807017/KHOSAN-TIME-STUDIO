@@ -68,3 +68,28 @@ After local mirror/bootstrap, begin:
 
 ## Rule
 Update this file from evidence, not optimism.
+
+## Asset Lab — Blender character master pipeline
+
+**Implementation scaffold is in GitHub; verification is still open.**
+
+Added under `TASK-ASSET-BLENDER-001`:
+- Blender promoted to Core editable 3D DCC/master-asset stage.
+- `.blend` defined as editable DCC master; `.glb` as derived runtime artifact.
+- Spawn-inspired architecture note with verified-vs-inferred boundary.
+- Versioned Blender character edit job schema.
+- Safe headless adapter: doctor, validator, runner and Blender worker.
+- Allowlisted operations for shape keys, visibility, transforms, bone parenting, custom properties and data-block rename.
+- Example Ploy character edit job and pure-Python contract tests.
+- ADR-0001 records the decision that ChatGPT + DevSpace remain the economical conversational/execution surface.
+
+Still required before acceptance:
+- fresh DevSpace harness check,
+- adapter unit tests from the repository checkout,
+- Blender doctor on the selected machine,
+- one real GLB/BLEND → `.blend` master → GLB round-trip,
+- deformation/material/export QA,
+- Independent Reviewer acceptance.
+
+The task must remain VERIFY/BLOCKED until those evidence items exist.
+
