@@ -8,6 +8,7 @@
   "pending_human_gate": null,
   "last_verification": null,
   "known_blockers": [
+    "DevSpace public MCP tunnel acceptance remains pending on the target PC",
     "Studio v0.1 local shell exists but full local acceptance has not yet been recorded from DevSpace",
     "Prototype Arena UI is not yet implemented",
     "Asset Registry and UG-IR live runtime are not yet implemented",
@@ -15,7 +16,7 @@
     "P0 external tools require fixture-based evaluation before ADOPT",
     "Legacy research archive remains pending verbatim mirror"
   ],
-  "next_milestone": "Local acceptance of v0.1 + Concept Lab/Prototype Arena iteration",
+  "next_milestone": "Fresh DevSpace/local acceptance of Studio v0.1 + MCP connectivity",
   "last_updated": "2026-09-29",
   "creative_intelligence": {
     "foundation": "specified",
@@ -34,6 +35,17 @@
     "default_bind": "127.0.0.1:8080",
     "arbitrary_shell_http": false,
     "rigging_adapter": "present",
-    "remote_team_ready": false
+    "remote_team_ready": false,
+    "devspace_connectivity": {
+      "source_status": "pack_present",
+      "local_port": 7676,
+      "providers": [
+        "ngrok",
+        "cloudflare"
+      ],
+      "public_mcp_acceptance": "pending_local_machine",
+      "studio_port_publication": "disabled_by_policy",
+      "persistent_workspace_contract": "documented"
+    }
   }
 }
