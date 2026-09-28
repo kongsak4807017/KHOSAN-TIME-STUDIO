@@ -106,6 +106,41 @@ Clone repository แล้วเปิด local workspace จากนั้น�
 
 ## สถานะปัจจุบัน
 
-ตอนนี้เป็น **Foundation / Master Repository**: Harness, architecture, contracts และ deployment plan ใช้งานได้ แต่ตัว Visual Studio Shell/World Editor ยังต้องสร้างเป็น software product ต่อไป
+ตอนนี้เป็น **Deployable Studio Baseline v0.1.0** แล้ว: Harness, architecture, Creative Intelligence contracts และ local Studio Web/API มี source code ที่รันได้จริง
+
+มีแล้ว:
+- Studio Home
+- Idea / Concept Lab ขั้นต้น
+- สร้าง project แบบ durable บน disk
+- Blueprint + Creative Constitution persistence
+- Agent Workboard ภาพรวม 21 roles
+- Tool Registry/provenance
+- local health/status API
+- routing helper
+- SkinTokens/UniRig adapter boundary
+- Docker/self-host สำหรับ trusted local machine
+
+ยังไม่ production-complete:
+- ChatGPT LLM ไม่ได้ฝังอยู่ใน local web server; ChatGPT ยังเป็น agent reasoning layer และ DevSpace เป็น execution layer
+- Prototype Arena UI
+- Asset Registry
+- UG-IR runtime/live WebGPU preview
+- tool worker GPU service แบบเต็ม
+- remote/team authentication และ security hardening
+
+รันบน Windows:
+```powershell
+.\scripts\bootstrap.ps1
+.\scripts\run-studio.ps1
+```
+
+แล้วเปิด `http://127.0.0.1:8080`
+
+หรือ Docker:
+```bash
+docker compose up --build
+```
+
+ดูรายละเอียดที่ `docs/17-DEPLOYABLE-STUDIO-V0.1.md`.
 
 หลักสำคัญคือ Repository นี้ต้องบอกความจริงว่าอะไรสร้างแล้ว อะไรเป็น specification และอะไรเป็น backlog ไม่ทำให้เอกสารดูเหมือนระบบรันได้แล้วทั้งที่ยังไม่ได้ implement
