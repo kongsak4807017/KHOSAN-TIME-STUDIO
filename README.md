@@ -128,6 +128,28 @@ Source: https://github.com/kongsak4807017/learn-harness-engineering
 
 See [docs/03-TOOL-REGISTRY.md](docs/03-TOOL-REGISTRY.md).
 
+## DevSpace connectivity profile
+
+When ChatGPT needs to operate on the local workspace, KHOSAN supports an optional MCP connectivity layer:
+
+~~~text
+ChatGPT
+  ↓ HTTPS tunnel
+ngrok / Cloudflare
+  ↓
+DevSpace MCP 127.0.0.1:7676
+  ↓
+allowed local project roots
+~~~
+
+This is separate from the KHOSAN Studio Web/API on `127.0.0.1:8080`. The DevSpace tunnel must not publish the Studio port by default.
+
+Safe configuration examples and a connectivity doctor are included; machine-specific domains, auth tokens, owner tokens, credentials, logs and tunnel binaries remain local-only.
+
+See:
+- [docs/18-DEVSPACE-CONNECTIVITY.md](docs/18-DEVSPACE-CONNECTIVITY.md)
+- [docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md](docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md)
+
 ## Deployable Studio baseline — v0.1.0
 
 The repository now contains a runnable local Studio Web/API baseline in addition to the architecture/harness.
