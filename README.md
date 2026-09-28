@@ -128,6 +128,25 @@ Source: https://github.com/kongsak4807017/learn-harness-engineering
 
 See [docs/03-TOOL-REGISTRY.md](docs/03-TOOL-REGISTRY.md).
 
+## Deployable Studio baseline — v0.1.0
+
+The repository now contains a runnable local Studio Web/API baseline in addition to the architecture/harness.
+
+Current runnable capabilities:
+- Studio Home and Idea / Concept Lab,
+- durable local project creation,
+- Blueprint and Creative Constitution persistence,
+- 21-role Agent Workboard overview,
+- Tool Registry/provenance view,
+- health/status API,
+- deterministic intent-to-role routing helper,
+- SkinTokens/UniRig rigging adapter boundary,
+- Docker/self-host package.
+
+The local web server intentionally does **not** pretend to be the ChatGPT LLM. ChatGPT performs agent reasoning; DevSpace runs bounded local work/tools; the Studio Web/API persists project state and presents the creator-facing shell.
+
+See [docs/17-DEPLOYABLE-STUDIO-V0.1.md](docs/17-DEPLOYABLE-STUDIO-V0.1.md).
+
 ## Start locally
 
 ### 1. Clone
@@ -136,16 +155,25 @@ git clone https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO.git
 cd KHOSAN-TIME-STUDIO
 ```
 
-### 2. Bootstrap
+### 2. Bootstrap and run
 Linux/macOS:
 ```bash
-chmod +x scripts/bootstrap.sh
+chmod +x scripts/*.sh
 ./scripts/bootstrap.sh
+./scripts/run-studio.sh
 ```
 
 Windows PowerShell:
 ```powershell
 .\scripts\bootstrap.ps1
+.\scripts\run-studio.ps1
+```
+
+Open `http://127.0.0.1:8080`.
+
+Docker:
+```bash
+docker compose up --build
 ```
 
 ### 3. Open with ChatGPT + DevSpace
@@ -161,10 +189,12 @@ See [docs/07-CHATGPT-DEVSPACE-WORKFLOW.md](docs/07-CHATGPT-DEVSPACE-WORKFLOW.md)
 Start with [docs/06-LOCAL-DEPLOYMENT.md](docs/06-LOCAL-DEPLOYMENT.md) and [deploy/README.md](deploy/README.md).
 
 Deployment is intentionally staged:
-1. **Repository/harness mode** — usable now with ChatGPT + DevSpace.
-2. **Local Studio shell** — implement the UI/orchestrator service.
-3. **Tool services** — sprite-gen, 3D, material, physics/nav compiler, QA.
-4. **Packaged local stack** — Docker/desktop packaging after executable services exist.
+1. **Repository/harness mode** — available.
+2. **Local Studio shell v0.1** — available: Web/API + durable project state.
+3. **Docker Studio shell v0.1** — available for trusted-local self-hosting.
+4. **Tool workers** — rigging adapter exists; full GPU/tool-service fleet remains staged.
+5. **Playable runtime integration** — WebGPU/UG-IR live preview remains roadmap work.
+6. **Remote/team deployment** — not approved until authentication/security hardening exists.
 
 ## Non-negotiable engineering rules
 
