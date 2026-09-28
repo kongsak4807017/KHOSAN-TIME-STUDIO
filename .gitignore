@@ -32,3 +32,10 @@ projects/*/artifacts/
 # Generated/temp
 *.tmp
 *.log
+
+# External pinned tool checkouts
+external/
+
+# Local game workspaces are not part of the Studio master source history
+projects/*
+!projects/README.md
