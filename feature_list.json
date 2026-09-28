@@ -15,7 +15,9 @@
         "Bootstrap verification exists",
         "Local deployment path is documented"
       ],
-      "verification": ["python scripts/harness_check.py"]
+      "verification": [
+        "python scripts/harness_check.py"
+      ]
     },
     {
       "id": "STUDIO-001",
@@ -37,6 +39,58 @@
       "status": "proposed",
       "owner_role": "06-technical-architect",
       "acceptance_criteria": []
+    },
+    {
+      "id": "CREATIVE-001",
+      "title": "Creative Intelligence foundation and Creative Constitution",
+      "status": "in_progress",
+      "owner_role": "00-studio-orchestrator",
+      "acceptance_criteria": [
+        "Creative Intelligence architecture and governance are documented",
+        "Council roles 13-20 exist",
+        "Creative Constitution and evidence schemas exist",
+        "Execution graph includes Discovery and Live Intelligence loops",
+        "Harness checker validates 21 roles and Creative Intelligence contracts"
+      ],
+      "verification": [
+        "python scripts/harness_check.py"
+      ]
+    },
+    {
+      "id": "CREATIVE-002",
+      "title": "Idea / Taste Engine and Concept Portfolio",
+      "status": "proposed",
+      "owner_role": "15-concept-inventor",
+      "acceptance_criteria": [
+        "User can start from theme, emotion, culture, fantasy, mechanic or reference",
+        "Studio produces multiple meaningfully distinct concept hypotheses",
+        "Creative critique preserves trade-offs without a universal winner score",
+        "Concept artifacts are persisted and traceable"
+      ]
+    },
+    {
+      "id": "CREATIVE-003",
+      "title": "Prototype Arena",
+      "status": "proposed",
+      "owner_role": "14-player-experience-researcher",
+      "acceptance_criteria": [
+        "Concept hypothesis can spawn a bounded micro-prototype experiment",
+        "Experiment records target experience, scope, success/failure signals and confounders",
+        "Player observations and telemetry can be attached as evidence",
+        "Concept evolution/recombination history is persisted"
+      ]
+    },
+    {
+      "id": "CREATIVE-004",
+      "title": "Community Pulse, Telemetry and Live Experiment Board",
+      "status": "proposed",
+      "owner_role": "20-live-game-designer",
+      "acceptance_criteria": [
+        "Community evidence and telemetry remain distinct evidence classes",
+        "Every insight includes source context/time window/population when known and uncertainty",
+        "Insights become governed experiments or no-action decisions",
+        "Vision-level changes route through HG-01"
+      ]
     }
   ]
 }
