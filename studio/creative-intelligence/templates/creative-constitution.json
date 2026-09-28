@@ -1,0 +1,28 @@
+{
+  "constitution_id": "CONSTITUTION-EXAMPLE",
+  "project_id": "GAME-EXAMPLE",
+  "version": 1,
+  "status": "draft",
+  "player_fantasy": "Who the player gets to be.",
+  "emotional_promise": ["Primary recurring feeling"],
+  "core_verbs": ["explore","choose"],
+  "world_point_of_view": "What the game examines about its world.",
+  "art_constitution": {
+    "shape_language": "",
+    "proportion": "",
+    "color_grammar": "",
+    "material_vocabulary": "",
+    "architecture_vocabulary": "",
+    "camera_language": "",
+    "lighting_identity": "",
+    "animation_personality": "",
+    "ui_personality": ""
+  },
+  "mechanical_identity": ["One relationship or rule that makes this game itself."],
+  "sacred_constraints": [],
+  "flexible_implementation": [],
+  "audience_hypothesis": [],
+  "falsification": [],
+  "approved_by_human": false,
+  "approval_reference": null
+}
