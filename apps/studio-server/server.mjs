@@ -50,6 +50,19 @@ function projectDir(id) {
 }
 function now() { return new Date().toISOString(); }
 
+async function listJsonFiles(directory) {
+  try {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const out = [];
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+      const item = await jsonFile(path.join(directory, entry.name));
+      if (item) out.push(item);
+    }
+    return out;
+  } catch { return []; }
+}
+
 async function listProjects() {
   const entries = await readdir(PROJECTS, { withFileTypes: true }); const out = [];
   for (const entry of entries) {
@@ -81,12 +94,17 @@ async function api(req, res, url) {
     }); return true;
   }
   if (req.method === "GET" && url.pathname === "/api/projects") { send(res, 200, { projects: await listProjects() }); return true; }
+  if (req.method === "GET" && url.pathname === "/api/tasks") {
+    const tasks = await listJsonFiles(path.join(ROOT, "studio/tasks"));
+    send(res, 200, { tasks: tasks.sort((a,b) => String(a.task_id||"").localeCompare(String(b.task_id||""))) });
+    return true;
+  }
 
   if (req.method === "POST" && url.pathname === "/api/projects") {
     const input = await bodyJson(req);
     const id = slug(input.name || input.brief || "game") + "-" + crypto.randomBytes(3).toString("hex");
     const dir = projectDir(id);
-    await mkdir(path.join(dir, "events"), { recursive:true }); await mkdir(path.join(dir, "artifacts"), { recursive:true });
+    for (const child of ["events","artifacts","concepts","experiments","tasks"]) await mkdir(path.join(dir, child), { recursive:true });
     const project = {schema_version:1,id,name:input.name||"Untitled Game",brief:input.brief||"",target:input.target||"webgpu",phase:"creative-discovery",status:"active",created_at:now(),updated_at:now()};
     const blueprint = {schema_version:1,project_id:id,status:"draft",hook:"",player_fantasy:"",core_loop:[],core_verbs:[],world:"",camera:"",art_direction:"",systems:[],first_playable_scope:[],unknowns:[]};
     const constitution = {
