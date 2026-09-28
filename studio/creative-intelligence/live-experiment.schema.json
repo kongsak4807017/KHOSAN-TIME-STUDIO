@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Live Experiment Proposal",
+  "type": "object",
+  "required": ["experiment_id","project_id","evidence_refs","hypothesis","change_scope","expected_player_effect","measurement_plan","guardrails","rollback","vision_impact","status"],
+  "properties": {
+    "experiment_id": {"type":"string"},
+    "project_id": {"type":"string"},
+    "evidence_refs": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "hypothesis": {"type":"string"},
+    "change_scope": {"type":"array","items":{"type":"string"}},
+    "expected_player_effect": {"type":"string"},
+    "target_population": {"type":["string","null"]},
+    "measurement_plan": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "success_signals": {"type":"array","items":{"type":"string"}},
+    "failure_signals": {"type":"array","items":{"type":"string"}},
+    "guardrails": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "rollback": {"type":"string"},
+    "vision_impact": {"enum":["none","implementation_only","possible_constitution_conflict","constitution_change"]},
+    "required_human_gate": {"type":["string","null"]},
+    "status": {"enum":["proposed","approved","active","completed","rolled_back","rejected"]},
+    "result": {"type":["string","null"]},
+    "next_action": {"type":["string","null"]}
+  },
+  "additionalProperties": false
+}
