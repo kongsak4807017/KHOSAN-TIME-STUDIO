@@ -148,6 +148,23 @@ The local Studio is not a substitute for ChatGPT. In v0.1:
 - DevSpace = local filesystem/build/tool execution
 - KHOSAN Studio Web/API = durable project shell/state/routing surface
 - GitHub = master source of truth
+- DevSpace connectivity tunnel = optional transport layer when ChatGPT needs to reach the local MCP server
+
+When remote MCP connectivity is needed:
+
+~~~text
+ChatGPT -> ngrok/Cloudflare -> DevSpace MCP 127.0.0.1:7676
+~~~
+
+Do not use that tunnel to expose the Studio Web/API on port 8080.
+
+Connectivity verification:
+
+~~~bash
+python tools/devspace-connectivity/doctor.py --require-public
+~~~
+
+See `docs/18-DEVSPACE-CONNECTIVITY.md` and `docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md`.
 
 Recommended DevSpace entry:
 
