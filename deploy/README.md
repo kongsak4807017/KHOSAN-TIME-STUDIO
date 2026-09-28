@@ -1,72 +1,128 @@
 # KHOSAN Local / Self-Host Deployment
 
-## Current deployable mode
+## Current deployable baseline — v0.1.0
 
-Today the repository is deployable as a **local AI-assisted development workspace**:
+KHOSAN TIME STUDIO now has a runnable trusted-local Web/API shell.
 
-1. clone the repository,
-2. bootstrap/verify the harness,
-3. open it with ChatGPT + DevSpace,
-4. connect/install approved production tools,
-5. work through durable tasks/evidence.
+Available:
+1. repository + ChatGPT + DevSpace mode,
+2. Node.js local Studio server,
+3. Docker Compose local Studio server,
+4. durable project persistence,
+5. SkinTokens/UniRig local rigging adapter boundary.
 
-The finished Visual Studio Shell/API services are a roadmap item; this guide does not pretend nonexistent services are runnable.
+Not yet production remote-ready:
+- authentication/authorization,
+- multi-user isolation,
+- remote tool execution,
+- general GPU worker service,
+- live WebGPU game preview from UG-IR,
+- production backup/migration automation.
 
-## Local workspace
+## Direct local run
 
-```bash
+~~~bash
 git clone https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO.git
 cd KHOSAN-TIME-STUDIO
+node scripts/verify-source.mjs
+node apps/studio-server/server.mjs
+~~~
+
+Windows convenience:
+
+~~~powershell
+.\scripts\bootstrap.ps1
+.\scripts\run-studio.ps1
+~~~
+
+Linux/macOS convenience:
+
+~~~bash
+chmod +x scripts/*.sh
 ./scripts/bootstrap.sh
-```
+./scripts/run-studio.sh
+~~~
+
+Open:
+
+~~~text
+http://127.0.0.1:8080
+~~~
+
+## Docker
+
+~~~bash
+docker compose up --build
+~~~
+
+Health:
+
+~~~bash
+curl http://127.0.0.1:8080/api/health
+~~~
+
+Stop:
+
+~~~bash
+docker compose down
+~~~
+
+## Rigging worker on host
+
+Clone pinned source revisions:
 
 Windows:
-```powershell
-git clone https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO.git
-cd KHOSAN-TIME-STUDIO
-.\scripts\bootstrap.ps1
-```
+~~~powershell
+.\scripts\setup-rigging.ps1
+~~~
 
-## Target self-host architecture
+Linux/macOS:
+~~~bash
+./scripts/setup-rigging.sh
+~~~
 
-```text
-localhost
-  ├─ Studio Web UI
-  ├─ Studio API / Orchestrator
-  ├─ Preview runtime (WebGPU)
-  ├─ Tool worker(s)
-  │    ├─ sprite-gen
-  │    ├─ 3D pipeline
-  │    ├─ material/rig/optimization
-  │    └─ build/export
-  └─ QA runner / Playwright
-```
+Then install the vendor-specific CUDA/Python dependencies and checkpoints according to `docs/16-3D-AUTO-RIGGING.md`.
 
-## Docker policy
+Check readiness:
 
-Do not add a misleading compose stack until executable service entrypoints exist.
+~~~bash
+python tools/adapters/rigging/doctor.py
+~~~
 
-When Phase 1/2 services land:
-- pin image/runtime versions,
-- add healthchecks,
-- mount project/cache/artifact directories explicitly,
-- keep secrets in environment/secret store,
-- do not mount unrestricted host roots into tool workers,
-- isolate tools that can execute arbitrary code,
-- document GPU passthrough per OS.
+The Studio web container intentionally does not contain these GPU dependencies.
+
+## Trust boundary
+
+v0.1:
+- binds localhost by default,
+- no arbitrary-shell HTTP endpoint,
+- 1 MiB request-body limit,
+- project IDs/path traversal guarded,
+- secrets stay outside git,
+- local game projects are not committed to the Master repo by default,
+- tool execution stays in DevSpace/registered local adapters.
+
+Do not expose v0.1 directly to the public internet.
+
+## Source verification
+
+~~~bash
+node scripts/verify-source.mjs
+python scripts/harness_check.py
+node --check apps/studio-server/server.mjs
+python -m py_compile tools/adapters/rigging/*.py
+~~~
+
+A manual GitHub Actions workflow is available at `.github/workflows/manual-verify.yml`; it does not run automatically on push.
 
 ## Production release gate
 
-A self-host release requires:
+Future remote/team release requires:
+- authentication,
+- accepted security model,
 - reproducible build,
-- config example,
-- migration notes,
-- healthcheck,
-- backup/restore path,
-- rollback instructions,
+- migration/backup plan,
 - QA evidence,
-- human release approval.
-
-## Offline/local-first principle
-
-Core editing and deterministic validation should work locally where practical. Cloud/generative providers are plugins, not hidden requirements.
+- artifact identity/checksum,
+- human release approval,
+- rollback procedure.
