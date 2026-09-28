@@ -15,9 +15,20 @@ This root file is the routing page. Detailed role instructions live under `studi
 ## Authority
 - Human owner = Executive Producer and final authority.
 - `00-studio-orchestrator` owns routing/state, not hidden implementation.
+- `13`–`20` form the Creative Intelligence Council. They are advisory and cannot select the game, change the Creative Constitution, or push production changes directly.
+- `01-creative-director` protects the locked Creative Constitution with the human.
 - Technical architecture changes route through `06-technical-architect`.
 - Makers cannot approve their own work.
 - QA evidence + independent review are required before acceptance.
+
+## Creative Intelligence invariants
+- Explore a portfolio before collapsing to one concept when the task is genuinely exploratory.
+- Do not use one universal creativity/winner score.
+- Separate stated community feedback from observed player behavior.
+- Claims about players require source context, population/time window where known, uncertainty and contrary evidence when material.
+- Community/telemetry findings become hypotheses or typed work items; they do not mutate the game directly.
+- Changes to player fantasy, emotional promise, core vision or sacred constraints require HG-01.
+- Do not infer sensitive personal traits for audience targeting or player analysis.
 
 ## Durable source of truth
 - Product architecture: `docs/`
