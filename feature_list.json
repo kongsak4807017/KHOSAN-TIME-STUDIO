@@ -28,10 +28,16 @@
     },
     {
       "id": "ASSET-001",
-      "title": "Asset Lab integration: sprite-gen + img2threejs + Asset Registry",
-      "status": "proposed",
+      "title": "Asset Lab integration: sprite-gen + img2threejs + Blender master assets + Asset Registry",
+      "status": "in_progress",
       "owner_role": "04-asset-synthesizer",
-      "acceptance_criteria": []
+      "acceptance_criteria": [
+        "sprite-gen and img2threejs remain specialized production tools behind Asset IR",
+        "Blender is a core editable 3D DCC with a safe headless adapter contract",
+        "Editable .blend masters are distinct from runtime .glb artifacts",
+        "Character edit jobs use allowlisted semantic operations rather than arbitrary executable code",
+        "Local Blender round-trip, deformation/material QA and independent review evidence exist before acceptance"
+      ]
     },
     {
       "id": "RUNTIME-001",
