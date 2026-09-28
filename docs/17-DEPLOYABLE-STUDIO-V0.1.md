@@ -11,7 +11,7 @@ Zero-dependency Node.js 20 server:
 - Studio Home
 - Idea / Concept Lab
 - Projects
-- Agent Workboard
+- Agent Workboard backed by `studio/tasks/*.json`
 - Tool Registry/provenance
 - health endpoint
 - durable local project creation
@@ -29,6 +29,9 @@ projects/<id>/
   project.json
   blueprint.json
   creative-constitution.json
+  concepts/
+  experiments/
+  tasks/
   events/
     events.jsonl
   artifacts/
@@ -156,6 +159,7 @@ Recommended DevSpace entry:
 GET  /api/health
 GET  /api/studio
 GET  /api/projects
+GET  /api/tasks
 POST /api/projects
 GET  /api/projects/:id
 PUT  /api/projects/:id/blueprint
