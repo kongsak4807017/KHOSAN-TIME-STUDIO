@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-EXAMPLE-001",
+  "feature_id": null,
+  "title": "Replace with a bounded task",
+  "status": "specified",
+  "owner_role": "07-gameplay-programmer",
+  "contributors": [],
+  "objective": "One measurable outcome only.",
+  "context_files": [],
+  "allowed_paths": ["src/example/**","tests/example/**"],
+  "forbidden_paths": [".git/**",".env*"],
+  "acceptance_criteria": ["Observable behavior is specified."],
+  "verification": ["Replace with a runnable verification command."],
+  "human_gates": [],
+  "dependencies": [],
+  "risks": [],
+  "notes": ""
+}
