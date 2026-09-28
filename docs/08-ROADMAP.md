@@ -66,7 +66,18 @@ Player/community evidence produces governed experiments without automatic vision
 ---
 
 ## Phase 1 — Studio Shell
-Build:
+**Status: v0.1 runnable baseline shipped; phase remains active**
+
+Implemented baseline:
+- local zero-dependency Node Web/API shell,
+- Studio Home,
+- Idea / Concept Lab project creation,
+- durable project/Blueprint/Creative Constitution files,
+- Agent Workboard reading durable work items,
+- Tool Registry/provenance view,
+- local Docker packaging.
+
+Still build:
 - Home/Projects,
 - Idea / Concept Lab,
 - Create New Game,
