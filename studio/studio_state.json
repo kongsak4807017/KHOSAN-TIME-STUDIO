@@ -1,20 +1,22 @@
 {
   "schema_version": 1,
   "project": "KHOSAN-TIME-STUDIO",
-  "phase": "FOUNDATION_MASTER_REPOSITORY",
+  "phase": "DEPLOYABLE_STUDIO_V0_1",
   "active_feature_id": null,
   "active_work_item_id": null,
   "active_roles": [],
   "pending_human_gate": null,
   "last_verification": null,
   "known_blockers": [
-    "Visual Studio Shell is not yet implemented",
-    "Idea/Concept Lab and Prototype Arena UI are not yet implemented",
+    "Studio v0.1 local shell exists but full local acceptance has not yet been recorded from DevSpace",
+    "Prototype Arena UI is not yet implemented",
+    "Asset Registry and UG-IR live runtime are not yet implemented",
     "Community/telemetry connectors are not yet implemented",
-    "P0 external tools require formal evaluation and pinned integration"
+    "P0 external tools require fixture-based evaluation before ADOPT",
+    "Legacy research archive remains pending verbatim mirror"
   ],
-  "next_milestone": "Phase 1 Studio Shell + CI1 Idea/Concept Lab",
-  "last_updated": "2026-09-28",
+  "next_milestone": "Local acceptance of v0.1 + Concept Lab/Prototype Arena iteration",
+  "last_updated": "2026-09-29",
   "creative_intelligence": {
     "foundation": "specified",
     "council_roles": 8,
@@ -22,5 +24,16 @@
     "constitution_status": null,
     "active_concept_portfolio": null,
     "active_experiment": null
+  },
+  "deployable_studio": {
+    "version": "0.1.0",
+    "source_status": "shipped_on_main",
+    "runtime_acceptance": "pending_local_devspace",
+    "local_node": true,
+    "docker_compose": true,
+    "default_bind": "127.0.0.1:8080",
+    "arbitrary_shell_http": false,
+    "rigging_adapter": "present",
+    "remote_team_ready": false
   }
 }
