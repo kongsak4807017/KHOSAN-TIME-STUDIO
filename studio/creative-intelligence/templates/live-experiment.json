@@ -1,0 +1,19 @@
+{
+  "experiment_id": "LIVE-EXP-EXAMPLE",
+  "project_id": "GAME-EXAMPLE",
+  "evidence_refs": [],
+  "hypothesis": "",
+  "change_scope": [],
+  "expected_player_effect": "",
+  "target_population": null,
+  "measurement_plan": [],
+  "success_signals": [],
+  "failure_signals": [],
+  "guardrails": [],
+  "rollback": "",
+  "vision_impact": "none",
+  "required_human_gate": null,
+  "status": "proposed",
+  "result": null,
+  "next_action": null
+}
