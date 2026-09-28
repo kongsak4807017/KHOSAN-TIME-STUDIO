@@ -76,3 +76,28 @@ Prefer work that can be described with:
 - runnable verification.
 
 If a task cannot fit this form, decompose it first.
+
+
+## Persistent workspace rule
+
+For long-running project work:
+- open one DevSpace workspace for the project root,
+- reuse the same `workspaceId` while it remains valid,
+- do not restart OAuth/tunnel/workspace merely because a ChatGPT conversation does not expose developer-MCP tools,
+- distinguish host capability failure from an actual DevSpace server request failure.
+
+Canonical contract:
+`docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md`
+
+## Connectivity profile
+
+When ChatGPT must reach the local DevSpace server:
+
+~~~text
+ChatGPT -> HTTPS tunnel -> DevSpace MCP 127.0.0.1:7676
+~~~
+
+Use:
+`docs/18-DEVSPACE-CONNECTIVITY.md`
+
+The KHOSAN Studio Web/API on `127.0.0.1:8080` remains separate and localhost-only in v0.1.
