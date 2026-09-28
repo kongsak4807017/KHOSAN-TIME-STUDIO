@@ -14,6 +14,12 @@ if ($python) {
     }
 }
 
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    node scripts/verify-source.mjs
+} else {
+    Write-Host "[KHOSAN] Node not found; deployable Studio source verification skipped."
+}
+
 Write-Host ""
 Write-Host "[KHOSAN] Git state"
 git status --short
