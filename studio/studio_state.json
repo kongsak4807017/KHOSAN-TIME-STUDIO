@@ -9,8 +9,18 @@
   "last_verification": null,
   "known_blockers": [
     "Visual Studio Shell is not yet implemented",
+    "Idea/Concept Lab and Prototype Arena UI are not yet implemented",
+    "Community/telemetry connectors are not yet implemented",
     "P0 external tools require formal evaluation and pinned integration"
   ],
-  "next_milestone": "Phase 1 Studio Shell",
-  "last_updated": "2026-09-28"
+  "next_milestone": "Phase 1 Studio Shell + CI1 Idea/Concept Lab",
+  "last_updated": "2026-09-28",
+  "creative_intelligence": {
+    "foundation": "specified",
+    "council_roles": 8,
+    "total_role_files_expected": 21,
+    "constitution_status": null,
+    "active_concept_portfolio": null,
+    "active_experiment": null
+  }
 }
