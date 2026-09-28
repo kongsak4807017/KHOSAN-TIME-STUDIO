@@ -1,20 +1,48 @@
 # Session Handoff
 
-**Status:** Master repository bootstrap in progress.
+**Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
+**Branch:** `main`
+**Status:** MASTER STRUCTURE CREATED / FOUNDATION VERIFICATION BLOCKED
 
-## Goal
-Make `kongsak4807017/KHOSAN-TIME-STUDIO` the source of truth for KHOSAN Studio architecture, harness, tools, local deployment and future implementation.
+## What is now authoritative in GitHub
+- Product vision and architecture
+- Create-game workflow
+- 13-agent harness and graph
+- Tool Registry
+- Asset pipeline
+- UG-IR direction
+- local/self-host deployment strategy
+- ChatGPT + DevSpace workflow
+- roadmap
+- work-item/handoff/evidence contracts
+- bootstrap scripts/checker
+- knowledge/source manifest
+- GitHub issues #1–#7
 
-## Current decisions
-- Human is Executive Producer.
+## Core decisions
+- Human = Executive Producer.
 - Studio Orchestrator routes work.
-- 13 specialist roles form the production organization.
-- sprite-gen is Core 2D Production.
-- img2threejs is Core 3D Production.
-- Asset IR / UG-IR sit between tools and engine adapters.
-- Native WebGPU remains a first-class runtime while UG-IR stays engine-neutral.
-- Verification requires maker/checker separation.
-- Local self-host/deploy documentation must be maintained alongside code.
+- Agents use specialized tools; they are not expected to implement every capability from scratch.
+- sprite-gen = Core 2D Production.
+- img2threejs = Core 3D Reconstruction.
+- Asset IR / UG-IR remain canonical above backend-specific representations.
+- Native WebGPU is first-class but does not own game semantics.
+- Maker/checker separation is mandatory.
+- Git LFS is planned but deliberately not force-enabled until local machines have git-lfs installed.
+- Do not fake Docker/service deployment before real service entrypoints exist.
 
-## Exact next action
-Complete the `studio/`, `knowledge/`, `scripts/` and `deploy/` master structure, then begin Phase 1 Studio Shell as bounded work items.
+## Known blocker
+The legacy research reports listed in `knowledge/source-manifest.yaml` are **not yet mirrored verbatim**. This is tracked as GitHub issue #1 and prevents claiming the foundation archive is fully complete.
+
+## Exact next action in DevSpace
+1. Clone/open this repository as a local workspace.
+2. Run:
+   - Windows: `.\scripts\bootstrap.ps1`
+   - Linux/macOS: `./scripts/bootstrap.sh`
+3. Record the checker result.
+4. Copy the legacy source documents into `knowledge/research/` verbatim and record hashes.
+5. Update source-manifest statuses.
+6. Then start a bounded work item for Issue #2 (Studio Shell) or Issue #4 (UG-IR v0.1).
+
+## Specialist startup prompt
+> Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, studio/graph.md, progress.md and this handoff. Select exactly one bounded work item. Do not widen scope or claim Done without evidence.
