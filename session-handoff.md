@@ -20,6 +20,8 @@
 - pinned SkinTokens/UniRig provenance
 - bounded rigging adapters and setup/doctor scripts
 - source verification scripts
+- DevSpace MCP Connectivity Pack (ngrok/Cloudflare provider options)
+- persistent ChatGPT workspace contract
 
 ## Runtime baseline
 
@@ -62,6 +64,22 @@ No generic shell execution is exposed over HTTP.
 - External fork commits are pinned in `config/external-tools.lock.json`.
 - Do not promote to ADOPT until humanoid + non-humanoid + runtime deformation fixtures pass.
 
+## DevSpace connectivity profile
+
+For ChatGPT-to-local workspace access:
+```text
+ChatGPT -> HTTPS tunnel -> DevSpace MCP 127.0.0.1:7676
+```
+
+The Studio Web/API remains `127.0.0.1:8080` and must not be exposed by the DevSpace tunnel in v0.1.
+
+Verify with:
+```bash
+python tools/devspace-connectivity/doctor.py --require-public
+```
+
+Reuse the same DevSpace `workspaceId` while valid; do not restart tunnel/OAuth solely for a ChatGPT host-capability error.
+
 ## What remains unverified
 
 A fresh local DevSpace checkout still needs to run:
@@ -72,6 +90,9 @@ A fresh local DevSpace checkout still needs to run:
 5. browser/API project-create smoke test
 6. Docker Compose config/health test
 7. GPU rigging doctor on the actual target PC
+8. DevSpace local MCP doctor
+9. public MCP tunnel doctor
+10. ChatGPT workspaceId reuse + bounded write/test smoke task
 
 Therefore `DEPLOY-001` remains `verify`, not `accepted`.
 
