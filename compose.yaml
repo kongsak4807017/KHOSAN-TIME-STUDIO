@@ -1,0 +1,15 @@
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: khosan-time-studio:0.1.0
+    environment:
+      KHOSAN_HOST: 0.0.0.0
+      KHOSAN_PORT: 8080
+      KHOSAN_PROJECTS_DIR: /data/projects
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./projects:/data/projects
+    restart: unless-stopped
