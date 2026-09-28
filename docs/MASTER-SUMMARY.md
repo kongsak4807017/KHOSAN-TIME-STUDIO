@@ -217,7 +217,21 @@ Native WebGPU remains a first-class target with research/implementation directio
 
 However, UG-IR must remain engine-neutral.
 
-## 11. Local deployment philosophy
+## 11. DevSpace connectivity
+
+For ChatGPT-controlled local production, KHOSAN treats DevSpace MCP connectivity as a deploy profile:
+
+~~~text
+ChatGPT -> HTTPS tunnel -> DevSpace MCP 127.0.0.1:7676
+~~~
+
+Supported provider strategy: ngrok or Cloudflare Tunnel.
+
+The tunnel is not the Studio application. The Studio Web/API remains separate on `127.0.0.1:8080` in v0.1 and is not publicly exposed by default.
+
+Secrets, owner credentials, tunnel credentials, logs and machine-specific state remain outside Git. Persistent ChatGPT sessions should reuse one valid DevSpace workspaceId per project root.
+
+## 12. Local deployment philosophy
 
 The Studio is local-first.
 
@@ -237,7 +251,7 @@ Target local app:
 
 Docker becomes a reproducibility layer only after executable service entrypoints exist. Do not create pretend deployment stacks.
 
-## 12. Knowledge policy
+## 13. Knowledge policy
 
 Research reports are evidence, not automatically current project truth.
 
@@ -247,7 +261,7 @@ Old ZIP deliverables are artifacts; they require provenance/checksum/reproducibi
 
 See `knowledge/source-manifest.yaml` for the legacy source archive list.
 
-## 13. Next product sequence
+## 14. Next product sequence
 
 1. Finish Master Repository mirror of legacy research.
 2. Build Studio Shell with Idea/Concept Lab + Creative Constitution.
