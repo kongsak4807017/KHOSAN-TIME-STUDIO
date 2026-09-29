@@ -1,0 +1,67 @@
+{
+  "task_id": "TASK-HUMAN-001",
+  "feature_id": "HUMAN-001",
+  "title": "Implement KHOSAN Human Engine v0.1 with Native WebGPU Human Lab",
+  "status": "verify",
+  "owner_role": "08-rendering-engineer",
+  "contributors": [
+    "04-asset-synthesizer",
+    "06-technical-architect",
+    "07-gameplay-programmer",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Provide a runnable Native WebGPU parametric-human foundation with a stable Character DNA contract, semantic body/face controls, a live Human Lab preview, and a canonical mesh morph+skinning compute kernel.",
+  "context_files": [
+    "docs/20-HUMAN-ENGINE-WEBGPU-V0.1.md",
+    "docs/16-3D-AUTO-RIGGING.md"
+  ],
+  "allowed_paths": [
+    "apps/studio-web/public/**",
+    "docs/**",
+    "scripts/**",
+    "studio/**",
+    "feature_list.json",
+    "README.md",
+    "progress.md"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env",
+    "secrets/**"
+  ],
+  "acceptance_criteria": [
+    "Studio navigation exposes Human Lab",
+    "Human Lab uses Native WebGPU without third-party rendering engines",
+    "Character DNA v1 has stable semantic body, face, appearance and lighting fields",
+    "Body/face/appearance controls update the live viewport deterministically",
+    "DNA can be exported as JSON",
+    "WebGPU compute kernel exists for dense morph evaluation plus normalized four-joint linear blend skinning",
+    "Preview and canonical-mesh compute paths remain architecturally separate",
+    "Unsupported WebGPU devices fail with an explicit user-visible message",
+    "Source verification requires Human Engine files",
+    "Browser/GPU acceptance evidence is recorded before status becomes accepted"
+  ],
+  "verification": [
+    "node scripts/verify-source.mjs",
+    "node --check apps/studio-web/public/app.js",
+    "node --check apps/studio-web/public/human-dna.js",
+    "node --check apps/studio-web/public/human-webgpu.js",
+    "node --check apps/studio-web/public/human-lab.js",
+    "manual WebGPU browser smoke test",
+    "WGSL shader compilation inspection",
+    "Character DNA export/reload equivalence test"
+  ],
+  "human_gates": [],
+  "dependencies": [
+    "STUDIO-001",
+    "RUNTIME-001"
+  ],
+  "risks": [
+    "Procedural SDF viewport is a preview/reference backend, not final anatomical production topology",
+    "Canonical human mesh and statistical morph basis are not yet authored",
+    "Garment auto-fit and cloth simulation are not yet connected",
+    "Runtime performance is not yet accepted on mobile targets"
+  ],
+  "notes": "Source implementation is pushed for verification. No claim of production anatomical accuracy until canonical mesh fixtures and deformation QA are completed."
+}
