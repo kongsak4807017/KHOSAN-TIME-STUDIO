@@ -1,13 +1,227 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KHOSAN TIME STUDIO</title><link rel="stylesheet" href="/styles.css"></head><body>
-<div class="shell"><aside><div class="brand"><span class="mark">K</span><div><strong>KHOSAN</strong><small>TIME STUDIO</small></div></div>
-<nav><button class="active" data-view="home">Studio Home</button><button data-view="idea">Idea / Concept Lab</button><button data-view="projects">Projects</button><button data-view="agents">Agent Workboard</button><button data-view="tools">Tool Registry</button></nav>
-<div class="status"><i id="healthDot"></i><span id="healthText">Checking local Studio…</span></div></aside><main>
-<header><div><span class="eyebrow">EXECUTIVE PRODUCER WORKSPACE</span><h1 id="title">Studio Home</h1></div><div class="pill">LOCAL-FIRST · v0.1.0</div></header>
-<section id="view-home" class="view active"><div class="hero glass"><span class="eyebrow">FROM IDEA TO PLAYABLE</span><h2>What do you want to create?</h2><p>เริ่มจากเกมที่คิดไว้แล้ว หรือเริ่มจากอารมณ์ วัฒนธรรม mechanic หรือ fantasy ที่อยากสำรวจก็ได้</p>
-<textarea id="intent" placeholder="เช่น อยากทำเกมเกี่ยวกับความทรงจำของหมู่บ้าน แต่ไม่อยากให้เป็น horror แบบเดิม…"></textarea><div class="actions"><button class="primary" id="exploreBtn">Explore Idea</button><button id="routeBtn">Route to Agent</button></div><pre id="routeOut" class="console hidden"></pre></div>
-<div class="grid3"><article class="glass"><span class="eyebrow">CREATIVE INTELLIGENCE</span><h3>Discover</h3><p>Concept Portfolio → Prototype Arena → Creative Constitution</p></article><article class="glass"><span class="eyebrow">PRODUCTION</span><h3>Build</h3><p>Assets · Gameplay · World · WebGPU · QA</p></article><article class="glass"><span class="eyebrow">LIVE LOOP</span><h3>Evolve</h3><p>Community + Telemetry → governed experiments</p></article></div></section>
-<section id="view-idea" class="view"><div class="glass formcard"><span class="eyebrow">NEW GAME / CONCEPT</span><h2>Create a project</h2><label>Name<input id="projectName" placeholder="Project name"></label><label>Creative brief<textarea id="projectBrief" placeholder="Player fantasy, emotion, culture, mechanic or visual direction…"></textarea></label><label>First target<select id="projectTarget"><option value="webgpu">WebGPU Browser</option><option value="godot">Godot</option><option value="unity">Unity</option></select></label><button class="primary" id="createProjectBtn">Create Project</button><p id="createResult" class="muted"></p></div></section>
-<section id="view-projects" class="view"><div class="sectionhead"><div><span class="eyebrow">DURABLE WORKSPACE</span><h2>Projects</h2></div><button id="refreshProjects">Refresh</button></div><div id="projectList" class="cards"></div><div id="projectDetail" class="glass hidden"></div></section>
-<section id="view-agents" class="view"><div class="glass"><span class="eyebrow">HARNESS</span><h2>21-role operating model</h2><div class="lanes"><div><b>Creative Intelligence</b><p>13 Cultural Research · 14 Player Experience · 15 Concept Inventor · 16 Creative Critic · 17 Audience · 18 Community · 19 Telemetry · 20 Live Game Designer</p></div><div><b>Production & Governance</b><p>00 Orchestrator · 01 Creative Director · 02 Game Designer · 03 Narrative · 04 Asset · 05 Audio · 06 Architecture · 07 Gameplay · 08 Rendering · 09 Adapter · 10 QA · 11 Reviewer · 12 Release</p></div></div><p class="muted">ChatGPT adopts these role contracts; DevSpace performs bounded local work. Maker and checker remain separate contexts where independence matters.</p></div><div class="sectionhead"><div><span class="eyebrow">DURABLE WORK ITEMS</span><h2>Agent Workboard</h2></div><button id="refreshTasks">Refresh</button></div><div id="taskList" class="cards"></div></section>
-<section id="view-tools" class="view"><div class="glass"><span class="eyebrow">TOOLING</span><h2>Rigging path</h2><p><b>SkinTokens / TokenRig</b> — preferred EVALUATE P0 candidate.</p><p><b>UniRig</b> — expert/fallback staged skeleton → inspect → skin path.</p><pre id="toolStatus" class="console">Loading pinned tool provenance…</pre></div></section>
-</main></div><script type="module" src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KHOSAN TIME STUDIO</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <span class="mark">K</span>
+      <div><strong>KHOSAN</strong><small>TIME STUDIO</small></div>
+    </div>
+
+    <nav>
+      <button class="active" data-view="home">Studio Home</button>
+      <button data-view="idea">Idea / Concept Lab</button>
+      <button data-view="projects">Projects</button>
+      <button data-view="human">Human Lab</button>
+      <button data-view="agents">Agent Workboard</button>
+      <button data-view="tools">Tool Registry</button>
+    </nav>
+
+    <div class="status">
+      <i id="healthDot"></i>
+      <span id="healthText">Checking local Studio…</span>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <span class="eyebrow">EXECUTIVE PRODUCER WORKSPACE</span>
+        <h1 id="title">Studio Home</h1>
+      </div>
+      <div class="pill">LOCAL-FIRST · v0.1.0</div>
+    </header>
+
+    <section id="view-home" class="view active">
+      <div class="hero glass">
+        <span class="eyebrow">FROM IDEA TO PLAYABLE</span>
+        <h2>What do you want to create?</h2>
+        <p>เริ่มจากเกมที่คิดไว้แล้ว หรือเริ่มจากอารมณ์ วัฒนธรรม mechanic หรือ fantasy ที่อยากสำรวจก็ได้</p>
+        <textarea id="intent" placeholder="เช่น อยากทำเกมเกี่ยวกับความทรงจำของหมู่บ้าน แต่ไม่อยากให้เป็น horror แบบเดิม…"></textarea>
+        <div class="actions">
+          <button class="primary" id="exploreBtn">Explore Idea</button>
+          <button id="routeBtn">Route to Agent</button>
+        </div>
+        <pre id="routeOut" class="console hidden"></pre>
+      </div>
+
+      <div class="grid3">
+        <article class="glass">
+          <span class="eyebrow">CREATIVE INTELLIGENCE</span>
+          <h3>Discover</h3>
+          <p>Concept Portfolio → Prototype Arena → Creative Constitution</p>
+        </article>
+        <article class="glass">
+          <span class="eyebrow">PRODUCTION</span>
+          <h3>Build</h3>
+          <p>Assets · Gameplay · World · WebGPU · QA</p>
+        </article>
+        <article class="glass">
+          <span class="eyebrow">LIVE LOOP</span>
+          <h3>Evolve</h3>
+          <p>Community + Telemetry → governed experiments</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-idea" class="view">
+      <div class="glass formcard">
+        <span class="eyebrow">NEW GAME / CONCEPT</span>
+        <h2>Create a project</h2>
+        <label>Name<input id="projectName" placeholder="Project name"></label>
+        <label>Creative brief<textarea id="projectBrief" placeholder="Player fantasy, emotion, culture, mechanic or visual direction…"></textarea></label>
+        <label>First target
+          <select id="projectTarget">
+            <option value="webgpu">WebGPU Browser</option>
+            <option value="godot">Godot</option>
+            <option value="unity">Unity</option>
+          </select>
+        </label>
+        <button class="primary" id="createProjectBtn">Create Project</button>
+        <p id="createResult" class="muted"></p>
+      </div>
+    </section>
+
+    <section id="view-projects" class="view">
+      <div class="sectionhead">
+        <div><span class="eyebrow">DURABLE WORKSPACE</span><h2>Projects</h2></div>
+        <button id="refreshProjects">Refresh</button>
+      </div>
+      <div id="projectList" class="cards"></div>
+      <div id="projectDetail" class="glass hidden"></div>
+    </section>
+
+    <section id="view-human" class="view">
+      <div class="human-lab">
+        <div class="glass human-controls">
+          <span class="eyebrow">KHOSAN HUMAN ENGINE · DNA v1</span>
+          <h2>Parametric Human</h2>
+          <p class="muted">Semantic controls → constrained Character DNA → Native WebGPU. Drag the viewport to rotate.</p>
+
+          <details open>
+            <summary>Body figure</summary>
+            <div class="human-slider-grid">
+              <label>Height <output data-value-for="humanHeight"></output><input id="humanHeight" type="range" min="0" max="1" step="0.01"></label>
+              <label>Shoulders <output data-value-for="humanShoulders"></output><input id="humanShoulders" type="range" min="0" max="1" step="0.01"></label>
+              <label>Chest <output data-value-for="humanChest"></output><input id="humanChest" type="range" min="0" max="1" step="0.01"></label>
+              <label>Waist <output data-value-for="humanWaist"></output><input id="humanWaist" type="range" min="0" max="1" step="0.01"></label>
+              <label>Hips <output data-value-for="humanHips"></output><input id="humanHips" type="range" min="0" max="1" step="0.01"></label>
+              <label>Muscle <output data-value-for="humanMuscle"></output><input id="humanMuscle" type="range" min="0" max="1" step="0.01"></label>
+              <label>Leg ratio <output data-value-for="humanLegRatio"></output><input id="humanLegRatio" type="range" min="0" max="1" step="0.01"></label>
+              <label>Arm ratio <output data-value-for="humanArmRatio"></output><input id="humanArmRatio" type="range" min="0" max="1" step="0.01"></label>
+            </div>
+          </details>
+
+          <details>
+            <summary>Face</summary>
+            <div class="human-slider-grid">
+              <label>Face width <output data-value-for="humanFaceWidth"></output><input id="humanFaceWidth" type="range" min="0" max="1" step="0.01"></label>
+              <label>Jaw <output data-value-for="humanJaw"></output><input id="humanJaw" type="range" min="0" max="1" step="0.01"></label>
+              <label>Nose <output data-value-for="humanNose"></output><input id="humanNose" type="range" min="0" max="1" step="0.01"></label>
+              <label>Lips <output data-value-for="humanLips"></output><input id="humanLips" type="range" min="0" max="1" step="0.01"></label>
+              <label>Eye size <output data-value-for="humanEyeSize"></output><input id="humanEyeSize" type="range" min="0" max="1" step="0.01"></label>
+              <label>Eye spacing <output data-value-for="humanEyeSpacing"></output><input id="humanEyeSpacing" type="range" min="0" max="1" step="0.01"></label>
+              <label>Brow height <output data-value-for="humanBrowHeight"></output><input id="humanBrowHeight" type="range" min="0" max="1" step="0.01"></label>
+              <label>Chin <output data-value-for="humanChin"></output><input id="humanChin" type="range" min="0" max="1" step="0.01"></label>
+            </div>
+          </details>
+
+          <details>
+            <summary>Appearance</summary>
+            <div class="human-color-grid">
+              <label>Skin<input id="humanSkin" type="color"></label>
+              <label>Eyes<input id="humanEyes" type="color"></label>
+              <label>Hair<input id="humanHair" type="color"></label>
+            </div>
+            <div class="human-slider-grid">
+              <label>Hair style <output data-value-for="humanHairStyle"></output><input id="humanHairStyle" type="range" min="0" max="1" step="0.01"></label>
+              <label>Brow thickness <output data-value-for="humanBrowThickness"></output><input id="humanBrowThickness" type="range" min="0" max="1" step="0.01"></label>
+              <label>Mole <output data-value-for="humanMole"></output><input id="humanMole" type="range" min="0" max="1" step="0.01"></label>
+              <label>Tattoo <output data-value-for="humanTattoo"></output><input id="humanTattoo" type="range" min="0" max="1" step="0.01"></label>
+            </div>
+          </details>
+
+          <details>
+            <summary>Lighting / Camera</summary>
+            <div class="human-slider-grid">
+              <label>Key light <output data-value-for="humanKeyLight"></output><input id="humanKeyLight" type="range" min="0" max="1" step="0.01"></label>
+              <label>Rim light <output data-value-for="humanRimLight"></output><input id="humanRimLight" type="range" min="0" max="1" step="0.01"></label>
+              <label>Zoom <output data-value-for="humanZoom"></output><input id="humanZoom" type="range" min="0" max="1" step="0.01"></label>
+            </div>
+          </details>
+
+          <div class="actions human-actions">
+            <button id="humanRandomize">Constrained Random</button>
+            <button id="humanReset">Reset</button>
+            <button class="primary" id="humanExport">Export DNA</button>
+          </div>
+        </div>
+
+        <div class="glass human-stage">
+          <div class="sectionhead">
+            <div>
+              <span class="eyebrow">NATIVE WEBGPU PREVIEW</span>
+              <h2>Live Character</h2>
+            </div>
+            <span id="humanStatus" class="human-status">Open Human Lab to initialize WebGPU.</span>
+          </div>
+
+          <canvas id="humanCanvas" aria-label="KHOSAN parametric human WebGPU preview"></canvas>
+
+          <div id="humanFallback" class="human-fallback hidden">
+            WebGPU is unavailable. Use a current Chrome/Edge build or a compatible device/driver.
+          </div>
+
+          <div id="humanMetrics" class="human-metrics"></div>
+
+          <div class="human-note">
+            <b>v0.1 preview backend:</b> procedural semantic body/face volumes rendered entirely in WebGPU.
+            The repository also contains a canonical-mesh WGSL morph + 4-joint skinning compute kernel for the production backend.
+          </div>
+
+          <details class="dna-inspector">
+            <summary>Character DNA</summary>
+            <pre id="humanDNAOut" class="console"></pre>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-agents" class="view">
+      <div class="glass">
+        <span class="eyebrow">HARNESS</span>
+        <h2>21-role operating model</h2>
+        <div class="lanes">
+          <div><b>Creative Intelligence</b><p>13 Cultural Research · 14 Player Experience · 15 Concept Inventor · 16 Creative Critic · 17 Audience · 18 Community · 19 Telemetry · 20 Live Game Designer</p></div>
+          <div><b>Production & Governance</b><p>00 Orchestrator · 01 Creative Director · 02 Game Designer · 03 Narrative · 04 Asset · 05 Audio · 06 Architecture · 07 Gameplay · 08 Rendering · 09 Adapter · 10 QA · 11 Reviewer · 12 Release</p></div>
+        </div>
+        <p class="muted">ChatGPT adopts these role contracts; DevSpace performs bounded local work. Maker and checker remain separate contexts where independence matters.</p>
+      </div>
+
+      <div class="sectionhead">
+        <div><span class="eyebrow">DURABLE WORK ITEMS</span><h2>Agent Workboard</h2></div>
+        <button id="refreshTasks">Refresh</button>
+      </div>
+      <div id="taskList" class="cards"></div>
+    </section>
+
+    <section id="view-tools" class="view">
+      <div class="glass">
+        <span class="eyebrow">TOOLING</span>
+        <h2>Rigging path</h2>
+        <p><b>SkinTokens / TokenRig</b> — preferred EVALUATE P0 candidate.</p>
+        <p><b>UniRig</b> — expert/fallback staged skeleton → inspect → skin path.</p>
+        <pre id="toolStatus" class="console">Loading pinned tool provenance…</pre>
+      </div>
+    </section>
+  </main>
+</div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

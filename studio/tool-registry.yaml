@@ -63,6 +63,13 @@ tools:
   - {id: ai-audio, name: AI SFX/Music Tool, status: to_find, priority: p1}
   - {id: playwright, name: Playwright, status: evaluate, priority: p0, capability: automated_qa}
   - {id: git-lfs, name: Git LFS, status: evaluate, priority: p0, capability: large_asset_versioning}
+  - id: khosan-human-engine
+    name: KHOSAN Human Engine
+    status: build_khosan
+    priority: core
+    owner: 08-rendering-engineer
+    capability: webgpu_parametric_human_runtime
+    notes: Character DNA v1 + Human Lab preview + canonical mesh morph/skinning compute kernel
   - {id: world-editor, name: KHOSAN World Editor, status: build_khosan, priority: p0}
   - {id: asset-registry, name: KHOSAN Asset Registry, status: build_khosan, priority: p0}
   - {id: ui-editor, name: KHOSAN UI/HUD Editor, status: build_khosan, priority: p0}

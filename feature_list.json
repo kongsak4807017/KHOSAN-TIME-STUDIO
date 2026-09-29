@@ -54,6 +54,27 @@
       "acceptance_criteria": []
     },
     {
+      "id": "HUMAN-001",
+      "title": "KHOSAN Human Engine v0.1 — Native WebGPU parametric character foundation",
+      "status": "verify",
+      "owner_role": "08-rendering-engineer",
+      "acceptance_criteria": [
+        "Human Lab is available in the Studio shell",
+        "Character DNA v1 persists semantic body, face, appearance and lighting parameters",
+        "Live preview uses Native WebGPU without a third-party 3D engine",
+        "Canonical-mesh WGSL compute kernel performs morph evaluation and normalized four-joint LBS",
+        "Browser/GPU smoke evidence exists before acceptance"
+      ],
+      "verification": [
+        "node scripts/verify-source.mjs",
+        "node --check apps/studio-web/public/app.js",
+        "node --check apps/studio-web/public/human-dna.js",
+        "node --check apps/studio-web/public/human-webgpu.js",
+        "node --check apps/studio-web/public/human-lab.js",
+        "manual WebGPU browser smoke test"
+      ]
+    },
+    {
       "id": "CREATIVE-001",
       "title": "Creative Intelligence foundation and Creative Constitution",
       "status": "in_progress",
