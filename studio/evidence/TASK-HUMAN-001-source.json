@@ -1,0 +1,31 @@
+{
+  "task_id": "TASK-HUMAN-001",
+  "evidence_type": "source-verification",
+  "branch": "feature/human-engine-webgpu-v0.1",
+  "status": "partial",
+  "verified_at": "2026-09-29",
+  "checks": [
+    {"check":"ES module syntax — apps/studio-web/public/app.js","result":"PASS","method":"V8 source parse after import/export normalization"},
+    {"check":"ES module syntax — apps/studio-web/public/human-dna.js","result":"PASS","method":"V8 source parse after import/export normalization"},
+    {"check":"ES module syntax — apps/studio-web/public/human-webgpu.js","result":"PASS","method":"V8 source parse after import/export normalization"},
+    {"check":"ES module syntax — apps/studio-web/public/human-lab.js","result":"PASS","method":"V8 source parse after import/export normalization"},
+    {"check":"Node server syntax — apps/studio-server/server.mjs","result":"PASS","method":"V8 async source parse after module import normalization"},
+    {"check":"feature_list.json parse","result":"PASS"},
+    {"check":"studio/tasks/TASK-HUMAN-001.json parse","result":"PASS"},
+    {"check":"studio/studio_state.json parse","result":"PASS"},
+    {"check":"Branch scope review","result":"PASS","detail":"Changes are limited to Human Engine implementation, Studio integration, verification metadata and documentation."},
+    {"check":"WebGPU WGSL runtime compilation","result":"PENDING","detail":"Requires navigator.gpu on a real WebGPU adapter."},
+    {"check":"Human Lab visual smoke test","result":"PENDING","detail":"Requires browser execution at the local Studio URL."},
+    {"check":"Canonical morph+skin compute dispatch","result":"PENDING","detail":"Kernel exists but canonical production mesh fixture is not yet connected."},
+    {"check":"Mobile performance acceptance","result":"PENDING","detail":"No device benchmark has been recorded."}
+  ],
+  "artifacts": [
+    "apps/studio-web/public/human-dna.js",
+    "apps/studio-web/public/human-lab.js",
+    "apps/studio-web/public/human-webgpu.js",
+    "apps/studio-web/public/human-morph-skin.wgsl",
+    "docs/20-HUMAN-ENGINE-WEBGPU-V0.1.md",
+    "studio/tasks/TASK-HUMAN-001.json"
+  ],
+  "conclusion": "Source foundation is implemented and statically parseable. HUMAN-001 must remain verify until WGSL compilation, browser interaction, visual behavior and compute-fixture evidence are collected on a real WebGPU-capable environment."
+}
