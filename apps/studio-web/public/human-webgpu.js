@@ -266,8 +266,9 @@ fn baseMaterial(id: f32, p: vec3f) -> vec3f {
 
     // Tattoo preview: procedural ink on the upper torso. Production assets use
     // UV/barycentric surface anchors; this preview proves the layered material path.
-    let torsoMask = smoothstep(0.72, 0.30, abs(p.x)) *
-                    smoothstep(1.30, 0.30, p.y) *
+    let torsoMask = (1.0 - smoothstep(0.30, 0.72, abs(p.x))) *
+                    smoothstep(0.20, 0.45, p.y) *
+                    (1.0 - smoothstep(1.05, 1.35, p.y)) *
                     smoothstep(-0.05, 0.20, p.z);
     let ink = 0.5 + 0.5 * sin(p.x * 28.0 + sin(p.y * 16.0) * 2.2);
     let tattooMask = torsoMask * smoothstep(0.47, 0.62, ink) * u.detail0.w;
