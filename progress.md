@@ -29,6 +29,15 @@
 - deterministic intent-to-role routing helper
 - localhost-first trust boundary
 
+### Human Engine v0.1
+- Human Lab integrated into the Studio navigation
+- stable `khosan.human-dna` v1 semantic contract
+- body, face, appearance and lighting controls
+- Native WebGPU procedural live preview with eye/hair/brow/detail material layers
+- JSON DNA export and constrained random variations
+- canonical-mesh WGSL compute kernel for morph evaluation + 4-joint LBS
+- browser/GPU runtime acceptance intentionally remains pending until real WebGPU smoke evidence exists
+
 ### Deployment
 - DevSpace MCP Connectivity Pack (ngrok/Cloudflare provider-neutral profile)
 - persistent ChatGPT workspace contract
