@@ -76,6 +76,7 @@ function routeIntent(text = "") {
   const q = text.toLowerCase();
   if (/idea|concept|ไอเดีย|แนวเกม|แหวก/.test(q)) return { lane:"creative-intelligence", roles:["15-concept-inventor","16-creative-critic","14-player-experience-researcher"] };
   if (/community|review|discord|reddit|ผู้เล่น|คอมมูนิตี้/.test(q)) return { lane:"live-intelligence", roles:["18-community-intelligence","19-telemetry-analyst","20-live-game-designer"] };
+  if (/human|avatar|character|face|body|hair|garment|clothing|ตัวละคร|ใบหน้า|รูปร่าง|ทรงผม|เสื้อผ้า/.test(q)) return { lane:"human-engine", roles:["04-asset-synthesizer","06-technical-architect","08-rendering-engineer","10-qa-playtester"] };
   if (/rig|skeleton|skin|bone|กระดูก/.test(q)) return { lane:"asset-rigging", roles:["04-asset-synthesizer","10-qa-playtester","11-independent-reviewer"] };
   if (/render|shader|webgpu|fps|lighting|แสง/.test(q)) return { lane:"rendering", roles:["08-rendering-engineer","10-qa-playtester"] };
   if (/quest|dialog|story|เนื้อเรื่อง/.test(q)) return { lane:"narrative", roles:["03-narrative-architect","02-game-designer"] };
@@ -84,7 +85,7 @@ function routeIntent(text = "") {
 
 async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
-    send(res, 200, {ok:true, service:"khosan-studio", version:"0.1.0", time:now(), host:HOST, port:PORT, creative_intelligence:true, project_persistence:true}); return true;
+    send(res, 200, {ok:true, service:"khosan-studio", version:"0.1.0", time:now(), host:HOST, port:PORT, creative_intelligence:true, project_persistence:true, human_engine:"v0.1-verify"}); return true;
   }
   if (req.method === "GET" && url.pathname === "/api/studio") {
     send(res, 200, {
