@@ -93,16 +93,26 @@ Exit:
 A user can create a project and approve a blueprint without touching agent internals.
 
 ## Phase 2 — Asset Lab
-Integrate:
-- sprite-gen,
-- img2threejs,
+Integrate/build:
+- sprite-gen true-2D production,
+- img2threejs generic 3D reconstruction,
 - Asset Registry,
 - material pipeline,
 - 3D optimizer/compression,
-- asset inspector/curation.
+- asset inspector/curation,
+- **KHOSAN Canonical Character Factory**,
+- Human DNA / Character IR contract,
+- canonical semantic humanoid skeleton + sockets,
+- reusable Animation Library,
+- production animation retarget adapter,
+- Wearable IR + Equipment IR,
+- character deformation/animation/collision QA,
+- native 3D → 2.5D / sprite-bake output path.
+
+Auto-rigging (SkinTokens/UniRig) is evaluated for imported/arbitrary meshes; it is not the default native-character skeleton authority.
 
 Exit:
-Reference → approved runtime 2D and 3D asset is reproducible.
+Reference → approved runtime 2D, generic 3D and canonical character assets are reproducible. A single approved master character can drive traceable native 3D, 2.5D and sprite-baked outputs.
 
 ## Phase 3 — Native Playable Runtime
 Integrate:
