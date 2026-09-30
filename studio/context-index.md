@@ -26,7 +26,7 @@ Load docs/12-CREATIVE-INTELLIGENCE.md plus only the evidence domain needed for t
 Community and telemetry agents must not treat chat memory as evidence.
 
 ### Asset Synthesizer
-Asset pipeline, 2D/3D tool docs, material/animation constraints.
+Asset pipeline, 2D/generic-3D/character tool docs, `docs/20-CHARACTER-FACTORY.md` for character work, material/animation/wearable constraints.
 
 ### Technical Architect
 UG-IR, architecture, relevant research/specification and target constraints.
@@ -38,10 +38,10 @@ Active design/system contract + nearest source/tests.
 Only renderer reports relevant to the active feature: PBR, clustered lighting, shadows, SSAO, compute/instancing, post-processing, terrain, skinning.
 
 ### Engine Adapter
-UG-IR + target backend/export contracts.
+UG-IR + Asset/Character IR + target backend/export contracts. Load `docs/20-CHARACTER-FACTORY.md` when skeleton/animation/socket/wearable semantics are involved.
 
 ### QA / Reviewer
-Acceptance criteria, changed files, handoff/evidence, minimal specs needed to judge.
+Acceptance criteria, changed files, handoff/evidence, minimal specs needed to judge. For character work load the Character Factory QA contract without preloading unrelated renderer research.
 
 ### Release/Ops
 Deployment, packaging, benchmark and actual build configuration.
