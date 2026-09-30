@@ -2,9 +2,11 @@
 
 ## Decision
 
-KHOSAN will evaluate **SkinTokens as the preferred P0 auto-rigging candidate** and **UniRig as a fallback / expert / research path**.
+KHOSAN will evaluate **SkinTokens as the preferred P0 auto-rigging candidate for imported/arbitrary meshes** and **UniRig as a fallback / expert / research path**.
 
 This is not yet an ADOPT decision. Promotion to ADOPT requires a local integration fixture, reproducible command, license/provenance note, GPU/resource measurement, output validation and animation test.
+
+**Scope correction:** this rigging router is not the default first step for a KHOSAN-native humanoid. Native reusable characters should start from the canonical Character Factory skeleton/identity defined in `docs/20-CHARACTER-FACTORY.md`. Auto-rigging is primarily for imported, arbitrary, generated or otherwise untrusted meshes that do not already have a reliable semantic skeleton.
 
 ## Why SkinTokens is preferred
 
@@ -65,61 +67,62 @@ UniRig's own documentation warns that poor skeleton prediction can significantly
 
 ## KHOSAN integration architecture
 
+For imported/arbitrary characters:
+
 ~~~text
-Reference / Generated 3D
+Imported / generated animated mesh
         |
         v
-img2threejs or imported mesh
-        |
-        v
-KHOSAN Mesh Normalize
-  - scale / axis
-  - topology/format
-  - material references
-        |
-        v
-Rigging Router
+Inspect existing skeleton
    +-------------------------------+
    |                               |
    v                               v
-SkinTokens                     UniRig Expert Path
-default candidate              skeleton -> inspect -> skin
+trusted/mappable               missing/untrusted
    |                               |
-   +---------------+---------------+
-                   v
-            Rigged GLB/FBX
-                   |
-                   v
-           Rig Validation Gate
-  - skeleton hierarchy
-  - root/orientation
-  - skin weights
-  - max influences
-  - deformation sanity
-  - texture/material preservation
-  - bounding box / scale
-                   |
-                   v
-        Animation Retargeting
-                   |
-                   v
-       glTF Transform / optimize
-                   |
-                   v
-            KHOSAN Asset IR
-                   |
-                   v
-            Asset Registry
-                   |
-                   v
-          WebGPU / Godot / Unity
+   v                               v
+Semantic Mapping              KHOSAN Mesh Normalize
+                                   |
+                                   v
+                              Rigging Router
+                         +---------+---------+
+                         |                   |
+                         v                   v
+                    SkinTokens          UniRig Expert
+                    preferred           inspect -> skin
+                         |                   |
+                         +---------+---------+
+                                   v
+                            Rigged GLB/FBX
+                                   |
+                                   v
+                           Rig Validation Gate
+                  - hierarchy / root / orientation
+                  - skin weights / deformation
+                  - material / scale preservation
+                                   |
+                                   v
+                         Semantic Bone Mapping
+                                   |
+                                   v
+                         Animation Retargeting
+                                   |
+                                   v
+                       Character / Asset IR
+                                   |
+                                   v
+                           Asset Registry
+                                   |
+                                   v
+                         WebGPU / Godot / Unity
 ~~~
+
+For KHOSAN-native humanoids, start at the canonical skeleton/Character Factory path instead of invoking auto-rigging unless the asset has left that contract or requires explicit recovery.
 
 ## ChatGPT agent routing
 
-Normal creator request:
+Imported/arbitrary asset request:
 
-> Rig this character and make it animation-ready.
+> Rig this imported character and make it animation-ready.
 
 Expected routing:
 1. Studio Orchestrator creates a bounded rigging work item.

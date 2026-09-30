@@ -47,6 +47,29 @@
       "acceptance_criteria": []
     },
     {
+      "id": "CHARACTER-001",
+      "title": "KHOSAN Canonical Character Factory",
+      "status": "proposed",
+      "owner_role": "04-asset-synthesizer",
+      "acceptance_criteria": [
+        "Native KHOSAN characters use a versioned canonical semantic skeleton",
+        "Reference images or concepts can fit appearance without silently replacing skeleton identity",
+        "Character DNA is independent from renderer and source tool",
+        "Wearables and equipment use semantic compatibility and attachment contracts",
+        "Reusable animation states can be retargeted through semantic bones",
+        "Imported arbitrary meshes route through mapping or SkinTokens/UniRig rather than redefining the native character contract",
+        "One approved master character can produce traceable native 3D, 2.5D and sprite-baked outputs",
+        "Character deformation, animation and wearable/equipment QA produce deterministic evidence"
+      ],
+      "verification": [
+        "validate Character IR/Human DNA schema when implemented",
+        "run canonical skeleton fixture",
+        "run animation retarget fixture",
+        "run deformation and wearable collision QA fixture",
+        "verify derived outputs reference the same master character version"
+      ]
+    },
+    {
       "id": "RUNTIME-001",
       "title": "Playable WebGPU vertical slice from UG-IR",
       "status": "proposed",

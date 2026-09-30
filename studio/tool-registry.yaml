@@ -39,6 +39,37 @@ tools:
   - {id: basis-universal, name: Basis Universal / KTX2, status: evaluate, priority: p0, capability: texture_compression}
   - {id: material-maker, name: Material Maker, status: evaluate, priority: p0, capability: pbr_authoring}
   - {id: comfyui, name: ComfyUI, status: evaluate, priority: p0, capability: generative_workflows}
+  - id: character-factory
+    name: KHOSAN Character Factory
+    status: build_khosan
+    priority: p0
+    owner: 04-asset-synthesizer
+    capability: canonical_character_pipeline
+    notes: native_reusable_characters_use_semantic_skeleton_and_stable_master_identity
+  - id: canonical-humanoid-skeleton
+    name: KHOSAN Canonical Humanoid Skeleton
+    status: build_khosan
+    priority: p0
+    owner: 06-technical-architect
+    capability: semantic_character_skeleton
+  - id: animation-library
+    name: KHOSAN Animation Library
+    status: build_khosan
+    priority: p0
+    owner: 04-asset-synthesizer
+    capability: reusable_semantic_motion
+  - id: wearable-equipment-ir
+    name: KHOSAN Wearable + Equipment IR
+    status: build_khosan
+    priority: p0
+    owner: 04-asset-synthesizer
+    capability: modular_character_wearables_and_equipment
+  - id: character-qa
+    name: KHOSAN Character QA
+    status: build_khosan
+    priority: p0
+    owner: 10-qa-playtester
+    capability: deformation_animation_collision_output_parity
   - id: skintokens
     name: SkinTokens / TokenRig
     source: https://github.com/kongsak4807017/SkinTokens
@@ -56,7 +87,7 @@ tools:
     capability: staged_skeleton_and_skinning
     notes: fallback_expert_path_for_skeleton_inspection_and_manual_refinement
   - {id: blender-rig-fallback, name: Blender Rigging Fallback, status: evaluate, priority: p1, capability: deterministic_manual_rigging_support}
-  - {id: animation-retarget, name: Animation Retargeting Tool, status: to_find, priority: p0}
+  - {id: animation-retarget, name: Animation Retargeting Tool, status: to_find, priority: p0, capability: semantic_animation_retarget}
   - {id: retejs, name: Rete.js, status: evaluate, priority: p0, capability: visual_graph_editor}
   - {id: yarn-spinner, name: Yarn Spinner, status: evaluate, priority: p0, capability: dialogue}
   - {id: tonejs, name: Web Audio / Tone.js, status: evaluate, priority: p0, capability: audio_runtime}

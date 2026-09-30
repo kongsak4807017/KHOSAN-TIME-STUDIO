@@ -17,6 +17,11 @@
 | Harness reference | learn-harness-engineering | ADOPT/reference | Orchestrator | harness/loop/graph engineering patterns |
 | 2D assets | sprite-gen | ADOPT | Asset Synthesizer | sprite atlas, animation loops, manifests, curation, QA |
 | 3D assets | img2threejs | ADOPT | Asset Synthesizer | reference → structured/procedural 3D |
+| Character factory | KHOSAN Character Factory | BUILD-KHOSAN P0 | Asset/Architect | canonical reusable-character production path |
+| Character skeleton | KHOSAN Canonical Humanoid Skeleton | BUILD-KHOSAN P0 | Architect/Asset | semantic bones, sockets and versioned skeleton profile |
+| Character animation | KHOSAN Animation Library | BUILD-KHOSAN P0 | Asset/Adapter | reusable semantic motion library |
+| Wearables | KHOSAN Wearable + Equipment IR | BUILD-KHOSAN P0 | Asset/Architect | modular clothing, gear, sockets and compatibility |
+| Character QA | KHOSAN Character QA | BUILD-KHOSAN P0 | QA | deformation, animation, cloth/equipment collision and output parity |
 | Physics | Rapier | EVALUATE P0 | Gameplay/Architect | rigid bodies, colliders, queries, joints |
 | Navigation | Recast + Detour | EVALUATE P0 | Gameplay/Architect | navmesh, pathfinding, crowds |
 | glTF processing | glTF Transform | EVALUATE P0 | Asset/Adapter | validate/process/dedup/simplify pipeline |
@@ -26,7 +31,7 @@
 | Generative workflows | ComfyUI | EVALUATE P0 | Asset | extensible image/material/media workflows |
 | 3D rigging | SkinTokens / TokenRig | EVALUATE P0 preferred | Asset | unified mesh → skeleton + skin weights; requires local GPU fixture |
 | 3D rigging | UniRig | EVALUATE P0 fallback | Asset | staged skeleton → inspect/refine → skin → merge |
-| Animation retarget | production retarget tool | TO-FIND P0 | Asset/Adapter | reuse motion across skeletons |
+| Animation retarget | production retarget tool | TO-FIND P0 | Asset/Adapter | map reusable motion through KHOSAN semantic skeleton contracts |
 | Node editor | Rete.js | EVALUATE P0 | Studio Shell | logic/quest/audio/shader graph UI foundation |
 | Dialogue | Yarn Spinner | EVALUATE P0 | Narrative | dialogue and command runtime |
 | Audio runtime | Web Audio + Tone.js | EVALUATE P0 | Audio | playback, timing, mixing, adaptive layers |
@@ -46,28 +51,39 @@ See `docs/16-3D-AUTO-RIGGING.md` for the pinned SkinTokens/UniRig integration pa
 
 ## Core asset pipeline target
 
-```text
-                     ASSET LAB
-             ┌──────────┴──────────┐
-             ▼                     ▼
-       2D Production          3D Production
-         sprite-gen            img2threejs
-             │                     │
-             │                rig / retarget
-             │                     │
-             ├──── material / texture ────┐
-             │                     │       │
-             ▼                     ▼       ▼
-        Sprite IR              Mesh IR   PBR IR
-             └──────────┬──────────┘
-                        ▼
-                  KHOSAN Asset IR
-                        │
-        optimize / compress / validate
-                        │
-                        ▼
-                  Asset Registry
-```
+~~~text
+                         ASSET LAB
+          +-----------------+-----------------+
+          |                 |                 |
+          v                 v                 v
+       True 2D          Generic 3D        Character 3D
+      sprite-gen        img2threejs      Character Factory
+          |                 |                 |
+          v                 v            Human DNA
+      Sprite IR          Mesh IR              |
+          |                 |          Canonical Skeleton
+          |                 |                 |
+          |                 |       Wearable / Equipment IR
+          |                 |                 |
+          |                 |        Animation Library
+          |                 |                 |
+          |                 |            Retargeting
+          |                 |                 |
+          |                 |          Character QA
+          +-----------------+-----------------+
+                            |
+                            v
+                     KHOSAN Asset IR
+                            |
+                 optimize / validate
+                            |
+                            v
+                      Asset Registry
+~~~
+
+Auto-rigging tools sit on the imported/arbitrary-character branch. They do not define the native Character Factory skeleton.
+
+See `docs/20-CHARACTER-FACTORY.md` for the canonical character path.
 
 ## Acquisition rule
 

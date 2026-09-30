@@ -72,6 +72,18 @@ External/internal production and research capabilities invoked through stable ad
 - provenance,
 - uncertainty/confidence.
 
+**Character IR specialization**
+- stable master-character identity/version,
+- Human DNA / appearance semantics,
+- canonical semantic skeleton profile,
+- semantic animation profile/library,
+- Wearable + Equipment IR references,
+- character physics profile,
+- derived-output lineage,
+- character QA evidence.
+
+Native KHOSAN humanoids use the Canonical Character Factory. Imported/arbitrary meshes may enter mapping/auto-rigging before normalization to Character IR.
+
 **UG-IR**
 Engine-neutral game/project representation:
 - entities/components/systems,
