@@ -159,8 +159,8 @@ Its output is normalized into KHOSAN Asset IR. Three.js is not the canonical pro
 - GPU texture compression — Basis Universal/KTX2
 - PBR authoring — Material Maker
 - Generative workflow backend — ComfyUI
-- 3D auto rigging — evaluate UniRig + Blender fallback
-- Animation retargeting — TO FIND
+- 3D auto rigging for imported/arbitrary meshes — evaluate SkinTokens/TokenRig + UniRig fallback
+- Animation retargeting implementation — TO FIND; KHOSAN owns the semantic retarget contract
 - Visual graph editor — Rete.js
 - Dialogue/quest — Yarn Spinner
 - Browser audio runtime — Web Audio/Tone.js
@@ -179,6 +179,12 @@ P1/optional:
 
 Do not outsource the Studio's canonical authoring surfaces:
 - Studio Shell
+- Canonical Character Factory
+- Canonical semantic character skeleton
+- Human DNA / Character IR
+- Animation Library contract
+- Wearable + Equipment IR
+- Character QA contracts
 - World Editor
 - Asset Registry
 - UI/HUD Editor
@@ -194,13 +200,22 @@ External tools plug into these boundaries.
 
 ## 9. Asset architecture
 
-### 2D
+KHOSAN uses three asset-production classes:
+
+### True 2D
 Reference → sprite-gen → curation → deterministic extraction/compose/QA → Sprite Adapter → Asset IR → Registry.
 
-### 3D
-Reference → img2threejs → inspect uncertainty → Asset IR → material → rig/retarget → glTF process → optimize → KTX2 → validate → Registry.
+### Generic 3D
+Reference/import → img2threejs or other import → inspect uncertainty → geometry/material/pivot/socket/collider/LOD normalization → optimize/compress → QA → Asset IR → Registry.
 
-Generated assets must preserve provenance and uncertainty rather than hiding inferred content.
+### Character 3D
+Reference/concept → Human DNA → canonical base mesh → canonical semantic skeleton → appearance fit → Wearable/Equipment IR → Animation Library → semantic retarget → physics/character QA → Character Asset IR → Registry → native 3D / 2.5D / sprite bake.
+
+Native KHOSAN characters do not depend on auto-rigging as their default skeleton source. SkinTokens/TokenRig and UniRig remain the imported/arbitrary-mesh rigging path.
+
+Generated assets must preserve provenance and uncertainty rather than hiding inferred content. Derived character outputs must preserve master-character lineage.
+
+See `docs/20-CHARACTER-FACTORY.md` and ADR-001.
 
 ## 10. Runtime architecture
 
@@ -266,8 +281,8 @@ See `knowledge/source-manifest.yaml` for the legacy source archive list.
 1. Finish Master Repository mirror of legacy research.
 2. Build Studio Shell with Idea/Concept Lab + Creative Constitution.
 3. Implement Creative Intelligence CI1 and Prototype Arena CI2.
-4. Build Asset Registry + Asset Lab integrations.
-5. Define UG-IR v0.1 + canonical fixtures.
+4. Build Asset Registry + Asset Lab integrations, including CHARACTER-001 Canonical Character Factory.
+5. Define Character IR/Human DNA + canonical skeleton/animation fixtures and UG-IR v0.1.
 6. Produce a native WebGPU vertical slice.
 7. Add World/Logic authoring.
 8. Add automated QA.
