@@ -2,32 +2,54 @@
 
 **Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
 **Branch:** `main`
-**Studio source version:** `0.1.0`
-**Status:** RUNNABLE SOURCE SHIPPED / LOCAL ACCEPTANCE PENDING
+**Studio source version:** `0.2.0`
+**Status:** MULTI-PROJECT SOURCE IMPLEMENTED / TARGET-PC RUNTIME ACCEPTANCE PENDING
 
-## What is now authoritative on GitHub
+## Authoritative additions on main
 
-- Product vision and Creative Intelligence architecture
-- 21-role Harness
-- execution graph / human gates
-- Tool Registry
-- Asset/UG-IR direction
-- local/self-host deployment guidance
-- runnable Studio Web/API source
-- Docker/Compose deployment source
-- durable project-state API
-- Agent Workboard API/UI
-- pinned SkinTokens/UniRig provenance
-- bounded rigging adapters and setup/doctor scripts
-- source verification scripts
-- DevSpace MCP Connectivity Pack (ngrok/Cloudflare provider options)
-- persistent ChatGPT workspace contract
+- `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`
+- `docs/23-DEPLOYABLE-STUDIO-V0.2.md`
+- `studio/contracts/game-project.schema.json`
+- `studio/contracts/project-work-item.schema.json`
+- Project Library + active-project APIs
+- Studio header Project Switcher
+- full new-project workspace initialization
+- `khosan-project.json` portable manifest
+- `.khosan/project-state.json`
+- explicit project workspace/write boundary
+- project-aware `/api/orchestrate`
+- `scripts/smoke-multi-project.mjs`
+- `npm run verify:workspace`
+- manual GitHub Actions workspace runtime smoke
+- Reference Reconstruction Workflow remains canonical for reference-driven scene/asset/UI work
+
+## Multi-project operating model
+
+~~~text
+KHOSAN Studio (install once)
+        ↓
+Project Library
+  ├─ Game A
+  ├─ Game B
+  └─ Game C
+        ↓
+one active project
+        ↓
+one project root / write boundary
+        ↓
+one reusable DevSpace workspace per continuous project session
+~~~
+
+Shared tools/models may be reused. Game source/state/assets are isolated.
+
+Project-scoped work items require `project_id`. Studio-product tasks continue to use the root Studio task schema.
 
 ## Runtime baseline
 
 Direct:
 ```bash
 node scripts/verify-source.mjs
+npm run verify:workspace
 node apps/studio-server/server.mjs
 ```
 
@@ -45,65 +67,71 @@ docker compose up --build
 Open:
 `http://127.0.0.1:8080`
 
-## Important architecture boundary
+## Important trust boundary
 
-The v0.1 web server is **not the ChatGPT LLM**.
+The v0.2 web server is **not the ChatGPT LLM** and is not an arbitrary local-file manager.
 
 - ChatGPT = role reasoning / agent behavior
-- DevSpace = bounded local execution
-- Studio Web/API = creator UI, project persistence, routing/state surface
+- DevSpace = bounded local execution rooted at the selected game project
+- Studio Web/API = Project Library, active project, durable project state and routing
 - GitHub = master Studio source of truth
 - external GPU tools = registered/pinned workers through adapters
 
 No generic shell execution is exposed over HTTP.
+No arbitrary external filesystem project path is accepted through the browser in v0.2.
 
-## Rigging decision
+## Project root configuration
 
-- SkinTokens / TokenRig: preferred EVALUATE P0 candidate.
-- UniRig: expert/fallback staged path.
-- External fork commits are pinned in `config/external-tools.lock.json`.
-- Do not promote to ADOPT until humanoid + non-humanoid + runtime deformation fixtures pass.
-
-## DevSpace connectivity profile
-
-For ChatGPT-to-local workspace access:
+Development fallback:
 ```text
-ChatGPT -> HTTPS tunnel -> DevSpace MCP 127.0.0.1:7676
+<KHOSAN-TIME-STUDIO>/projects
 ```
 
-The Studio Web/API remains `127.0.0.1:8080` and must not be exposed by the DevSpace tunnel in v0.1.
-
-Verify with:
-```bash
-python tools/devspace-connectivity/doctor.py --require-public
+Installed target:
+```text
+KHOSAN_PROJECTS_DIR=D:\KHOSAN\Projects
 ```
 
-Reuse the same DevSpace `workspaceId` while valid; do not restart tunnel/OAuth solely for a ChatGPT host-capability error.
+Additional separation contracts:
+```text
+KHOSAN_SHARED_ASSETS_DIR
+KHOSAN_MODELS_DIR
+KHOSAN_TOOL_DATA_DIR
+KHOSAN_CACHE_DIR
+KHOSAN_LOGS_DIR
+```
 
-## What remains unverified
+Only project persistence is active today; other roots establish the boundary for later Asset/Tool work.
 
-A fresh local DevSpace checkout still needs to run:
+## Verification completed this session
+
+Source-level verification:
+- server syntax PASS
+- app syntax PASS
+- workspace smoke script syntax PASS
+- verify-source syntax PASS
+- feature/state/schema/task/evidence/package JSON PASS
+- required Project Library / activate / workspace / manifest / project_context markers PASS
+
+## Runtime acceptance still required
+
+On the target PC:
 1. `node scripts/verify-source.mjs`
-2. `python scripts/harness_check.py`
-3. `node --check apps/studio-server/server.mjs`
-4. Python adapter syntax check
-5. browser/API project-create smoke test
-6. Docker Compose config/health test
-7. GPU rigging doctor on the actual target PC
-8. DevSpace local MCP doctor
-9. public MCP tunnel doctor
-10. ChatGPT workspaceId reuse + bounded write/test smoke task
+2. `npm run verify:workspace`
+3. launch Studio and open the browser
+4. create/activate two real test projects and inspect the Project Switcher
+5. verify routing follows the active project
+6. verify Project Library survives restart
+7. verify one project root → one reused DevSpace workspaceId
+8. `python scripts/harness_check.py`
+9. Docker config/health if Docker mode is needed
 
-Therefore `DEPLOY-001` remains `verify`, not `accepted`.
+Therefore `WORKSPACE-001` remains `verify`, not `accepted`.
 
-## Legacy blocker
+## Exact next product action after acceptance
 
-The research reports in `knowledge/source-manifest.yaml` are still indexed rather than mirrored verbatim. Issue #1 remains open.
-
-## Exact next action in DevSpace
-
-Open/clone this repository, preserve the tree, run the acceptance matrix above, persist evidence, and patch only defects found. After acceptance, proceed with Concept Lab / Prototype Arena / UG-IR work.
+Build **Asset Registry / Asset Lab** against this project-root contract. Do not let Asset Lab or World Editor create a second independent storage-root model.
 
 ## Startup instruction
 
-> Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, feature_list.json, progress.md and this handoff. Run v0.1 source/runtime verification before feature work. Preserve unrelated changes and record exact evidence.
+> Operate as KHOSAN Studio Orchestrator. Read AGENTS.md, studio/studio_state.json, feature_list.json, progress.md and this handoff. Resolve the active game project before any project-scoped production work. Run v0.2 source/workspace verification first. Preserve unrelated changes and record exact evidence.
