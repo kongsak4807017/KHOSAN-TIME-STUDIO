@@ -6,32 +6,38 @@
     {
       "name": "Architecture and contracts",
       "status": "pass",
-      "evidence": "Canonical multi-project architecture plus game-project and project-work-item schemas are present on main."
+      "evidence": "Canonical multi-project architecture, game-project schema and project-scoped work-item schema are present on main."
     },
     {
       "name": "Server implementation",
       "status": "pass",
-      "evidence": "Source inspection confirms Project Library persistence, active-project API, workspace boundary API, full project initialization and project-aware orchestration without arbitrary shell/path endpoints."
+      "evidence": "Project Library persistence, active-project API, workspace-boundary API, full project initialization, safe Thai route decoding and project-aware orchestration are present without arbitrary shell/path endpoints."
     },
     {
       "name": "Studio Shell integration",
       "status": "pass",
-      "evidence": "Source inspection confirms header active-project selector, Project Library surface, activate/open controls and workspace manifest visibility."
+      "evidence": "Header active-project selector, Project Library view, explicit activate/open controls, workspace boundary and manifest visibility are present."
     },
     {
-      "name": "Version/state integration",
+      "name": "Static syntax and JSON verification",
       "status": "pass",
-      "evidence": "package/Compose/Studio state are aligned to v0.2.0 and WORKSPACE-001 is present in feature_list.json."
+      "evidence": "V8 syntax parsing passed for server.mjs, app.js, smoke-multi-project.mjs and verify-source.mjs; feature/state/schema/task/evidence/package JSON parsed successfully."
     },
     {
-      "name": "Fresh local runtime smoke",
+      "name": "Automated runtime fixture",
+      "status": "pass",
+      "evidence": "scripts/smoke-multi-project.mjs and npm run verify:workspace are committed; manual GitHub Actions is wired to run the two-project workspace smoke."
+    },
+    {
+      "name": "Fresh target-PC runtime smoke",
       "status": "blocked",
-      "evidence": "GitHub source can be verified in this session, but the target PC Studio process/browser was not executed through a selected DevSpace workspace."
+      "evidence": "The target PC Studio process/browser and DevSpace workspace were not executed in this session, so machine-specific runtime acceptance remains pending."
     }
   ],
   "verdict": "BLOCKED",
   "limitations": [
-    "Static/source integration is complete; final acceptance requires a fresh local two-project API/browser smoke test.",
-    "v0.2 intentionally limits projects to the configured KHOSAN_PROJECTS_DIR library root; arbitrary external-root import is deferred to a safer desktop/native picker flow."
+    "Source implementation and automated runtime fixture are complete; final acceptance still requires executing the smoke/browser matrix on the target PC or CI runner and recording the result.",
+    "v0.2 intentionally limits browser-managed projects to KHOSAN_PROJECTS_DIR; arbitrary external-root import is deferred to a trusted desktop/native picker flow.",
+    "Project schema migration UX is specified but not yet implemented."
   ]
 }
