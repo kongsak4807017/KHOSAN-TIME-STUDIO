@@ -88,6 +88,21 @@ Core 3D Production Tool:
 - KHOSAN จะนำ semantic structure ไปลง Asset IR
 - Three.js เป็น adapter/backend หนึ่ง ไม่ใช่หัวใจของ Studio
 
+### Reference Reconstruction Workflow
+Workflow มาตรฐานสำหรับฉาก, generic asset และ UI ที่อ้างอิงภาพ:
+- Reference Package / Conditioning
+- Art-Direction Lock
+- Decomposition / Blockout
+- Reference Compare
+- Diagnose mismatch
+- Targeted Repair เฉพาะส่วนที่ผิด
+- Material / Lighting / Detail
+- Technical QA + Independent Review
+- Human Approval / Freeze
+- บันทึกส่วนที่ AI อนุมานและความไม่แน่นอน ไม่อ้างว่า single-view ตรง 100%
+
+รายละเอียดดู `docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md`
+
 ## สิ่งที่ต้องหา/ต่อเพิ่มเป็น P0
 
 Physics, Navigation, glTF optimization, mesh optimization, KTX2 compression, PBR material authoring, ComfyUI, 3D auto rigging, animation retargeting, visual graph editor, dialogue/quest runtime, audio runtime/generation, Playwright QA และ Git LFS
