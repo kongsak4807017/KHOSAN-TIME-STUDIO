@@ -9,6 +9,32 @@ Every asset moves through:
 
 KHOSAN distinguishes three primary production classes because a reusable character has stronger invariants than a generic 3D mesh.
 
+## Reference-driven reconstruction layer
+
+When a scene, generic 3D asset or UI surface must match a visual reference, use the canonical **Reference Reconstruction Workflow** before final Asset IR registration.
+
+Core loop:
+
+~~~text
+Reference Package
+ → Reference Conditioning
+ → Art-Direction Lock
+ → Decomposition
+ → Blockout
+ → Reference Compare
+ → Diagnose
+ → Targeted Repair
+ → Detail / Material / Lighting
+ → Technical Normalization
+ → QA + Independent Review
+ → Human Approval / Freeze
+ → Asset IR / UG-IR
+~~~
+
+Approved dimensions are locked against accidental regression. Hidden or occluded geometry must retain uncertainty metadata rather than being presented as reference-grounded truth. Open-ended “refine everything” prompting is not the default after the first pass.
+
+See `docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md`.
+
 ## 1. True 2D pipeline
 
 ~~~text
