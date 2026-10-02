@@ -33,11 +33,17 @@ flowchart TD
 
     S --> TA[06 Technical Architect]
 
-    TA --> AS[04 Asset Synthesizer]
+    TA --> RQ{Reference-driven visual work?}
+    RQ -->|yes| RR[Reference Reconstruction Workflow]
+    RQ -->|no| AS[04 Asset Synthesizer]
+    RR --> AS
+    RR --> RE[08 Rendering Engineer]
+    RR --> EA[09 Engine Adapter]
+
     TA --> AU[05 Audio & Soundscape]
     TA --> GP[07 Gameplay Programmer]
-    TA --> RE[08 Rendering Engineer]
-    TA --> EA[09 Engine Adapter]
+    TA --> RE
+    TA --> EA
 
     AS --> F[Implementation fan-in]
     AU --> F
@@ -83,12 +89,14 @@ flowchart TD
 5. Human locks the Creative Constitution at HG-01 before expensive production.
 6. Activate only production roles required by approved work.
 7. Technical Architect establishes contracts/budgets before expensive implementation.
-8. Parallel production requires isolated paths or worktrees.
-9. QA and Independent Reviewer are separate from makers.
-10. Failure returns to the defect-origin layer.
-11. Community/telemetry findings create experiments or work items; they never directly mutate production.
-12. A proposed change to a sacred constraint, emotional promise or core vision returns to HG-01.
-13. External release/deploy waits for HG-04.
+8. Reference-driven scenes, generic assets and UI surfaces use `docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md`; reusable characters remain governed by the Character Factory.
+9. Reference reconstruction locks approved dimensions, diagnoses mismatches and repairs only failing dimensions before QA.
+10. Parallel production requires isolated paths or worktrees.
+11. QA and Independent Reviewer are separate from makers.
+12. Failure returns to the defect-origin layer.
+13. Community/telemetry findings create experiments or work items; they never directly mutate production.
+14. A proposed change to a sacred constraint, emotional promise or core vision returns to HG-01.
+15. External release/deploy waits for HG-04.
 
 ## Council boundaries
 
