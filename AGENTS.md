@@ -30,6 +30,16 @@ This root file is the routing page. Detailed role instructions live under `studi
 - Changes to player fantasy, emotional promise, core vision or sacred constraints require HG-01.
 - Do not infer sensitive personal traits for audience targeting or player analysis.
 
+## Project workspace invariants
+- Before project-scoped production, resolve one active `project_id` and project root.
+- Project-scoped work items use `studio/contracts/project-work-item.schema.json` and require `project_id`.
+- One interactive Studio session has one active game project.
+- Sibling game projects are never implicit read/write context.
+- One project root maps to one reusable DevSpace workspace per continuous session.
+- Shared tools/models may be reused, but project source/state/assets remain isolated.
+- Never accept an arbitrary filesystem path from Studio HTTP as a project write root.
+- See `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`.
+
 ## Durable source of truth
 - Product architecture: `docs/`
 - Tool decisions: `studio/tool-registry.yaml`
