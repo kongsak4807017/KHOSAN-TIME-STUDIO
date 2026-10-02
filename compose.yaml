@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: khosan-time-studio:0.1.0
+    image: khosan-time-studio:0.2.0
     environment:
       KHOSAN_HOST: 0.0.0.0
       KHOSAN_PORT: 8080
