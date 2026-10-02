@@ -213,9 +213,28 @@ Reference/concept → Human DNA → canonical base mesh → canonical semantic s
 
 Native KHOSAN characters do not depend on auto-rigging as their default skeleton source. SkinTokens/TokenRig and UniRig remain the imported/arbitrary-mesh rigging path.
 
+Reference-driven scenes, generic assets and UI surfaces use the canonical **Reference Reconstruction Workflow**:
+
+```text
+Reference Package
+ → Reference Conditioning
+ → Art-Direction Lock
+ → Decomposition
+ → Blockout
+ → Compare
+ → Diagnose
+ → Targeted Repair
+ → Detail / Material / Lighting
+ → Technical QA
+ → Independent Review
+ → Human Approval / Freeze
+```
+
+The workflow locks approved dimensions against regression, rejects open-ended “refine everything” loops as the default after first pass, and records inferred/hidden geometry explicitly. Backend tools remain replaceable; KHOSAN Asset IR / UG-IR remain canonical.
+
 Generated assets must preserve provenance and uncertainty rather than hiding inferred content. Derived character outputs must preserve master-character lineage.
 
-See `docs/20-CHARACTER-FACTORY.md` and ADR-001.
+See `docs/20-CHARACTER-FACTORY.md`, `docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md` and ADR-001.
 
 ## 10. Runtime architecture
 
