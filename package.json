@@ -11,6 +11,7 @@
     "studio": "node apps/studio-server/server.mjs",
     "verify:source": "node scripts/verify-source.mjs",
     "verify:harness": "python scripts/harness_check.py",
-    "doctor:rigging": "python tools/adapters/rigging/doctor.py --json"
+    "doctor:rigging": "python tools/adapters/rigging/doctor.py --json",
+    "verify:workspace": "node scripts/smoke-multi-project.mjs"
   }
 }
