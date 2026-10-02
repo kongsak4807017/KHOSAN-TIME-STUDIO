@@ -20,7 +20,12 @@ jobs:
       - name: Verify deployable source
         run: node scripts/verify-source.mjs
       - name: Check Node syntax
-        run: node --check apps/studio-server/server.mjs
+        run: |
+          node --check apps/studio-server/server.mjs
+          node --check apps/studio-web/public/app.js
+          node --check scripts/smoke-multi-project.mjs
+      - name: Verify multi-project workspace runtime
+        run: npm run verify:workspace
       - name: Verify harness
         run: python scripts/harness_check.py
       - name: Check Python adapter syntax
