@@ -1,0 +1,65 @@
+{
+  "task_id": "TASK-MULTI-PROJECT-WORKSPACE-001",
+  "feature_id": "WORKSPACE-001",
+  "title": "Implement KHOSAN Multi-Project Workspace Architecture in Studio Shell",
+  "status": "verify",
+  "owner_role": "00-studio-orchestrator",
+  "contributors": [
+    "06-technical-architect",
+    "07-gameplay-programmer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Establish project isolation, Project Library, active-project switching and portable project manifests before Asset Lab and World Editor production expands.",
+  "context_files": [
+    "docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md",
+    "apps/studio-server/server.mjs",
+    "apps/studio-web/public/index.html",
+    "apps/studio-web/public/app.js",
+    "studio/contracts/game-project.schema.json",
+    "studio/contracts/project-work-item.schema.json"
+  ],
+  "allowed_paths": [
+    "apps/**",
+    "docs/**",
+    "studio/**",
+    "scripts/**",
+    "feature_list.json",
+    "package.json",
+    "compose.yaml",
+    "README.md",
+    "README_TH.md"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env*",
+    "projects/**"
+  ],
+  "acceptance_criteria": [
+    "Canonical multi-project workspace architecture exists",
+    "Project Library and active-project APIs are implemented",
+    "Studio Shell includes active project selector and project activation",
+    "New project creation initializes portable manifest, project state and isolated production directories",
+    "Project workspace endpoint exposes one write boundary and DevSpace root",
+    "Project-scoped work-item schema requires project_id",
+    "Source verification checks the new contracts",
+    "Documentation describes install-once/shared-tools/project-isolation model"
+  ],
+  "verification": [
+    "GitHub source inspection confirms required implementation files",
+    "JSON.parse succeeds for new schemas, feature list and Studio state",
+    "node --check passes for server.mjs and app.js",
+    "fresh local two-project smoke test remains required before acceptance"
+  ],
+  "human_gates": [],
+  "dependencies": [
+    "STUDIO-001"
+  ],
+  "risks": [
+    "Fresh local browser/API smoke test has not yet been run on the target PC",
+    "Filesystem picker/import of arbitrary external project roots is intentionally not exposed in v0.2 because the HTTP API must not accept arbitrary paths",
+    "Project schema migration UX is specified but not yet implemented"
+  ],
+  "notes": "v0.2 source implements library-root projects and switching. External-project registration, migrations, Asset Registry and World Editor remain later bounded features."
+}
