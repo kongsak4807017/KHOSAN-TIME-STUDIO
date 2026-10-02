@@ -2,7 +2,7 @@
 
 ## Important status
 
-The repository now provides both the master architecture/harness **and a runnable local Studio Web/API baseline (v0.1.0)**.
+The repository now provides both the master architecture/harness **and a runnable local Studio Web/API baseline (v0.2.0)**.
 
 Usable modes today:
 1. Git repository + ChatGPT + DevSpace local workspace.
@@ -85,7 +85,26 @@ Physics/nav/material/optimization/QA tools are not “installed by assumption.�
 
 ## Stage 5 — Local Studio shell (available baseline)
 
-Current v0.1 topology:
+Current v0.2 topology:
+
+The Studio installation is independent from game projects. One interactive session resolves one active project from the Project Library.
+
+~~~text
+Installed Studio / source checkout
+        │
+        ▼
+Project Library
+        │
+   ┌────┼────┐
+   ▼    ▼    ▼
+Game A Game B Game C
+   │
+active project
+   │
+DevSpace workspace / project-scoped agents
+~~~
+
+Runtime topology:
 
 ```text
 Browser / Desktop shell
@@ -128,7 +147,7 @@ Future service classes still planned:
 - QA runner,
 - authenticated team/remote gateway.
 
-See `docs/17-DEPLOYABLE-STUDIO-V0.1.md` and `deploy/docker/README.md`.
+See `docs/23-DEPLOYABLE-STUDIO-V0.2.md`, `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md` and `deploy/docker/README.md`.
 
 ## Configuration
 
@@ -144,19 +163,30 @@ config/
 
 Secrets must remain outside git.
 
-## Data
+## Data and multi-project separation
 
-Target local data separation:
+Recommended installed layout:
 
 ```text
-projects/          # user game projects
-cache/             # regenerable generated/intermediate data
-artifacts/         # build/export output
-logs/              # local observability
-tool-data/         # tool-specific caches/models
+C:\Program Files\KHOSAN Studio\
+  application/runtime
+
+D:\KHOSAN\
+  Projects\
+  SharedAssets\
+  Models\
+  ToolData\
+  Cache\
+  Logs\
 ```
 
+The project root is configured with `KHOSAN_PROJECTS_DIR`. Development mode may continue to use the repository-local `projects/` fallback.
+
+Each game is an independent workspace with its own `khosan-project.json` and `.khosan/` operational state. Shared tools/models are not authoritative project data.
+
 Large binaries should use Git LFS or an explicit asset store rather than normal Git history.
+
+See `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`.
 
 ## Backup
 
@@ -183,3 +213,5 @@ Deployment must be gated by:
 ## Windows note
 
 Do not make Bash the only supported lifecycle path. Maintain PowerShell parity for bootstrap/build commands used by ordinary Windows creators.
+
+For a future packaged installer, install the application under Program Files (or the platform application directory) but keep Projects/Models/ToolData/Cache outside the application install directory. Updating KHOSAN Studio must not delete or silently migrate game projects.
