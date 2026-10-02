@@ -125,3 +125,29 @@ Stop/escalate if:
 - parallel agents require overlapping writes,
 - work expands beyond the active task,
 - a community request conflicts with the locked Constitution.
+
+
+## Project workspace gate
+
+Creative exploration may begin without an active game project. Before any project-scoped production write, the Orchestrator must resolve:
+
+~~~text
+Project Library
+  ↓
+active project_id
+  ↓
+project root / write boundary
+  ↓
+project-scoped task
+  ↓
+specialist / DevSpace workspace
+~~~
+
+Rules:
+- one interactive Studio session has one active project,
+- project-scoped work items use `studio/contracts/project-work-item.schema.json` and require `project_id`,
+- sibling game projects are never implicit context,
+- one project root maps to one reusable DevSpace workspace per continuous session,
+- Studio-level product/harness tasks remain separate from game-project tasks.
+
+See `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`.
