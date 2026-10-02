@@ -236,6 +236,29 @@ Generated assets must preserve provenance and uncertainty rather than hiding inf
 
 See `docs/20-CHARACTER-FACTORY.md`, `docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md` and ADR-001.
 
+## Multi-project workspace architecture
+
+KHOSAN Studio is installed once while game projects remain independent workspaces.
+
+~~~text
+Studio
+  ↓
+Project Library
+  ├─ Game A
+  ├─ Game B
+  └─ Game C
+       ↓
+one active project
+       ↓
+project-scoped Agent / DevSpace workspace
+~~~
+
+New projects receive a portable `khosan-project.json`, `.khosan/project-state.json` and isolated production directories. Project-scoped work items require `project_id`. Shared tools/models may be reused across projects, but authoritative project data and writes remain isolated.
+
+The Studio Shell v0.2 implements Project Library discovery, active-project switching, workspace-boundary API and project-aware routing. Arbitrary filesystem-path import is intentionally deferred to a trusted native/desktop picker so the local HTTP API does not become a filesystem escape surface.
+
+See `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md` and `docs/23-DEPLOYABLE-STUDIO-V0.2.md`.
+
 ## 10. Runtime architecture
 
 Native WebGPU remains a first-class target with research/implementation direction covering:
