@@ -31,12 +31,40 @@
         "Agent Workboard reads durable studio/tasks JSON work items",
         "Tool Registry provenance is visible",
         "Idea/Concept Lab can create a project from a creative brief",
-        "Human Gate UX and full editable Constitution remain future work"
+        "Human Gate UX and full editable Constitution remain future work",
+        "Studio header exposes an active-project selector",
+        "Production routing resolves one active project context before project-scoped work"
       ],
       "verification": [
         "node scripts/verify-source.mjs",
         "node --check apps/studio-server/server.mjs",
         "manual browser smoke test at http://127.0.0.1:8080"
+      ]
+    },
+    {
+      "id": "WORKSPACE-001",
+      "title": "KHOSAN Multi-Project Workspace Architecture and Project Library",
+      "status": "verify",
+      "owner_role": "00-studio-orchestrator",
+      "acceptance_criteria": [
+        "Studio is installable/updatable independently from game projects",
+        "Project Library tracks multiple isolated game projects and one active project",
+        "New projects receive khosan-project.json plus .khosan project state and production directory structure",
+        "Project-scoped work items require project_id",
+        "Studio Shell exposes project switcher, activation and project workspace boundary",
+        "DevSpace contract maps one project root to one reusable workspace per continuous session",
+        "Shared tools/models are separated from authoritative project state",
+        "Legacy v0.1 project folders remain discoverable",
+        "Studio HTTP API does not accept arbitrary filesystem paths or expose a generic shell endpoint"
+      ],
+      "verification": [
+        "node scripts/verify-source.mjs",
+        "node --check apps/studio-server/server.mjs",
+        "node --check apps/studio-web/public/app.js",
+        "create two projects locally and verify distinct roots/manifests/state",
+        "switch active project and verify /api/orchestrate returns the selected project_id",
+        "verify sibling project writes are not implicitly exposed",
+        "manual browser smoke test of Project Hub and project switcher"
       ]
     },
     {
