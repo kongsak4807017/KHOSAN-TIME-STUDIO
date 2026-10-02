@@ -75,6 +75,12 @@ KHOSAN converts that intent into bounded work items, routes only the required sp
 | `scripts/` | bootstrap and verification helpers |
 | `deploy/` | local/self-host deployment guidance |
 
+## Multi-project workspace
+
+KHOSAN Studio is installed once while each game is an independent workspace. The Studio keeps a Project Library, one active interactive project, portable project manifests and project-scoped work-item contracts. Tools/models may be shared, but project truth and writes remain isolated per game.
+
+See [docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md](docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md).
+
 ## Creative Intelligence
 
 KHOSAN treats “game generation” as only one subsystem. Before expensive production, the Studio can explore a concept space, critique derivative or incoherent ideas, build micro-prototypes, observe players and lock a **Creative Constitution**.
@@ -155,24 +161,28 @@ See:
 - [docs/18-DEVSPACE-CONNECTIVITY.md](docs/18-DEVSPACE-CONNECTIVITY.md)
 - [docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md](docs/19-CHATGPT-DEVSPACE-PERSISTENT-WORKSPACE.md)
 
-## Deployable Studio baseline — v0.1.0
+## Deployable Studio baseline — v0.2.0
 
 The repository now contains a runnable local Studio Web/API baseline in addition to the architecture/harness.
 
 Current runnable capabilities:
 - Studio Home and Idea / Concept Lab,
-- durable local project creation,
+- multi-project Project Library with one active project,
+- active-project switcher and project workspace view,
+- durable isolated project creation with `khosan-project.json` and `.khosan/` state,
+- project-aware routing and workspace boundary API,
 - Blueprint and Creative Constitution persistence,
 - 21-role Agent Workboard overview,
 - Tool Registry/provenance view,
 - health/status API,
-- deterministic intent-to-role routing helper,
 - SkinTokens/UniRig rigging adapter boundary,
 - Docker/self-host package.
 
 The local web server intentionally does **not** pretend to be the ChatGPT LLM. ChatGPT performs agent reasoning; DevSpace runs bounded local work/tools; the Studio Web/API persists project state and presents the creator-facing shell.
 
-See [docs/17-DEPLOYABLE-STUDIO-V0.1.md](docs/17-DEPLOYABLE-STUDIO-V0.1.md).
+See:
+- [docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md](docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md)
+- [docs/23-DEPLOYABLE-STUDIO-V0.2.md](docs/23-DEPLOYABLE-STUDIO-V0.2.md)
 
 ## Start locally
 
@@ -217,8 +227,8 @@ Start with [docs/06-LOCAL-DEPLOYMENT.md](docs/06-LOCAL-DEPLOYMENT.md) and [deplo
 
 Deployment is intentionally staged:
 1. **Repository/harness mode** — available.
-2. **Local Studio shell v0.1** — available: Web/API + durable project state.
-3. **Docker Studio shell v0.1** — available for trusted-local self-hosting.
+2. **Local Studio shell v0.2** — available: Web/API + Project Library + active-project isolation + durable project state.
+3. **Docker Studio shell v0.2** — available for trusted-local self-hosting.
 4. **Tool workers** — rigging adapter exists; full GPU/tool-service fleet remains staged.
 5. **Playable runtime integration** — WebGPU/UG-IR live preview remains roadmap work.
 6. **Remote/team deployment** — not approved until authentication/security hardening exists.
