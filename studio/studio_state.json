@@ -1,23 +1,23 @@
 {
   "schema_version": 1,
   "project": "KHOSAN-TIME-STUDIO",
-  "phase": "DEPLOYABLE_STUDIO_V0_1",
+  "phase": "DEPLOYABLE_STUDIO_V0_2_MULTI_PROJECT",
   "active_feature_id": null,
   "active_work_item_id": null,
   "active_roles": [],
   "pending_human_gate": null,
   "last_verification": null,
   "known_blockers": [
+    "Studio v0.2 multi-project shell source is implemented but fresh local runtime/browser acceptance remains pending",
     "DevSpace public MCP tunnel acceptance remains pending on the target PC",
-    "Studio v0.1 local shell exists but full local acceptance has not yet been recorded from DevSpace",
     "Prototype Arena UI is not yet implemented",
     "Asset Registry and UG-IR live runtime are not yet implemented",
     "Community/telemetry connectors are not yet implemented",
     "P0 external tools require fixture-based evaluation before ADOPT",
     "Legacy research archive remains pending verbatim mirror"
   ],
-  "next_milestone": "Fresh DevSpace/local acceptance of Studio v0.1 + MCP connectivity",
-  "last_updated": "2026-09-29",
+  "next_milestone": "Local runtime acceptance of v0.2 multi-project shell, then Asset Registry / Asset Lab",
+  "last_updated": "2026-10-03",
   "creative_intelligence": {
     "foundation": "specified",
     "council_roles": 8,
@@ -27,9 +27,9 @@
     "active_experiment": null
   },
   "deployable_studio": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "source_status": "shipped_on_main",
-    "runtime_acceptance": "pending_local_devspace",
+    "runtime_acceptance": "pending_local_v0_2",
     "local_node": true,
     "docker_compose": true,
     "default_bind": "127.0.0.1:8080",
@@ -46,6 +46,15 @@
       "public_mcp_acceptance": "pending_local_machine",
       "studio_port_publication": "disabled_by_policy",
       "persistent_workspace_contract": "documented"
+    },
+    "multi_project": {
+      "architecture": "canonical",
+      "project_library": true,
+      "active_project": true,
+      "project_switcher": true,
+      "project_manifest": true,
+      "project_work_item_contract": true,
+      "local_runtime_acceptance": "pending"
     }
   }
 }
