@@ -44,7 +44,21 @@
       "title": "Asset Lab integration: sprite-gen + img2threejs + Asset Registry",
       "status": "proposed",
       "owner_role": "04-asset-synthesizer",
-      "acceptance_criteria": []
+      "acceptance_criteria": [
+        "Asset Lab supports sprite-gen true-2D production and img2threejs generic 3D reconstruction through adapters",
+        "Reference-driven scenes, generic assets and UI can enter the canonical Reference Reconstruction Workflow",
+        "Reference Reconstruction persists a Reference Package, locked dimensions, mismatch annotations, uncertainty metadata and reconstruction lineage",
+        "Studio supports compare → diagnose → targeted repair without regenerating unrelated approved dimensions",
+        "Reference Reconstruction exposes QA and independent-review evidence before Human Approval / Freeze",
+        "Approved outputs normalize into KHOSAN Asset IR / UG-IR and Asset Registry entries"
+      ],
+      "verification": [
+        "validate Reference Reconstruction state transitions and manifest contract when implemented",
+        "run a scene fixture from reference selection through Human Approval / Freeze",
+        "verify locked camera/composition dimensions do not regress during targeted repair",
+        "verify inferred/hidden geometry is marked as uncertainty rather than reference-grounded truth",
+        "verify Asset Registry lineage points back to the approved source reference"
+      ]
     },
     {
       "id": "CHARACTER-001",
