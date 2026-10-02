@@ -1,10 +1,12 @@
 {
   "name": "khosan-time-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "KHOSAN TIME STUDIO local-first Creative Intelligence and Game Studio",
-  "engines": {"node": ">=20"},
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "studio": "node apps/studio-server/server.mjs",
     "verify:source": "node scripts/verify-source.mjs",
