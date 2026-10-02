@@ -103,6 +103,11 @@ Source: https://github.com/kongsak4807017/sprite-gen
 
 Source: https://github.com/kongsak4807017/img2threejs
 
+### Reference reconstruction
+KHOSAN now defines a canonical **Reference Reconstruction Workflow** for reference-driven scenes, generic assets and UI: condition the reference, lock art direction, decompose, block out, compare, diagnose, repair only failing dimensions, normalize technically, verify independently and freeze only after human approval.
+
+See [docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md](docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md).
+
 ### Harness engineering
 **learn-harness-engineering** — basis for instructions, state, verification, scope, lifecycle, maker/checker separation, context isolation and graph engineering.
 
