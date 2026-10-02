@@ -54,6 +54,9 @@ function safeId(value) {
   if (!/^[a-z0-9\u0E00-\u0E7F][a-z0-9\u0E00-\u0E7F._-]{0,79}$/i.test(value || "")) return null;
   return value;
 }
+function routeId(value) {
+  try { return safeId(decodeURIComponent(value || "")); } catch { return null; }
+}
 function projectDir(id) {
   const valid = safeId(id);
   if (!valid) throw new Error("invalid project id");
@@ -239,7 +242,7 @@ async function api(req, res, url) {
 
   const activateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/activate$/);
   if (req.method === "POST" && activateMatch) {
-    const id = safeId(activateMatch[1]);
+    const id = routeId(activateMatch[1]);
     if (!id) { send(res,400,{error:"invalid project id"}); return true; }
     const project = await activateProject(id);
     if (!project) { send(res,404,{error:"project not found"}); return true; }
@@ -248,7 +251,7 @@ async function api(req, res, url) {
 
   const workspaceMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/workspace$/);
   if (req.method === "GET" && workspaceMatch) {
-    const id = safeId(workspaceMatch[1]);
+    const id = routeId(workspaceMatch[1]);
     if (!id) { send(res,400,{error:"invalid project id"}); return true; }
     const dir = projectDir(id);
     const project = await jsonFile(path.join(dir,"project.json"));
@@ -265,7 +268,7 @@ async function api(req, res, url) {
 
   const pm = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
   if (req.method === "GET" && pm) {
-    const dir=projectDir(pm[1]); const project=await jsonFile(path.join(dir,"project.json"));
+    const id=routeId(pm[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const project=await jsonFile(path.join(dir,"project.json"));
     if (!project) { send(res,404,{error:"project not found"}); return true; }
     const {library}=await syncLibrary();
     send(res,200,{
@@ -280,7 +283,7 @@ async function api(req, res, url) {
 
   const updateMatch=url.pathname.match(/^\/api\/projects\/([^/]+)\/(blueprint|creative-constitution)$/);
   if (req.method==="PUT" && updateMatch) {
-    const dir=projectDir(updateMatch[1]); const p=await jsonFile(path.join(dir,"project.json"));
+    const id=routeId(updateMatch[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const p=await jsonFile(path.join(dir,"project.json"));
     if (!p) { send(res,404,{error:"project not found"}); return true; }
     const data=await bodyJson(req);
     if (data.project_id && data.project_id !== p.id) { send(res,409,{error:"project_id mismatch"}); return true; }
@@ -292,7 +295,7 @@ async function api(req, res, url) {
 
   const eventMatch=url.pathname.match(/^\/api\/projects\/([^/]+)\/events$/);
   if (req.method==="POST" && eventMatch) {
-    const dir=projectDir(eventMatch[1]); const p=await jsonFile(path.join(dir,"project.json"));
+    const id=routeId(eventMatch[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const p=await jsonFile(path.join(dir,"project.json"));
     if (!p) { send(res,404,{error:"project not found"}); return true; }
     const data=await bodyJson(req);
     const event={id:crypto.randomUUID(),project_id:p.id,time:now(),type:data.type||"note",payload:data.payload||data};
