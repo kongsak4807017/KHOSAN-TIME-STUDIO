@@ -70,6 +70,14 @@ Build / Export / Deploy
 
 รายละเอียดดู `docs/12-CREATIVE-INTELLIGENCE.md`
 
+## Multi-Project Workspace
+
+ติดตั้ง KHOSAN Studio ครั้งเดียว แต่สร้างเกมได้หลาย Project โดยแต่ละเกมมี Project ID, root, state, assets และ task ของตัวเอง ไม่ปะปนกัน ส่วน Tool/AI model ขนาดใหญ่สามารถติดตั้งร่วมกันได้
+
+Studio มี Project Library และ Active Project ชัดเจน ก่อนทำ production Agent/DevSpace ต้อง resolve project root ของเกมนั้นก่อน
+
+รายละเอียดดู `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`
+
 ## เครื่องมือ Core ที่มีแล้ว
 
 ### sprite-gen
@@ -121,12 +129,15 @@ Clone repository แล้วเปิด local workspace จากนั้น�
 
 ## สถานะปัจจุบัน
 
-ตอนนี้เป็น **Deployable Studio Baseline v0.1.0** แล้ว: Harness, architecture, Creative Intelligence contracts และ local Studio Web/API มี source code ที่รันได้จริง
+ตอนนี้เป็น **Deployable Studio Baseline v0.2.0** แล้ว: Harness, architecture, Creative Intelligence contracts และ local Studio Web/API มี source code ที่รันได้จริง
 
 มีแล้ว:
 - Studio Home
 - Idea / Concept Lab ขั้นต้น
-- สร้าง project แบบ durable บน disk
+- Project Library รองรับหลายเกมใน Studio เดียว
+- Active Project switcher: หนึ่ง interactive session ทำงานกับเกมเดียวอย่างชัดเจน
+- สร้าง project แบบ isolated บน disk พร้อม `khosan-project.json` และ `.khosan/`
+- Project workspace boundary / project-aware routing
 - Blueprint + Creative Constitution persistence
 - Agent Workboard ภาพรวม 21 roles
 - Tool Registry/provenance
@@ -169,6 +180,6 @@ python tools\devspace-connectivity\doctor.py --require-public
 docker compose up --build
 ```
 
-ดูรายละเอียดที่ `docs/17-DEPLOYABLE-STUDIO-V0.1.md`.
+ดูรายละเอียดที่ `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md` และ `docs/23-DEPLOYABLE-STUDIO-V0.2.md`.
 
 หลักสำคัญคือ Repository นี้ต้องบอกความจริงว่าอะไรสร้างแล้ว อะไรเป็น specification และอะไรเป็น backlog ไม่ทำให้เอกสารดูเหมือนระบบรันได้แล้วทั้งที่ยังไม่ได้ implement
