@@ -1,6 +1,6 @@
 # KHOSAN Local / Self-Host Deployment
 
-## Current deployable baseline — v0.1.0
+## Current deployable baseline — v0.2.0
 
 KHOSAN TIME STUDIO now has a runnable trusted-local Web/API shell.
 
@@ -9,8 +9,10 @@ Available:
 2. optional DevSpace MCP tunnel/connectivity pack for ChatGPT access,
 3. Node.js local Studio server,
 4. Docker Compose local Studio server,
-5. durable project persistence,
-6. SkinTokens/UniRig local rigging adapter boundary.
+5. multi-project Project Library + active project persistence,
+6. isolated new-project manifests/state/workspace directories,
+7. project-aware routing and workspace boundary API,
+8. SkinTokens/UniRig local rigging adapter boundary.
 
 Not yet production remote-ready:
 - authentication/authorization,
@@ -120,7 +122,7 @@ The Studio web container intentionally does not contain these GPU dependencies.
 
 ## Trust boundary
 
-v0.1:
+v0.2:
 - binds localhost by default,
 - no arbitrary-shell HTTP endpoint,
 - 1 MiB request-body limit,
@@ -131,7 +133,7 @@ v0.1:
 - DevSpace tunnel publishes only the MCP service, not the Studio Web/API,
 - DevSpace/tunnel credentials and machine-specific state stay outside Git.
 
-Do not expose v0.1 directly to the public internet.
+Do not expose v0.2 directly to the public internet.
 
 ## Source verification
 
@@ -139,6 +141,8 @@ Do not expose v0.1 directly to the public internet.
 node scripts/verify-source.mjs
 python scripts/harness_check.py
 node --check apps/studio-server/server.mjs
+node --check apps/studio-web/public/app.js
+npm run verify:workspace
 python -m py_compile tools/adapters/rigging/*.py
 ~~~
 
