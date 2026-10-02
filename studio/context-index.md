@@ -8,7 +8,14 @@
 - progress.md
 - session-handoff.md
 
+## Project workspace boundary
+
+For project-scoped production, resolve the active `project_id` and project root before loading specialist context. Load `khosan-project.json`, `.khosan/project-state.json`, the project-scoped work item, and only files inside that project plus explicitly allowed shared resources. Sibling game projects are never implicit context.
+
+See `docs/22-MULTI-PROJECT-WORKSPACE-ARCHITECTURE.md`.
+
 ## Load on demand
+
 
 ### Creative / Game Design / Narrative
 Product vision, Creative Constitution, GDD/world/narrative docs. Avoid renderer reports unless feasibility requires them.
