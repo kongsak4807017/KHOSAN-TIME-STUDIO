@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KHOSAN Game Project Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_id",
+    "name",
+    "created_with_studio",
+    "last_opened_with_studio",
+    "target",
+    "ir",
+    "paths"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_with_studio": {
+      "type": "string"
+    },
+    "last_opened_with_studio": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "ir": {
+      "type": "object",
+      "required": [
+        "ug_ir",
+        "asset_ir",
+        "character_ir"
+      ],
+      "properties": {
+        "ug_ir": {
+          "type": "string"
+        },
+        "asset_ir": {
+          "type": "string"
+        },
+        "character_ir": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "project_state",
+        "assets",
+        "world",
+        "gameplay",
+        "ui",
+        "builds"
+      ],
+      "properties": {
+        "project_state": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "string"
+        },
+        "world": {
+          "type": "string"
+        },
+        "gameplay": {
+          "type": "string"
+        },
+        "ui": {
+          "type": "string"
+        },
+        "builds": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "repository_mode": {
+          "enum": [
+            "independent",
+            "unconfigured"
+          ]
+        },
+        "lfs_recommended": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
