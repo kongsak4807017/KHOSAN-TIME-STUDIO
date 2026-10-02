@@ -1,0 +1,61 @@
+{
+  "task_id": "TASK-REFERENCE-RECON-001",
+  "feature_id": "ASSET-001",
+  "title": "Establish canonical Reference Reconstruction Workflow",
+  "status": "accepted",
+  "owner_role": "04-asset-synthesizer",
+  "contributors": [
+    "00-studio-orchestrator",
+    "08-rendering-engineer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Make reference-driven scene, generic asset and UI reconstruction a governed KHOSAN Studio workflow with locked visual invariants, targeted repair, uncertainty tracking, QA, independent review and human freeze.",
+  "context_files": [
+    "docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md",
+    "docs/04-ASSET-PIPELINE.md",
+    "studio/graph.md",
+    "docs/MASTER-SUMMARY.md",
+    "feature_list.json"
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "studio/graph.md",
+    "studio/tasks/**",
+    "studio/evidence/**",
+    "README.md",
+    "README_TH.md",
+    "feature_list.json"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env*",
+    "apps/**",
+    "tools/**"
+  ],
+  "acceptance_criteria": [
+    "A canonical Reference Reconstruction Workflow document exists",
+    "Workflow defines reference package, conditioning, art-direction lock, decomposition, comparison, targeted repair, QA, independent review and Human Approval / Freeze",
+    "Workflow records hidden/inferred geometry uncertainty and rejects unsupported 100% fidelity claims",
+    "Execution graph routes reference-driven visual work through the workflow without replacing the Character Factory",
+    "Asset Pipeline and Master Summary reference the workflow",
+    "README English/Thai surfaces the workflow",
+    "ASSET-001 backlog contains implementation and verification criteria for the workflow"
+  ],
+  "verification": [
+    "GitHub fetch verifies all modified canonical files contain the Reference Reconstruction workflow links and routing",
+    "JSON.parse succeeds for feature_list.json",
+    "GitHub fetch verifies TASK-REFERENCE-RECON-001 and its evidence are valid JSON"
+  ],
+  "human_gates": [],
+  "dependencies": [
+    "ASSET-001",
+    "CHARACTER-001"
+  ],
+  "risks": [
+    "This task establishes canonical architecture and backlog criteria; the interactive Reference Reconstruction workspace is not implemented yet",
+    "Backend-specific reconstruction workers such as Oriverse remain replaceable and are not made canonical by this workflow"
+  ],
+  "notes": "Documentation/state-machine layer accepted. Runtime/UI implementation remains under ASSET-001."
+}
