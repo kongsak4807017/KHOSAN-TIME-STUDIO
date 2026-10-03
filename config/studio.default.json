@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "installation": {
+    "portable": true,
+    "projects_dir": null,
+    "shared_assets_dir": null,
+    "models_dir": null,
+    "tool_data_dir": null,
+    "cache_dir": null,
+    "logs_dir": null
+  },
+  "integrations": {
+    "devspace": {
+      "required": false,
+      "configured": false,
+      "config_path": null
+    }
+  },
+  "runtime": {
+    "host": "127.0.0.1",
+    "port": 8080
+  }
+}

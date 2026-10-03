@@ -2,7 +2,7 @@
   "host": "127.0.0.1",
   "port": 7676,
   "allowedRoots": [
-    "C:\\KHOSAN\\KHOSAN-TIME-STUDIO"
+    "<SET-YOUR-KHOSAN-PROJECT-ROOT>"
   ],
-  "publicBaseUrl": "https://YOUR-STATIC-TUNNEL-DOMAIN"
+  "publicBaseUrl": "<OPTIONAL-HTTPS-TUNNEL-URL>"
 }
