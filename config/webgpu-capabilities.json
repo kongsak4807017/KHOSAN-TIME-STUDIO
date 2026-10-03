@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "policy": "Only claim implemented when executable source is present in the unified repository.",
+  "capabilities": [
+    {"id":"webgpu-runtime","status":"roadmap","evidence":"v0.2 Studio source states UG-IR/WebGPU live preview remains open"},
+    {"id":"advanced-compute","status":"specified","source_package":"v1.2.0","note":"package Studio payload is identical to baseline; retain report/specification as design evidence"},
+    {"id":"pbr-lighting","status":"specified","source_package":"v1.3.0","note":"package Studio payload is identical to baseline; retain report/specification as design evidence"},
+    {"id":"post-processing","status":"specified","source_package":"v1.4.0","note":"package Studio payload is identical to baseline; retain report/specification as design evidence"},
+    {"id":"procedural-terrain","status":"specified","source_package":"v1.5.0","note":"package Studio payload is identical to baseline; retain report/specification as design evidence"},
+    {"id":"skeletal-skinning","status":"specified","source_package":"v1.6.0","note":"package Studio payload is identical to baseline; rigging adapter boundary exists separately"},
+    {"id":"clustered-lighting","status":"specified","source_package":"v1.7.0","note":"package Studio payload is identical to baseline; retain report/specification as design evidence"},
+    {"id":"cross-platform-packaging","status":"specified","source_package":"v1.9.0","note":"current unified repo already has Docker/local packaging; legacy package adds no distinct Studio payload"},
+    {"id":"shadow-pcf","status":"prototype-source-available","source_package":"v2.0.0","artifact":"samples/webgpu_realtime_shadow_pcf.html"},
+    {"id":"ssao-contact-shadows","status":"prototype-source-available","source_package":"v2.1.0","artifact":"samples/webgpu_ssao_ambient_occlusion.html"},
+    {"id":"skintokens","status":"evaluate","note":"optional GPU-heavy candidate; not required for Studio readiness"},
+    {"id":"unirig","status":"evaluate","note":"optional rigging candidate; not required for Studio readiness"},
+    {"id":"animation-retargeting","status":"to-find","note":"production implementation remains unresolved"}
+  ]
+}
