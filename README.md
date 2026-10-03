@@ -200,11 +200,16 @@ chmod +x scripts/*.sh
 ./scripts/run-studio.sh
 ```
 
-Windows PowerShell:
+Windows PowerShell (recommended unified install):
 ```powershell
-.\scripts\bootstrap.ps1
-.\scripts\run-studio.ps1
+.\scripts\install.ps1
+.\scripts\doctor.ps1
+.\scripts\start.ps1
 ```
+
+DevSpace is optional and is configured after installation; the repository does not pin a connector ID or machine-specific project path.
+
+See [docs/24-UNIFIED-GITHUB-INSTALL.md](docs/24-UNIFIED-GITHUB-INSTALL.md).
 
 Open `http://127.0.0.1:8080`.
 
