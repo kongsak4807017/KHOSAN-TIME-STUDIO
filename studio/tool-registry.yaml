@@ -92,6 +92,13 @@ tools:
   - {id: yarn-spinner, name: Yarn Spinner, status: evaluate, priority: p0, capability: dialogue}
   - {id: tonejs, name: Web Audio / Tone.js, status: evaluate, priority: p0, capability: audio_runtime}
   - {id: ai-audio, name: AI SFX/Music Tool, status: to_find, priority: p1}
+  - {id: asset-provider-router, name: KHOSAN Asset Provider Router, status: build_khosan, priority: p0, owner: 04-asset-synthesizer, capability: provider_agnostic_asset_routing}
+  - {id: ludo, name: Ludo.ai, source: https://ludo.ai/developers, status: evaluate, priority: p0, owner: 04-asset-synthesizer, capability: cloud_multimodal_asset_generation}
+  - {id: meshy, name: Meshy, source: https://docs.meshy.ai/, status: evaluate, priority: p0, owner: 04-asset-synthesizer, capability: cloud_3d_rig_animation}
+  - {id: tripo, name: Tripo, source: https://platform.tripo3d.ai/docs, status: evaluate, priority: p0, owner: 04-asset-synthesizer, capability: cloud_3d_generation}
+  - {id: itchio-assets, name: itch.io Game Assets, source: https://itch.io/game-assets/free, status: reference, priority: p1, owner: 04-asset-synthesizer, capability: asset_discovery}
+  - {id: mixkit-sfx, name: Mixkit Sound Effects, source: https://mixkit.co/free-sound-effects/, status: reference, priority: p1, owner: 05-audio-designer, capability: sfx_discovery}
+  - {id: justsketchme, name: JustSketchMe, source: https://app.justsketch.me/, status: optional, priority: p1, owner: 04-asset-synthesizer, capability: humanoid_pose_reference}
   - {id: playwright, name: Playwright, status: evaluate, priority: p0, capability: automated_qa}
   - {id: git-lfs, name: Git LFS, status: evaluate, priority: p0, capability: large_asset_versioning}
   - {id: world-editor, name: KHOSAN World Editor, status: build_khosan, priority: p0}

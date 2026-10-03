@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "default_provider": "auto",
+    "secrets": "environment_only",
+    "download_outputs_immediately": true,
+    "license_gate": true,
+    "unknown_license_blocks_production": true,
+    "cloud_generation_requires_explicit_enable": true
+  },
+  "providers": [
+    {
+      "id": "native",
+      "name": "KHOSAN Native / Procedural",
+      "kind": "local",
+      "status": "preferred",
+      "capabilities": ["prototype_geometry","procedural_vfx","terrain","materials","motion_templates"],
+      "cost": "local"
+    },
+    {
+      "id": "sprite-gen",
+      "name": "sprite-gen",
+      "kind": "local",
+      "status": "adopt",
+      "source": "https://github.com/kongsak4807017/sprite-gen",
+      "capabilities": ["sprite","sprite_animation","atlas","qa"]
+    },
+    {
+      "id": "img2threejs",
+      "name": "img2threejs",
+      "kind": "local",
+      "status": "adopt",
+      "source": "https://github.com/kongsak4807017/img2threejs",
+      "capabilities": ["reference_to_3d","procedural_3d"]
+    },
+    {
+      "id": "ludo",
+      "name": "Ludo.ai",
+      "kind": "cloud",
+      "status": "evaluate_p0",
+      "homepage": "https://ludo.ai/",
+      "docs": "https://ludo.ai/developers",
+      "auth_env": "LUDO_API_KEY",
+      "capabilities": ["image","sprite","sprite_animation","3d","rig","audio","video"],
+      "integration": ["cli","rest","mcp"],
+      "notes": "Prefer CLI for coding agents; persist generated outputs because API results are temporary."
+    },
+    {
+      "id": "meshy",
+      "name": "Meshy",
+      "kind": "cloud",
+      "status": "evaluate_p0",
+      "homepage": "https://www.meshy.ai/",
+      "docs": "https://docs.meshy.ai/",
+      "auth_env": "MESHY_API_KEY",
+      "capabilities": ["text_to_3d","image_to_3d","rig","animation","text_to_motion","remesh","texture"],
+      "integration": ["rest"],
+      "constraints": ["auto_rig_best_for_clear_biped_humanoids"]
+    },
+    {
+      "id": "tripo",
+      "name": "Tripo",
+      "kind": "cloud",
+      "status": "evaluate_p0",
+      "homepage": "https://www.tripo3d.ai/",
+      "docs": "https://platform.tripo3d.ai/docs",
+      "auth_env": "TRIPO_API_KEY",
+      "capabilities": ["text_to_3d","image_to_3d","multiview_to_3d","texture"],
+      "integration": ["rest"],
+      "notes": "Adapter contract first; do not make Tripo-specific output canonical."
+    },
+    {
+      "id": "itchio",
+      "name": "itch.io Free Game Assets",
+      "kind": "marketplace",
+      "status": "reference_source",
+      "homepage": "https://itch.io/game-assets/free",
+      "capabilities": ["2d","3d","audio","textures","ui"],
+      "license_policy": "per_asset_review_required"
+    },
+    {
+      "id": "mixkit-sfx",
+      "name": "Mixkit Sound Effects",
+      "kind": "library",
+      "status": "reference_source",
+      "homepage": "https://mixkit.co/free-sound-effects/",
+      "capabilities": ["sfx"],
+      "license_policy": "record_source_and_asset_license_before_production"
+    },
+    {
+      "id": "justsketchme",
+      "name": "JustSketchMe",
+      "kind": "reference_tool",
+      "status": "optional",
+      "homepage": "https://app.justsketch.me/",
+      "capabilities": ["humanoid_pose_reference"]
+    }
+  ]
+}
