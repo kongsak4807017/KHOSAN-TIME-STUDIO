@@ -12,6 +12,8 @@
     "verify:source": "node scripts/verify-source.mjs",
     "verify:harness": "python scripts/harness_check.py",
     "doctor:rigging": "python tools/adapters/rigging/doctor.py --json",
-    "verify:workspace": "node scripts/smoke-multi-project.mjs"
+    "verify:workspace": "node scripts/smoke-multi-project.mjs",
+    "doctor:image-blaster": "node tools/adapters/image-blaster/doctor.mjs",
+    "image-blaster": "node tools/adapters/image-blaster/run.mjs"
   }
 }

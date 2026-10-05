@@ -1,7 +1,23 @@
 {
   "schema_version": 1,
   "tools": {
-    "skintokens": {"repository":"https://github.com/kongsak4807017/SkinTokens.git","commit":"273b691d35989d71cd17ff2895fdc735097b92d1","status":"evaluate","role":"preferred-auto-rig"},
-    "unirig": {"repository":"https://github.com/kongsak4807017/UniRig.git","commit":"6793c6640ff01c8fb389f3993434124bb43d2933","status":"evaluate","role":"expert-fallback"}
+    "skintokens": {
+      "repository": "https://github.com/kongsak4807017/SkinTokens.git",
+      "commit": "273b691d35989d71cd17ff2895fdc735097b92d1",
+      "status": "evaluate",
+      "role": "preferred-auto-rig"
+    },
+    "unirig": {
+      "repository": "https://github.com/kongsak4807017/UniRig.git",
+      "commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+      "status": "evaluate",
+      "role": "expert-fallback"
+    },
+    "image-blaster": {
+      "repository": "https://github.com/kongsak4807017/image-blaster.git",
+      "commit": "4acb43ba126a12358f71838d1b1a05e856b10eaf",
+      "status": "evaluate",
+      "role": "reference-scene-accelerator"
+    }
   }
 }
