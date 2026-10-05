@@ -1,0 +1,32 @@
+{
+  "evidence_id": "EVIDENCE-TASK-IMAGE-BLASTER-001-SOURCE",
+  "task_id": "TASK-IMAGE-BLASTER-001",
+  "recorded_at": "2026-10-05",
+  "phase": "source_integration",
+  "results": {
+    "upstream_repository_access": "PASS",
+    "upstream_main_commit": "4acb43ba126a12358f71838d1b1a05e856b10eaf",
+    "upstream_license": "MIT",
+    "upstream_capabilities_verified": [
+      "World Labs Marble world generation with local world asset downloads",
+      "FAL-backed atomic object 3D generation including Hunyuan and Meshy routes",
+      "FAL ElevenLabs SFX generation",
+      "local project/request metadata"
+    ],
+    "khosan_lock_json_parse": "PASS",
+    "khosan_package_json_parse": "PASS",
+    "khosan_task_json_parse": "PASS",
+    "adapter_doctor_node_check": "PASS",
+    "adapter_run_node_check": "PASS",
+    "project_isolation_design": "PASS - adapter cwd is <project>/assets/generated/image-blaster",
+    "paid_generation_guard": "PASS - world/object/sfx require --allow-paid",
+    "secret_values_committed": "NONE",
+    "target_pc_clone_and_doctor": "PENDING",
+    "provider_fixture": "PENDING_EXPLICIT_COST_APPROVAL"
+  },
+  "residual_risks": [
+    "External provider availability, quota, pricing and generated-content terms remain provider-specific",
+    "Gaussian splat/collider output still requires gameplay/runtime QA",
+    "No paid generation was executed in this source-integration session"
+  ]
+}
