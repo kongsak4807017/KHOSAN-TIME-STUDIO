@@ -1,0 +1,75 @@
+{
+  "task_id": "TASK-IMAGE-BLASTER-001",
+  "feature_id": "ASSET-001",
+  "title": "Integrate image-blaster as a project-isolated Reference Scene Accelerator",
+  "status": "verify",
+  "owner_role": "04-asset-synthesizer",
+  "contributors": [
+    "00-studio-orchestrator",
+    "06-technical-architect",
+    "08-rendering-engineer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Pin image-blaster, expose bounded KHOSAN setup/doctor/run adapters, keep generated artifacts inside the active game project, and prevent accidental paid provider calls.",
+  "context_files": [
+    "docs/24-IMAGE-BLASTER-INTEGRATION.md",
+    "docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md",
+    "studio/tool-registry.yaml",
+    "config/external-tools.lock.json",
+    "studio/agents/04-asset-synthesizer.md"
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "config/external-tools.lock.json",
+    "studio/tool-registry.yaml",
+    "studio/tasks/**",
+    "studio/evidence/**",
+    "tools/adapters/image-blaster/**",
+    "scripts/setup-image-blaster.*",
+    "scripts/verify-source.mjs",
+    ".github/workflows/manual-verify.yml",
+    ".env.example",
+    "package.json",
+    "progress.md",
+    "session-handoff.md",
+    "studio/studio_state.json"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    "apps/**",
+    "projects/**"
+  ],
+  "acceptance_criteria": [
+    "image-blaster source is pinned to an exact commit in external-tools.lock.json",
+    "Tool Registry records image-blaster as P0 evaluate under 04 Asset Synthesizer",
+    "Setup scripts install/pin source without creating provider credentials",
+    "Doctor reports source pin, expected scripts, provider credential presence, ffmpeg/ffprobe and optional Bun",
+    "Bounded adapter writes generated state under <project>/assets/generated/image-blaster rather than the external source checkout",
+    "Potentially paid generation actions require explicit --allow-paid",
+    "Source verification and manual CI syntax checks include the new adapter",
+    "Integration documentation explains routing boundaries, costs, licenses and ADOPT fixture gates"
+  ],
+  "verification": [
+    "GitHub diff review of all integration files",
+    "JSON.parse succeeds for package.json and config/external-tools.lock.json",
+    "node --check tools/adapters/image-blaster/doctor.mjs",
+    "node --check tools/adapters/image-blaster/run.mjs",
+    "Fresh target-PC setup-image-blaster then npm run doctor:image-blaster",
+    "Paid fixture generation only after explicit owner cost approval"
+  ],
+  "human_gates": [
+    "External paid-provider fixture requires explicit cost approval before execution"
+  ],
+  "dependencies": [
+    "ASSET-001",
+    "TASK-REFERENCE-RECON-001"
+  ],
+  "risks": [
+    "World Labs and FAL are external paid/network dependencies",
+    "Generated geometry and Gaussian splats require downstream collision/LOD/material/performance QA",
+    "Runtime fixture cannot be accepted until provider keys are configured on the target machine"
+  ],
+  "notes": "Source integration is being installed now; status remains verify until deterministic checks and a real provider fixture pass."
+}
