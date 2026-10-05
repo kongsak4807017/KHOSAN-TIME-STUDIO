@@ -24,6 +24,9 @@ jobs:
           node --check apps/studio-server/server.mjs
           node --check apps/studio-web/public/app.js
           node --check scripts/smoke-multi-project.mjs
+          node --check tools/adapters/image-blaster/doctor.mjs
+          node --check tools/adapters/image-blaster/run.mjs
+          bash -n scripts/setup-image-blaster.sh
       - name: Verify multi-project workspace runtime
         run: npm run verify:workspace
       - name: Verify harness
