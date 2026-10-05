@@ -32,6 +32,14 @@ tools:
     priority: core
     owner: 04-asset-synthesizer
     capability: reference_to_structured_3d
+  - id: image-blaster
+    name: image-blaster
+    source: https://github.com/kongsak4807017/image-blaster
+    status: evaluate
+    priority: p0
+    owner: 04-asset-synthesizer
+    capability: reference_image_to_world_objects_and_sfx
+    notes: source_pinned_adapter_ready_project_isolated_paid_fixture_required_before_adopt
   - {id: rapier, name: Rapier, status: evaluate, priority: p0, capability: physics}
   - {id: recast-detour, name: Recast + Detour, status: evaluate, priority: p0, capability: navigation}
   - {id: gltf-transform, name: glTF Transform, status: evaluate, priority: p0, capability: gltf_processing}
