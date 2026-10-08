@@ -10,7 +10,7 @@ import json
 import pathlib
 import re
 
-KEYWORDS = re.compile(r"TRR[- ]?(?:0?[1-9]|1[0-9]|20)\\b|Oriverse|Weave|Source Evidence|Disclosure Status", re.I)
+KEYWORDS = re.compile(r"TRR[- ]?(?:0?[1-9]|1[0-9]|20)\b|Oriverse|Weave|Source Evidence|Disclosure Status", re.I)
 
 def main():
     p = argparse.ArgumentParser()
@@ -38,7 +38,7 @@ def main():
                 continue
             content = msg.get("content") or {}
             parts = content.get("parts") or []
-            text = "\\n".join(x for x in parts if isinstance(x, str))
+            text = "\n".join(x for x in parts if isinstance(x, str))
             if not text or not KEYWORDS.search(text):
                 continue
             # Exclude very short incidental references; retain candidate texts unchanged.
@@ -56,7 +56,7 @@ def main():
             })
     manifest["candidate_count"] = len(manifest["messages"])
     (args.output / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8"
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print(f"Extracted {manifest['candidate_count']} candidate assistant messages.")
     print("Not certified complete. Review before committing any extracted text.")
