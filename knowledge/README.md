@@ -21,3 +21,10 @@ This directory indexes source material used to design KHOSAN TIME STUDIO.
 See `knowledge/source-manifest.yaml`.
 
 Files marked `pending_verbatim_mirror` are known project source documents that must be copied into `knowledge/research/` unchanged when the local source archive is connected. Their titles are indexed now so they cannot be forgotten, but this index is not a substitute for their full content.
+
+## Oriverse / Weave technical research (200-question study)
+
+- [TRR-01–TRR-20 research category index](oriverse-research/README.md)
+- [Question coverage register (001–200)](oriverse-research/questions.md)
+
+**Status:** research index and question register only. Detailed ten-part answer transcripts are not yet fully mirrored into GitHub; see archive status. These are non-canonical technical references, not validated KHOSAN engineering decisions.
