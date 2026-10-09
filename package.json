@@ -14,6 +14,7 @@
     "doctor:rigging": "python tools/adapters/rigging/doctor.py --json",
     "verify:workspace": "node scripts/smoke-multi-project.mjs",
     "doctor:image-blaster": "node tools/adapters/image-blaster/doctor.mjs",
-    "image-blaster": "node tools/adapters/image-blaster/run.mjs"
+    "image-blaster": "node tools/adapters/image-blaster/run.mjs",
+    "test:asset-reconstruction": "node --test packages/asset-reconstruction/test.mjs"
   }
 }
