@@ -31,6 +31,19 @@ async function showProjectInventory(id){
     box.textContent=JSON.stringify({project_id:inventory.project_id,root:inventory.root,file_count:inventory.file_count,groups:inventory.groups,files:inventory.files,documents:inventory.documents,truncated:inventory.truncated},null,2);
   }catch(error){box.textContent="Inventory error: "+error.message}
 }
+$("#scanExistingBtn")?.addEventListener("click",async()=>{
+  try{const r=await api("/api/projects/import-candidates"),select=$("#existingFolder");
+    select.replaceChildren();for(const p of r.candidates){const o=document.createElement("option");o.value=p.folder;o.textContent=p.folder;select.appendChild(o)}
+    $("#importResult").textContent=r.candidates.length+" unregistered folders found under "+r.projects_root;
+  }catch(e){$("#importResult").textContent=e.message}
+});
+$("#registerExistingBtn")?.addEventListener("click",async()=>{
+  const folder=$("#existingFolder").value;if(!folder)return;
+  if(!confirm("Register existing game folder '"+folder+"' without replacing game files?"))return;
+  try{await api("/api/projects/register-existing",{method:"POST",body:JSON.stringify({folder,confirm:true,activate:true})});
+    $("#importResult").textContent="Registered "+folder;await loadProjects();
+  }catch(e){$("#importResult").textContent=e.message}
+});
 function renderActiveProject(){
   const p=library.projects.find(x=>x.id===library.active_project_id);
   const box=$("#activeProjectBanner");
@@ -97,6 +110,10 @@ async function openProject(id){
   d.innerHTML="<div class='detailHead'><div><span class='eyebrow'>"+(r.project.is_active?"ACTIVE PROJECT":"PROJECT")+"</span><h2>"+esc(r.project.name)+"</h2></div>"+(r.project.is_active?"<span class='activeTag'>ACTIVE</span>":"<button id='activateDetail'>Activate Project</button>")+"</div><p>"+esc(r.project.brief||"No brief")+"</p><div class='meta'><b>Project ID</b> "+esc(r.project.id)+" · <b>Phase</b> "+esc(r.project.phase)+" · <b>Target</b> "+esc(r.project.target)+"</div><h3>Workspace boundary</h3><pre class='console'>"+esc(JSON.stringify(w,null,2))+"</pre><h3>Project manifest</h3><pre class='console'>"+esc(JSON.stringify(r.manifest,null,2))+"</pre><h3>Creative Constitution</h3><p class='muted'>Status: "+esc(r.creative_constitution.status||"draft")+" · human approved: "+String(!!r.creative_constitution.approved_by_human)+"</p>";
   d.insertAdjacentHTML("beforeend","<h3>Actual Game Folder Inventory</h3><p class='muted'>Files from assets / world / gameplay / ui / narrative / shaders / tests / builds</p><pre id='projectInventory' class='console'>Loading…</pre>");
   await showProjectInventory(id);
+  d.insertAdjacentHTML("beforeend","<h3>Source Code Index</h3><p class='muted'>Read-only symbols/imports; excludes large files and sensitive filenames.</p><pre class='console' id='sourceIndex'>Loading…</pre>");
+  try{const index=await api("/api/projects/"+encodeURIComponent(id)+"/source-index");
+    $("#sourceIndex").textContent=JSON.stringify(index,null,2);
+  }catch(e){$("#sourceIndex").textContent=e.message}
   $("#activateDetail")?.addEventListener("click",()=>activateProject(id,true));
 }
 
