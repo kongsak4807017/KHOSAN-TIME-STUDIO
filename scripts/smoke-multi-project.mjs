@@ -1,4 +1,4 @@
-import { mkdtemp, rm, access } from "node:fs/promises";
+import { mkdtemp, rm, access, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import net from "node:net";
@@ -83,9 +83,15 @@ try {
   if(routed.project_context?.project_id!==a.project.id)throw new Error("routing did not use Game A");
   if(routed.routing?.lane!=="reference-reconstruction")throw new Error("reference route mismatch");
 
+  await writeFile(path.join(projectsRoot,b.project.id,"world","scene.json"),JSON.stringify({entities:[{id:"sample-house"}]}));
+  await writeFile(path.join(projectsRoot,b.project.id,"gameplay","systems.json"),JSON.stringify({systems:["movement"]}));
   await request(base,"/api/projects/"+encodeURIComponent(b.project.id)+"/activate",{method:"POST",body:"{}"});
+  const inventory=await request(base,"/api/projects/"+encodeURIComponent(b.project.id)+"/inventory");
+  if(inventory.groups.world.files!==1||inventory.groups.gameplay.files!==1)throw new Error("game folders not inventoried");
+  if(inventory.documents["world/scene.json"].entities[0].id!=="sample-house")throw new Error("world content not read");
   routed=await request(base,"/api/orchestrate",{method:"POST",body:JSON.stringify({text:"build gameplay system"})});
   if(routed.project_context?.project_id!==b.project.id)throw new Error("routing did not use Game B");
+  if(routed.inventory_summary?.groups.gameplay.files!==1)throw new Error("orchestrator did not read game folder");
 
   await stop(server); server=null;
 
