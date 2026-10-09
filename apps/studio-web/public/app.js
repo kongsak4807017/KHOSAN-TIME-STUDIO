@@ -23,6 +23,14 @@ async function refreshLibrary(){
   return r;
 }
 
+async function showProjectInventory(id){
+  const box=$("#projectInventory");if(!box)return;
+  box.textContent="Scanning actual game folders…";
+  try{
+    const inventory=await api("/api/projects/"+encodeURIComponent(id)+"/inventory");
+    box.textContent=JSON.stringify({project_id:inventory.project_id,root:inventory.root,file_count:inventory.file_count,groups:inventory.groups,files:inventory.files,documents:inventory.documents,truncated:inventory.truncated},null,2);
+  }catch(error){box.textContent="Inventory error: "+error.message}
+}
 function renderActiveProject(){
   const p=library.projects.find(x=>x.id===library.active_project_id);
   const box=$("#activeProjectBanner");
@@ -87,6 +95,8 @@ async function openProject(id){
   const [r,w]=await Promise.all([api("/api/projects/"+encodeURIComponent(id)),api("/api/projects/"+encodeURIComponent(id)+"/workspace")]);
   const d=$("#projectDetail");d.classList.remove("hidden");
   d.innerHTML="<div class='detailHead'><div><span class='eyebrow'>"+(r.project.is_active?"ACTIVE PROJECT":"PROJECT")+"</span><h2>"+esc(r.project.name)+"</h2></div>"+(r.project.is_active?"<span class='activeTag'>ACTIVE</span>":"<button id='activateDetail'>Activate Project</button>")+"</div><p>"+esc(r.project.brief||"No brief")+"</p><div class='meta'><b>Project ID</b> "+esc(r.project.id)+" · <b>Phase</b> "+esc(r.project.phase)+" · <b>Target</b> "+esc(r.project.target)+"</div><h3>Workspace boundary</h3><pre class='console'>"+esc(JSON.stringify(w,null,2))+"</pre><h3>Project manifest</h3><pre class='console'>"+esc(JSON.stringify(r.manifest,null,2))+"</pre><h3>Creative Constitution</h3><p class='muted'>Status: "+esc(r.creative_constitution.status||"draft")+" · human approved: "+String(!!r.creative_constitution.approved_by_human)+"</p>";
+  d.insertAdjacentHTML("beforeend","<h3>Actual Game Folder Inventory</h3><p class='muted'>Files from assets / world / gameplay / ui / narrative / shaders / tests / builds</p><pre id='projectInventory' class='console'>Loading…</pre>");
+  await showProjectInventory(id);
   $("#activateDetail")?.addEventListener("click",()=>activateProject(id,true));
 }
 
