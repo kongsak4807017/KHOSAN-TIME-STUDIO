@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, readdir, stat, appendFile } from "node:fs/p
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import {inspectProjectContent} from "./project-inventory.mjs";
 
 const STUDIO_VERSION = "0.2.0";
 const PROJECT_SCHEMA_VERSION = 1;
@@ -266,6 +267,16 @@ async function api(req, res, url) {
     }); return true;
   }
 
+  const inventoryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/inventory$/);
+  if (req.method === "GET" && inventoryMatch) {
+    const id = routeId(inventoryMatch[1]);
+    if (!id) { send(res,400,{error:"invalid project id"}); return true; }
+    const dir=projectDir(id), project=await jsonFile(path.join(dir,"project.json"));
+    if (!project) { send(res,404,{error:"project not found"}); return true; }
+    const inventory=await inspectProjectContent(dir);
+    send(res,200,{project_id:id,...inventory}); return true;
+  }
+
   const pm = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
   if (req.method === "GET" && pm) {
     const id=routeId(pm[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const project=await jsonFile(path.join(dir,"project.json"));
@@ -314,8 +325,11 @@ async function api(req, res, url) {
       if (!project) { send(res,404,{error:"project not found"}); return true; }
     }
     const routing=routeIntent(String(input.text||""));
+    const inventory=project ? await inspectProjectContent(projectRoot) : null;
     send(res,200,{
       mode:"routing-only",
+      inventory_summary: inventory ? {file_count:inventory.file_count,groups:inventory.groups,truncated:inventory.truncated} : null,
+      project_documents: inventory?.documents || {},
       note:"Local Studio v0.2 routes work inside the selected project; ChatGPT/DevSpace executes the selected role contracts.",
       project_context: project ? {project_id:project.id,project_name:project.name,project_root:projectRoot,write_boundary:projectRoot} : null,
       routing
