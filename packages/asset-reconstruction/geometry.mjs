@@ -1,0 +1,21 @@
+// KHOSAN native procedural mesh generator — no external engine dependency.
+// Geometry in meters, Y up. Deterministic input -> deterministic indexed triangle mesh.
+const finite=(v,name)=>{if(typeof v!=='number'||!Number.isFinite(v))throw Error(name+' must be finite');return v};
+const positive=(v,name)=>{finite(v,name);if(v<=0||v>1000)throw Error(name+' must be in (0,1000]');return v};
+export function validateSpec(spec){
+ if(!spec||typeof spec!=='object'||Array.isArray(spec))throw Error('spec object required');
+ if(!['house','tree','crate'].includes(spec.kind))throw Error('unsupported kind');
+ const p=spec.params||{};
+ const out={kind:spec.kind,params:{}};
+ if(spec.kind==='house'){out.params.width=positive(p.width??4,'width');out.params.depth=positive(p.depth??5,'depth');out.params.wallHeight=positive(p.wallHeight??3,'wallHeight');out.params.roofRise=positive(p.roofRise??1.5,'roofRise');out.params.overhang=positive(p.overhang??0.35,'overhang')}
+ if(spec.kind==='tree'){out.params.trunkRadius=positive(p.trunkRadius??0.25,'trunkRadius');out.params.trunkHeight=positive(p.trunkHeight??2.5,'trunkHeight');out.params.crownRadius=positive(p.crownRadius??1.5,'crownRadius');out.params.crownHeight=positive(p.crownHeight??3,'crownHeight')}
+ if(spec.kind==='crate'){out.params.width=positive(p.width??1.5,'width');out.params.height=positive(p.height??1.5,'height');out.params.depth=positive(p.depth??1.5,'depth')}
+ return out;
+}
+function mesh(){return {positions:[],normals:[],indices:[],groups:[]}}
+function face(m,points,material){const base=m.positions.length/3;const [a,b,c]=points;const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];let n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];const len=Math.hypot(...n);if(len<1e-9)throw Error('degenerate face');n=n.map(x=>x/len);for(const p of points){m.positions.push(...p);m.normals.push(...n)}for(let i=1;i<points.length-1;i++)m.indices.push(base,base+i,base+i+1);m.groups.push({material,start:m.indices.length-(points.length-2)*3,count:(points.length-2)*3})}
+function box(m,c,size,mat){const [x,y,z]=c,[w,h,d]=size,X=w/2,Y=h/2,Z=d/2;const a=[x-X,y-Y,z-Z],b=[x+X,y-Y,z-Z],c1=[x+X,y+Y,z-Z],dd=[x-X,y+Y,z-Z],e=[x-X,y-Y,z+Z],f=[x+X,y-Y,z+Z],g=[x+X,y+Y,z+Z],hh=[x-X,y+Y,z+Z];for(const q of [[e,f,g,hh],[b,a,dd,c1],[a,e,hh,dd],[f,b,c1,g],[dd,hh,g,c1],[a,b,f,e]])face(m,q,mat)}
+function house(m,p){const {width:w,depth:d,wallHeight:h,roofRise:r,overhang:o}=p;box(m,[0,h/2,0],[w,h,d],'plaster');const z0=-d/2-o,z1=d/2+o,x0=-w/2-o,x1=w/2+o;const left0=[x0,h,z0],left1=[x0,h,z1],right0=[x1,h,z0],right1=[x1,h,z1],ridge0=[0,h+r,z0],ridge1=[0,h+r,z1];face(m,[left0,ridge0,ridge1,left1],'roof');face(m,[ridge0,right0,right1,ridge1],'roof');face(m,[left0,right0,ridge0],'gable');face(m,[left1,ridge1,right1],'gable');box(m,[0,1.05,d/2+0.015],[0.9,2.1,0.035],'door');for(const x of [-w/3,w/3])box(m,[x,h*0.62,d/2+0.025],[0.6,0.65,0.04],'glass')}
+function tree(m,p){const {trunkRadius:r,trunkHeight:h,crownRadius:R,crownHeight:H}=p;box(m,[0,h/2,0],[r*2,h,r*2],'bark');const base=h*0.75,top=h+H,segments=12;for(let i=0;i<segments;i++){const a=2*Math.PI*i/segments,b=2*Math.PI*(i+1)/segments;face(m,[[R*Math.cos(a),base,R*Math.sin(a)],[R*Math.cos(b),base,R*Math.sin(b)],[0,top,0]],'leaves')}}
+export function generateAsset(input){const spec=validateSpec(input),m=mesh(),p=spec.params;if(spec.kind==='house')house(m,p);if(spec.kind==='tree')tree(m,p);if(spec.kind==='crate')box(m,[0,p.height/2,0],[p.width,p.height,p.depth],'wood');const {positions,indices,normals}=m;if(indices.length===0||positions.length%3||normals.length!==positions.length||indices.some(i=>i<0||i>=positions.length/3))throw Error('invalid generated mesh');return {schema:'khosan.asset.mesh.v1',spec,mesh:m,stats:{vertices:positions.length/3,triangles:indices.length/3}}}
+export function toOBJ(asset){const a=asset.mesh,lines=['# KHOSAN generated asset', 'o '+asset.spec.kind];for(let i=0;i<a.positions.length;i+=3)lines.push('v '+a.positions.slice(i,i+3).join(' '));for(let i=0;i<a.normals.length;i+=3)lines.push('vn '+a.normals.slice(i,i+3).join(' '));for(let i=0;i<a.indices.length;i+=3){const f=a.indices.slice(i,i+3).map(v=>`${v+1}//${v+1}`);lines.push('f '+f.join(' '))}return lines.join('\n')+'\n'}
