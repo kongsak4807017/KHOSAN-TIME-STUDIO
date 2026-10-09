@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import {inspectProjectContent} from "./project-inventory.mjs";
+import {indexProjectSource} from "./source-index.mjs";
 
 const STUDIO_VERSION = "0.2.0";
 const PROJECT_SCHEMA_VERSION = 1;
@@ -241,6 +242,31 @@ async function api(req, res, url) {
     send(res, 201, {...initialized, project_root:dir}); return true;
   }
 
+  if (req.method==="GET" && url.pathname==="/api/projects/import-candidates") {
+    const entries=await readdir(PROJECTS,{withFileTypes:true}),candidates=[];
+    for(const entry of entries){
+      if(!entry.isDirectory()||entry.name.startsWith(".")||!safeId(entry.name))continue;
+      const dir=projectDir(entry.name),existing=await jsonFile(path.join(dir,"project.json"));
+      if(existing)continue;
+      const s=await stat(dir);if(!s.isDirectory())continue;
+      candidates.push({folder:entry.name,relative_path:entry.name});
+    }
+    send(res,200,{projects_root:PROJECTS,candidates});return true;
+  }
+  if (req.method==="POST" && url.pathname==="/api/projects/register-existing") {
+    const input=await bodyJson(req),id=safeId(input.folder);
+    if(!id||id.startsWith(".")||input.confirm!==true){send(res,400,{error:"valid folder and explicit confirmation required"});return true;}
+    const dir=projectDir(id),entries=await readdir(PROJECTS,{withFileTypes:true});
+    if(!entries.some(e=>e.name===id&&e.isDirectory())){send(res,404,{error:"folder not found under configured projects root"});return true;}
+    const existing=await jsonFile(path.join(dir,"project.json"));
+    if(existing){send(res,409,{error:"project already registered"});return true;}
+    const timestamp=now(),project={schema_version:1,id,project_id:id,name:String(input.name||id).slice(0,120),brief:"Existing game folder (registered without modifying game content)",target:"unknown",phase:"imported",status:"active",created_at:timestamp,updated_at:timestamp};
+    try{await writeFile(path.join(dir,"project.json"),JSON.stringify(project,null,2)+"\n",{flag:"wx"})}
+    catch(e){send(res,409,{error:"cannot safely register folder; project.json already exists or folder is not writable"});return true;}
+    await syncLibrary();if(input.activate===true)await activateProject(id);
+    send(res,201,{project,project_root:dir,game_content_preserved:true});return true;
+  }
+
   const activateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/activate$/);
   if (req.method === "POST" && activateMatch) {
     const id = routeId(activateMatch[1]);
@@ -277,6 +303,13 @@ async function api(req, res, url) {
     send(res,200,{project_id:id,...inventory}); return true;
   }
 
+  const sourceMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/source-index$/);
+  if(req.method==="GET"&&sourceMatch){
+    const id=routeId(sourceMatch[1]);if(!id){send(res,400,{error:"invalid project id"});return true;}
+    const dir=projectDir(id),project=await jsonFile(path.join(dir,"project.json"));
+    if(!project){send(res,404,{error:"project not found"});return true;}
+    send(res,200,{project_id:id,...await indexProjectSource(dir)});return true;
+  }
   const pm = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
   if (req.method === "GET" && pm) {
     const id=routeId(pm[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const project=await jsonFile(path.join(dir,"project.json"));
