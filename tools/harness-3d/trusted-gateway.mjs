@@ -8,14 +8,7 @@ import {createHash,createPublicKey,randomUUID,verify as verifyEd25519,sign as si
 import {mkdir,readFile,writeFile,rename,open,unlink,lstat,realpath,stat} from 'node:fs/promises';
 import path from 'node:path';
 import {allowedTools,enforceTool,geometryDiagnostics,measuredRepairScope,applyDifferentialPatch,digest,stableJSON,HardLockError} from './repair-protocol.mjs';
-
-// Must match the independent, separately tested signed payload contract in gate.mjs.
-export function reviewerReceiptPayload(e){
- return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,agent_id:e.reviewer?.agent_id,session_id:e.reviewer?.session_id,run_id:e.reviewer?.run_id,isolated_session:e.reviewer?.isolated_session,verdict:e.reviewer?.verdict,defects:e.reviewer?.defects,contact_sha256:e.reviewer?.reviewed_contact_sha256,reference_sha256:e.reference_mode==='reference'?e.reviewer?.reviewed_reference_sha256:null});
-}
-export function humanApprovalPayload(e){
- return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,approval_reference:e.human_approval?.approval_reference,approved_by:e.human_approval?.approved_by,approved:e.human_approval?.approved,glb_sha256:e.human_approval?.approved_glb_sha256,review_run_id:e.reviewer?.run_id});
-}
+import {rendererReceiptPayload,reviewerReceiptPayload,humanApprovalPayload,verify3DAcceptance,EVIDENCE_SCHEMA} from './gate.mjs';
 
 const PROTOCOL='khosan.3d.command.v1';
 const STATE='khosan.3d.trusted-state.v1';
@@ -124,7 +117,7 @@ async function readState(folder,trust){
  const {signature_base64,...body}=raw;
  if(!checkedSignature(stableJSON(body),signature_base64,trust.server.public_key_pem))fail('state signature invalid or tampered');
  if(!Number.isSafeInteger(raw.version)||raw.version<1)fail('invalid state version');
- if(raw.source){const f=await getSafeFile(folder,raw.source.filename,{suffix:'.json',maxBytes:8*1024*1024});const current=JSON.parse(await readFile(f.file,'utf8'));if(digest(current)!==raw.source.sha256)fail('stored source was modified without authorization')}
+ if(raw.source){const f=await getSafeFile(folder,raw.source.filename,{suffix:'.json',maxBytes:8*1024*1024});const bytes=await readFile(f.file);const current=JSON.parse(bytes.toString('utf8'));if(digest(current)!==raw.source.sha256||sha(bytes)!==raw.source.file_sha256)fail('stored source was modified without authorization')}
  return raw;
 }
 async function commitState(folder,oldState,newState,serverPrivateKey,trust){
@@ -149,8 +142,8 @@ function createEvidence(state,payloadHuman=null){
  const s=state;
  if(!s.reference||!s.render||!s.lint||!s.review||!s.source||!s.maker)fail('incomplete evidence state');
  return {
-  schema:'khosan.3d.verification.v1',project_id:s.project_id,task_id:s.task_id,asset_id:s.asset_id,source_revision:s.source.sha256,reference_mode:'reference',maker:s.maker,
-  reviewer:s.review,technical:{source_revision:s.source.sha256,tool_id:'khosan-3d-measured-layout',run_id:s.lint.run_id,compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:s.lint.max_seam_gap_cm,max_camera_blocked_frac:s.render.camera_blocked_frac,vertex_count:s.render.vertices},
+  schema:EVIDENCE_SCHEMA,project_id:s.project_id,task_id:s.task_id,asset_id:s.asset_id,source_revision:s.source.file_sha256,reference_mode:'reference',maker:s.maker,
+  renderer:s.render.renderer,reviewer:s.review,technical:{source_revision:s.source.file_sha256,tool_id:'khosan-3d-measured-layout',run_id:s.lint.run_id,compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:s.lint.max_seam_gap_cm,max_camera_blocked_frac:s.render.camera_blocked_frac,vertex_count:s.render.vertices},
   artifacts:{ugir_json:{path:`.khosan/harness3d/tasks/${s.task_id}/${s.source.filename}`,sha256:s.source.file_sha256},glb:s.render.glb,contact_sheet_png:s.render.contact_sheet_png,reference:s.reference},
   human_approval:payloadHuman??{approved:false,approval_reference:'PENDING',approved_by:'PENDING',asset_id:s.asset_id,approved_glb_sha256:s.render.glb.sha256,signature_base64:''}
  };
@@ -217,7 +210,7 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
     const p=await getSafeFile(folder,next.source.filename,{suffix:'.json',maxBytes:8*1024*1024});const source=JSON.parse(await readFile(p.file,'utf8'));
     const findings=geometryDiagnostics(source);
     if(findings.length){next.scope=measuredRepairScope(source);next.lint=null;response={verdict:'REWORK',scope:next.scope};}
-    else {next.scope=null;next.lint={run_id:request.nonce,source_sha256:next.source.sha256,max_seam_gap_cm:0,issues:[]};next.stage='geometry_verified';response={verdict:'PASS',source_sha256:next.source.sha256};}
+    else {next.scope=null;next.lint={run_id:request.nonce,source_sha256:next.source.file_sha256,max_seam_gap_cm:0,issues:[]};next.stage='geometry_verified';response={verdict:'PASS',source_sha256:next.source.sha256};}
     break;
    }
    case 'patch_failing_layout_nodes':{
@@ -231,8 +224,10 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
     next.source=issued;next.scope=null;next.lint=null;response={verdict:patch.complete?'READY_FOR_RECHECK':'REWORK',source_sha256:issued.sha256,issues_after:patch.after};break;
    }
    case 'submit_render':{
-    validatePayload(request.payload,['glb','contact_sheet_png','camera_blocked_frac','source_sha256']);
-    if(request.payload.source_sha256!==next.source.sha256||next.lint.source_sha256!==next.source.sha256)fail('render references stale geometry');
+    validatePayload(request.payload,['glb','contact_sheet_png','camera_blocked_frac','source_sha256','camera_ids','renderer_receipt_signature_base64']);
+    if(request.actor.id===next.maker?.agent_id)fail('renderer must be a separate principal from maker');
+    if(request.payload.source_sha256!==next.source.file_sha256||next.lint.source_sha256!==next.source.file_sha256)fail('render references stale geometry');
+    if(!Array.isArray(request.payload.camera_ids)||request.payload.camera_ids.length!==16||new Set(request.payload.camera_ids).size!==16||request.payload.camera_ids.some(x=>typeof x!=='string'||!x))fail('renderer must attest exactly 16 unique camera IDs');
     const out={};for(const [name,extension] of [['glb','.glb'],['contact_sheet_png','.png']]){
       const item=request.payload[name];if(!keys(item,['path','sha256'])||Object.keys(item).length!==2)fail('invalid render artifact object');
       const f=await getSafeFile(root,item.path,{suffix:extension,maxBytes:256*1024*1024});const h=await fileHash(f.file);
@@ -242,12 +237,15 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
       out[name]={path:item.path,sha256:h};
     }
     const frac=request.payload.camera_blocked_frac;if(typeof frac!=='number'||!Number.isFinite(frac)||frac<0||frac>0.2)fail('measured camera occlusion exceeds budget or is invalid');
-    next.render={glb:out.glb,contact_sheet_png:out.contact_sheet_png,vertices:out.vertices,camera_blocked_frac:frac,run_id:request.nonce,actor_id:request.actor.id};next.stage='rendered';response={verdict:'RENDER_RECEIPT_RECORDED',vertices:out.vertices};break;
+    const renderer={renderer_id:request.actor.id,run_id:request.nonce,source_revision:next.source.file_sha256,rendered_glb_sha256:out.glb.sha256,contact_sheet_sha256:out.contact_sheet_png.sha256,reference_sha256:next.reference.sha256,views_rendered:16,camera_ids:request.payload.camera_ids,signature_base64:request.payload.renderer_receipt_signature_base64};
+    const candidate={schema:EVIDENCE_SCHEMA,project_id:next.project_id,task_id:next.task_id,asset_id:next.asset_id,source_revision:next.source.file_sha256,reference_mode:'reference',renderer};
+    if(!checkedSignature(rendererReceiptPayload(candidate),renderer.signature_base64,trustKey(trust,'renderer',request.actor.id)))fail('renderer receipt signature invalid or untrusted');
+    next.render={glb:out.glb,contact_sheet_png:out.contact_sheet_png,vertices:out.vertices,camera_blocked_frac:frac,run_id:request.nonce,actor_id:request.actor.id,renderer};next.stage='rendered';response={verdict:'RENDER_RECEIPT_RECORDED',vertices:out.vertices};break;
    }
    case 'submit_review':{
     validatePayload(request.payload,['run_id','verdict','defects','reviewed_contact_sha256','reviewed_reference_sha256','receipt_signature_base64']);
     if(!ID.test(request.payload.run_id??'')||request.payload.verdict!=='ACCEPT'||!Array.isArray(request.payload.defects)||request.payload.defects.length)fail('reviewer has defects or invalid verdict');
-    if(request.actor.id===next.maker?.agent_id||request.payload.reviewed_contact_sha256!==next.render.contact_sheet_png.sha256||request.payload.reviewed_reference_sha256!==next.reference.sha256)fail('review not independent or hash-bound');
+    if(request.actor.id===next.maker?.agent_id||request.actor.id===next.render.actor_id||request.payload.reviewed_contact_sha256!==next.render.contact_sheet_png.sha256||request.payload.reviewed_reference_sha256!==next.reference.sha256)fail('review not independent or hash-bound');
     const reviewer={agent_id:request.actor.id,session_id:request.nonce,run_id:request.payload.run_id,isolated_session:true,verdict:'ACCEPT',defects:[],reviewed_contact_sha256:request.payload.reviewed_contact_sha256,reviewed_reference_sha256:request.payload.reviewed_reference_sha256,signature_base64:request.payload.receipt_signature_base64};
     const candidate=createEvidence({...next,review:reviewer});
     if(!checkedSignature(reviewerReceiptPayload(candidate),reviewer.signature_base64,trustKey(trust,'reviewer',request.actor.id)))fail('reviewer receipt not signed by independent key');
@@ -255,11 +253,10 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
    }
    case 'approve':{
     validatePayload(request.payload,['approval_reference','approved_glb_sha256','receipt_signature_base64']);
-    if(!ID.test(request.payload.approval_reference??'')||request.payload.approved_glb_sha256!==next.render.glb.sha256||request.actor.id===next.maker?.agent_id||request.actor.id===next.review?.agent_id)fail('invalid approval identity/binding');
+    if(!ID.test(request.payload.approval_reference??'')||request.payload.approved_glb_sha256!==next.render.glb.sha256||request.actor.id===next.maker?.agent_id||request.actor.id===next.review?.agent_id||request.actor.id===next.render.actor_id)fail('invalid approval identity/binding');
     const human={approved:true,approval_reference:request.payload.approval_reference,approved_by:request.actor.id,asset_id:next.asset_id,approved_glb_sha256:next.render.glb.sha256,signature_base64:request.payload.receipt_signature_base64};
     const evidence=createEvidence({...next,human_approval:human},human);
-    const {verify3DAcceptance}=await import('./gate.mjs');
-    const result=await verify3DAcceptance(root,evidence,{reviewer_public_key_pem:trustKey(trust,'reviewer',next.review.agent_id),human_public_key_pem:trustKey(trust,'human',request.actor.id)});
+    const result=await verify3DAcceptance(root,evidence,{renderer_public_key_pem:trustKey(trust,'renderer',next.render.actor_id),reviewer_public_key_pem:trustKey(trust,'reviewer',next.review.agent_id),human_public_key_pem:trustKey(trust,'human',request.actor.id)});
     if(!result.ok)fail('final independent evidence gate BLOCKED: '+result.errors.join(' | '));
     const filename=`acceptance-v${String(next.version+1).padStart(6,'0')}.json`;
     await writeFile(path.join(folder,filename),stableJSON(evidence)+'\n',{flag:'wx',mode:0o600});
