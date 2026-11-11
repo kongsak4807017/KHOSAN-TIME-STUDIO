@@ -43,12 +43,16 @@ export function validateTechnical(metrics, budgets = {}) {
   return errors;
 }
 
-/** Stable signed payloads; only a trusted independent reviewer / human approval service may hold issuer private keys. */
+/** Stable, complete payloads: every issuer signs the exact current artifacts and upstream receipts. */
+const signatureDigest = value => createHash('sha256').update(String(value || '')).digest('hex');
+export function rendererReceiptPayload(e) {
+  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,renderer_id:e.renderer?.renderer_id,run_id:e.renderer?.run_id,rendered_glb_sha256:e.renderer?.rendered_glb_sha256,contact_sheet_sha256:e.renderer?.contact_sheet_sha256,reference_sha256:e.reference_mode==='reference'?e.renderer?.reference_sha256:null,views_rendered:e.renderer?.views_rendered,camera_ids:e.renderer?.camera_ids});
+}
 export function reviewerReceiptPayload(e) {
-  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,agent_id:e.reviewer?.agent_id,session_id:e.reviewer?.session_id,run_id:e.reviewer?.run_id,isolated_session:e.reviewer?.isolated_session,verdict:e.reviewer?.verdict,defects:e.reviewer?.defects,contact_sha256:e.reviewer?.reviewed_contact_sha256,reference_sha256:e.reference_mode==='reference'?e.reviewer?.reviewed_reference_sha256:null});
+  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,agent_id:e.reviewer?.agent_id,session_id:e.reviewer?.session_id,run_id:e.reviewer?.run_id,isolated_session:e.reviewer?.isolated_session,verdict:e.reviewer?.verdict,defects:e.reviewer?.defects,contact_sha256:e.reviewer?.reviewed_contact_sha256,reference_sha256:e.reference_mode==='reference'?e.reviewer?.reviewed_reference_sha256:null,renderer_signature_sha256:signatureDigest(e.renderer?.signature_base64),artifacts:{ugir:e.artifacts?.ugir_json?.sha256,glb:e.artifacts?.glb?.sha256,contact:e.artifacts?.contact_sheet_png?.sha256,reference:e.artifacts?.reference?.sha256||null},technical:e.technical,budgets:e.budgets||null});
 }
 export function humanApprovalPayload(e) {
-  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,approval_reference:e.human_approval?.approval_reference,approved_by:e.human_approval?.approved_by,approved:e.human_approval?.approved,glb_sha256:e.human_approval?.approved_glb_sha256,review_run_id:e.reviewer?.run_id});
+  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,approval_reference:e.human_approval?.approval_reference,approved_by:e.human_approval?.approved_by,approved:e.human_approval?.approved,glb_sha256:e.human_approval?.approved_glb_sha256,review_run_id:e.reviewer?.run_id,renderer_signature_sha256:signatureDigest(e.renderer?.signature_base64),reviewer_signature_sha256:signatureDigest(e.reviewer?.signature_base64),artifacts:{ugir:e.artifacts?.ugir_json?.sha256,glb:e.artifacts?.glb?.sha256,contact:e.artifacts?.contact_sheet_png?.sha256,reference:e.artifacts?.reference?.sha256||null},technical:e.technical,budgets:e.budgets||null});
 }
 function verifyEd25519(payload, signature, publicKey) {
   if(!isText(publicKey)||!isText(signature)||!/^[A-Za-z0-9+/]+={0,2}$/.test(signature))return false;
@@ -62,8 +66,13 @@ export function validateEvidenceShape(evidence) {
   for (const k of ['asset_id','task_id','project_id','source_revision']) {
     if (!isText(evidence[k])) fail(errors, `missing ${k}`);
   }
-  const maker = evidence.maker, reviewer = evidence.reviewer;
-  if (!isObject(maker) || !isObject(reviewer)) fail(errors, 'maker and reviewer required');
+  const maker = evidence.maker, reviewer = evidence.reviewer, renderer = evidence.renderer;
+  if (!isObject(maker) || !isObject(reviewer) || !isObject(renderer)) fail(errors, 'maker, renderer and reviewer required');
+  if (isObject(renderer)) {
+    for (const k of ['renderer_id','run_id','source_revision','rendered_glb_sha256','contact_sheet_sha256','signature_base64']) if (!isText(renderer[k])) fail(errors, `renderer.${k} missing`);
+    if (renderer.source_revision !== evidence.source_revision) fail(errors, 'renderer source revision mismatch');
+    if (!Number.isSafeInteger(renderer.views_rendered) || renderer.views_rendered !== 16 || !Array.isArray(renderer.camera_ids) || renderer.camera_ids.length !== 16 || new Set(renderer.camera_ids).size !== 16 || renderer.camera_ids.some(x => !isText(x))) fail(errors, 'renderer must attest 16 unique camera views');
+  }
   else {
     for (const k of ['agent_id','session_id']) {
       if (!isText(maker[k]) || !isText(reviewer[k])) fail(errors, `${k} missing for maker/reviewer`);
@@ -85,6 +94,12 @@ export function validateEvidenceShape(evidence) {
     if (evidence.reference_mode === 'reference' && (!isObject(artifacts.reference) || !isText(artifacts.reference.path) || !SHA256.test(artifacts.reference.sha256 || ''))) fail(errors,'reference artifact missing');
   }
   if (evidence.reference_mode !== 'reference' && evidence.reference_mode !== 'original') fail(errors, 'reference_mode must be reference or original');
+  if (renderer && artifacts) {
+    if (renderer.rendered_glb_sha256 !== artifacts.glb?.sha256) fail(errors, 'renderer did not bind the exact GLB');
+    if (renderer.contact_sheet_sha256 !== artifacts.contact_sheet_png?.sha256) fail(errors, 'renderer did not bind the exact contact sheet');
+    if (evidence.reference_mode === 'reference' && renderer.reference_sha256 !== artifacts.reference?.sha256) fail(errors, 'renderer did not bind the exact reference');
+    if (evidence.reference_mode === 'original' && renderer.reference_sha256 !== null) fail(errors, 'original mode must not claim a reference image');
+  }
   if (reviewer && artifacts?.contact_sheet_png && reviewer.reviewed_contact_sha256 !== artifacts.contact_sheet_png.sha256) fail(errors, 'reviewer did not inspect current contact sheet hash');
   if (evidence.reference_mode === 'reference' && reviewer?.reviewed_reference_sha256 !== artifacts?.reference?.sha256) fail(errors,'reviewer did not inspect current reference hash');
   const human = evidence.human_approval;
@@ -170,6 +185,7 @@ async function checkFormat(role, file, size, assetId) {
 
 export async function verify3DAcceptance(projectRoot, evidence, trust = {}) {
   const errors=validateEvidenceShape(evidence),checked=[];
+  if (!verifyEd25519(rendererReceiptPayload(evidence),evidence?.renderer?.signature_base64,trust.renderer_public_key_pem)) errors.push('renderer receipt signature missing, wrong, or untrusted');
   if (!verifyEd25519(reviewerReceiptPayload(evidence),evidence?.reviewer?.signature_base64,trust.reviewer_public_key_pem)) errors.push('reviewer receipt signature missing, wrong, or untrusted');
   if (!verifyEd25519(humanApprovalPayload(evidence),evidence?.human_approval?.signature_base64,trust.human_public_key_pem)) errors.push('human approval signature missing, wrong, or untrusted');
   let root;
@@ -188,7 +204,7 @@ export async function verify3DAcceptance(projectRoot, evidence, trust = {}) {
         if(role==='ugir_json')for(const field of ['floating_count','piercing_count','max_seam_gap_cm']){
           if(Math.abs((evidence.technical?.[field]??NaN)-structural[field])>1e-6 || !Number.isFinite(evidence.technical?.[field])) throw Error('technical.'+field+' differs from independently recomputed UG-IR bounds lint');
         }
-        if(role==='glb' && evidence.technical?.vertex_count!==structural.vertex_count) throw Error('technical.vertex_count differs from GLB POSITION accessor count');
+        if(role==='glb' && evidence.technical?.vertex_count!==structural.vertex_count) throw Error('technical.vertex_count differs from GLB POSITION accessor count');\n        if(role==='ugir_json' && digest !== evidence.source_revision) throw Error('source_revision must equal the exact UG-IR artifact SHA-256');
         const digest=await sha256File(info.file);
         if(digest.toLowerCase()!==a.sha256.toLowerCase()) throw Error('SHA-256 mismatch');
         checked.push({role,path:a.path,bytes:info.size,sha256:digest});
