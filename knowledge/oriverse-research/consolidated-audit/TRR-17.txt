@@ -1,0 +1,256 @@
+TRR-17 — Testing, Debugging & Observability
+Oriverse / Weave Technical Research Protocol | หมวด 17 | คำถาม 161–170 | 9 ตุลาคม 2569
+ผมตรวจคู่มือ Oriverse โดยตรง ได้แก่ weave_compile_errors, weave_coding → authoring_completion, ui_patterns และสัญญาการทำงานของ stage_new_world, patch_and_run_pending_world, run_pending_world, playtest, ui_inspect, get_load_status และเครื่องมือตรวจ Assets
+ข้อค้นพบหลัก: Oriverse มีเครื่องมือสำหรับตรวจ Compilation, Simulation, Gameplay, Multiplayer Inputs, UI Layout, Rendered Captures และ Visual Diagnostics จริง แต่ยังไม่มีหลักฐานยืนยันว่ามีระบบ Automated Unit Test Framework, Distributed Tracing, GPU Profiler หรือ CI Server ที่เปิดเป็น Public API ครบวงจร
+ความแตกต่างสำคัญคือ การ Compile ผ่าน ไม่เท่ากับการเล่นผ่าน และการเล่นผ่าน ไม่เท่ากับการตรวจ Visual Fidelity ผ่าน
+Oriverse Verification Pipeline — ตามเครื่องมือที่เปิดเผย
+Acceptance Record และ Delivery Gate เป็นกรอบวิศวกรรมสำหรับ KHOSAN Studio ไม่ใช่การยืนยันว่า Oriverse มี CI Orchestrator ภายในตามแผนภาพทุกขั้น
+161 — Compiler Diagnostics แบ่ง Severity และ Error Codes อย่างไร?
+1. Direct Answer: Oriverse Weave2 Compiler มีรหัสข้อผิดพลาดกลุ่ม W2C และข้อความ Diagnostics สำหรับปัญหา Syntax, Types, Lists, Cross-class References และ API Usage แต่ ยังไม่พบเอกสารเปิดเผยตาราง Severity Levels หรือ Error-code Taxonomy ฉบับสมบูรณ์
+2. Architecture: Compiler อ่าน Source → Parse Classes/Declarations → ตรวจ Types/References/API Contracts → รายงาน Diagnostics โดย Error ต้นทางอาจทำให้เกิด Cascading Errors ใน Class อื่น
+3. Source Evidence: weave_compile_errors → Syntax, Lists, Cross-class, Collision / Touch, Patching
+4. API Contract — Codes ที่ตรวจพบ:
+Code
+	ความหมายตามคู่มือ
+	W2C0107
+	Expression หรือ Statement Syntax ไม่ถูกต้อง
+	W2C0210
+	Invalid List Literal หรือ Field Initializer
+	W2C0214
+	Legacy List Methods/Nested Lists
+	W2C0407
+	Assignment ที่ไม่อนุญาตในบางกรณี
+	W2C0614
+	Type/API/Member Resolution และ Context Restrictions หลายประเภท
+	W2C0620/0621
+	List Element Type Inference ล้มเหลว
+	5. Working Example — ตัวอย่างแก้ Syntax ตามคู่มือ:
+6. Execution Trace — Expected: Compiler พบ func Heal { → Parse Error → แก้เป็น func Heal() → Recompile → ตรวจ Diagnostics ใหม่
+7. Limits & Failure Modes: W2C0614 ครอบคลุมข้อผิดพลาดหลายลักษณะ จึงต้องอ่านข้อความประกอบเสมอ และเมื่อ Class หนึ่ง Parse ล้มเหลว อาจทำให้ Class อื่นมี Errors ตามมา
+8. Verification: Expected: แก้ Syntax แล้ว Error ต้นทางหายไป; Actual: คู่มือยืนยันแนวทางแก้ แต่ไม่ได้สร้าง Compile-failure Fixture ใหม่ในรอบนี้
+9. Disclosure Status: Error Codes/Remediation Documented; Complete Severity Taxonomy Undisclosed
+10. Research Gaps: Diagnostic JSON Schema, Severity Enum, Error Catalogue, Source Span Precision และ Machine-readable Fix Suggestions
+162 — playtest รัน Engine จริงและจำลอง Inputs อย่างไร?
+1. Direct Answer: playtest ใช้ Simulation Engine สำหรับรัน Pending World แบบแยกจาก Live World พร้อมจำลอง Player Inputs โดยรองรับผู้เล่น 1–8 Seats, Keyboard, Mouse, UI Actions, Camera Controls และ Player Lifecycle Events
+2. Architecture: Load Pending Source → Initialize Simulation → Spawn Test Players → Execute Scripted Actions → Collect Logs/State/Images → Return Results
+3. Source Evidence: Oriverse Tool Contract mcp__Oriverse__playtest
+4. API Contract:
+ตัวอย่าง Actions ที่รองรับ ได้แก่ tap, hold, down, up, click, click_world, click_ui, drag, look_at, wheel, wait_sec, leave, rejoin และ disconnect
+5. Working Example — เครื่องมือ ไม่ใช่ Weave Source:
+6. Execution Trace — Expected: Seat 0 Spawn → Seat 1 Joins → Both Press E → Seat 1 Leaves → OnPlayerLeft → Seat 1 Rejoins → OnPlayerReconnected
+7. Limits & Failure Modes: การกด Key ที่ถูกต้องแต่ไม่มี Binding ไม่ถือเป็น Tool Error ส่วน click_ui บน Element ที่ไม่อยู่หรือถูกซ่อนอาจถูก Skip และรายงานในผลทดสอบ จึงต้องตรวจ Input Notes
+8. Verification: Expected: ได้ Timeline และ Gameplay Events ตาม Actions; Actual: ยังไม่ได้เรียก playtest ใหม่ในหมวด 17
+9. Disclosure Status: Tool Behavior Documented; Current Test Not Run
+10. Research Gaps: Simulation Clock Control, Frame-level Input Logs, Internal Determinism Hash และ Full Replay Artifact Export
+163 — Text Simulation กับ Rendered Capture ต่างกันอย่างไร?
+1. Direct Answer: ทั้งสองใช้ Engine Simulation แต่หลักฐานที่ได้ต่างกัน Text Simulation ใช้ตรวจ Gameplay State, Positions และ Event Logs ขณะที่ Rendered Capture เพิ่มภาพจาก Renderer สำหรับตรวจ Appearance
+2. Architecture: playtest มี Output Lanes ขึ้นกับ Editor/Render Host หาก Browser Editor ถูกซ่อนหรือไม่มี Render Host จะได้ Text Timeline แทนภาพ ส่วน Multi-seat Tests ตั้งแต่ 2 ผู้เล่นขึ้นไปใช้ Text Lane
+3. Source Evidence: Tool Contract playtest → output modes, views, debug_view
+4. API Contract:
+Mode
+	ข้อมูล
+	เหมาะกับ
+	Text Timeline
+	Positions, Print Logs, Events
+	Gameplay/State
+	Rendered Capture
+	Screenshots และ Image Statistics
+	Visual QA
+	AOV Diagnostics
+	Material/Lighting Channels
+	Rendering Debug
+	Multi-seat Text
+	Multiplayer State Timeline
+	Join/Leave/Inputs
+	Rendered Capture รองรับ capture_size สูงสุดด้านละ 2,048 Pixels และจำนวน Pixels รวมไม่เกิน 2,097,152
+5. Working Example:
+6. Execution Trace — Expected: Simulate World → Resolve Capture Host → Render Frame → Capture/Analyze Image หรือ Return Text Timeline ตาม Lane
+7. Limits & Failure Modes: Text-only Output ไม่รับรอง Material, Shadow หรือ HUD Appearance และภาพ Capture อาจไม่สะท้อนทุก Frame ที่เกิด Stutter เพราะเป็น Samples ตามช่วงเวลา
+8. Verification: Expected: Render Host ที่พร้อมใช้งานคืน Screenshot; Actual: Current Editor ในผลตรวจคู่มือรายงาน Browser Tab Hidden แต่ไม่ได้ขอ Capture ใหม่ จึงยังไม่ทราบผลภาพในรอบนี้
+9. Disclosure Status: Output Lane Contract Documented; Current Render Capture Not Verified
+10. Research Gaps: Render-host Capability Negotiation, Screenshot Timing Accuracy, Frame-time Telemetry และ Capture Artifacts Retention
+164 — ui_inspect ตรวจ Layout และ Interaction ได้ระดับใด?
+1. Direct Answer: ui_inspect ตรวจ Element Tree, Layout Rectangles, Text, Visibility, Interactability, Bindings และ Layout Lints ได้ โดยสามารถส่ง Synthetic Hover/Click/Scroll ผ่าน Engine Input Path
+2. Architecture: เครื่องมือจำลอง UI ถึง Frame ที่เลือก → Extract UI Tree → วิเคราะห์ Bounds/Bindings → ส่ง Input → Wait for Settling → Compare UI Diff
+3. Source Evidence: Tool Contract mcp__Oriverse__ui_inspect; ui_patterns → Verify
+4. API Contract:
+Layout Coordinates ใช้ฐาน 1600×900 Units
+5. Working Example:
+6. Execution Trace — Expected: Load UI → Extract Tree → Click → Dispatch UiAction → Update State/UI → Return Diff
+7. Limits & Failure Modes: UI ที่อยู่หลัง Invisible/Blocking Panel อาจรับ Input ไม่ได้ และการที่ Canvas มี Layout ถูกต้องไม่ได้พิสูจน์ว่า Visually Attractive หรืออ่านง่ายบนมือถือ
+8. Verification: Expected: ได้ Tree/Rect/Lint/Interaction Diff; Actual: Tool Contract ยืนยันความสามารถ แต่ยังไม่ได้เรียก ui_inspect ในหมวด 17
+9. Disclosure Status: UI Inspection API Documented; Current UI Result Not Verified
+10. Research Gaps: Automated Accessibility Audit, Contrast Testing, Mobile Touch Precision, Focus Chain Inspection และ Layout Performance Metrics
+165 — รองรับ Unit, Integration และ Regression Tests อย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือสำหรับทดสอบ Compilation, Runtime Simulation และ Interaction แบบ Black-box แต่ไม่พบ Public Test Runner ที่มีมาตรฐาน Unit Test เช่น Test Discovery, Assertions, Test Suites และ Coverage Reports โดยตรง
+2. Architecture: สามารถแยก Testing Levels ได้โดยใช้ World Fixtures ที่มีขอบเขตจำกัด และส่ง Actions ผ่าน playtest/ui_inspect จากนั้นตรวจ Outputs เทียบ Expected Results
+3. Source Evidence: stage_new_world, run_pending_world, playtest, ui_inspect; authoring_completion
+4. API Contract: run_pending_world Compile และ Simulate ประมาณ 60 Frames; playtest รับ Actions และ Observation Window; ui_inspect ส่ง UI Events ได้
+5. Working Example — Weave Test Probe:
+ตัวอย่างนี้ไม่ได้ใช้ Built-in Assertion Framework แต่ใช้ Explicit Test Logs และยังไม่ได้ Compile ในรอบนี้
+6. Execution Trace — Expected: Load Fixture → Spawn Object → Increment Counter → Print TEST_PASS → External Harness ตรวจ Log
+7. Limits & Failure Modes: Print("TEST_PASS") เป็นเพียงข้อความ ไม่ใช่การรับรอง Test Result อย่างเป็นทางการ และหาก Script ไม่ถูกเรียก Test อาจไม่มีทั้ง PASS และ FAIL จึงต้องให้ External Harness ตรวจการขาดหายของ Evidence ด้วย
+8. Verification: Expected: ได้ Log ตาม Condition; Actual: Not Run
+9. Disclosure Status: Black-box Test Building Blocks Documented; Native Unit Test Framework Undisclosed
+10. Research Gaps: Test Discovery, Assertions, Coverage, Parameterized Tests, Fixtures Isolation และ Machine-readable Test Results
+166 — เก็บ Event Trace, State Snapshots และ Profiling ได้หรือไม่?
+1. Direct Answer: เครื่องมือ playtest ให้ Text Timeline และ Print() Logs ซึ่งใช้เป็น Observability ระดับ Gameplay ได้ ส่วน State Snapshots ภายใน Rollback, CPU Profiler, GPU Timings และ Distributed Trace Context ยังไม่พบ Public Export APIs ที่ยืนยันได้ครบถ้วน
+2. Architecture: Observability ที่เปิดเผยเน้นการตรวจสอบจากภายนอก ได้แก่ Logs, Positions, UI Trees, Terrain Samples และ Image Diagnostics
+3. Source Evidence: playtest, ui_inspect, sample_ground, preview_terrain; frame_and_scheduling_model
+4. API Contract: สามารถใช้ Print(Text) เพื่อสร้าง Log และใช้ playtest เก็บผลตาม Observation Window ขณะที่ AOV ใช้ debug_view/debug_views
+5. Working Example:
+ในทางปฏิบัติไม่ควร Print ทุก Frame เพราะจะสร้าง Log จำนวนมาก ควรเก็บเฉพาะ Events หรือ Sampled Metrics
+6. Execution Trace — Expected: Gameplay Event → Print Log → Tool Captures Timeline → External Analyzer Parses Event Sequence
+7. Limits & Failure Modes: Text Logs ไม่มี Structured Span IDs โดยอัตโนมัติ และการอ่าน Positions ทุกช่วงเวลาไม่ได้เป็น Full State Snapshot จึงไม่สามารถนำกลับไป Restore Simulation State ได้โดยตรง
+8. Verification: Expected: Event Logs ปรากฏใน Timeline; Actual: Tool Contract ยืนยัน แต่ไม่ได้รัน Trace Experiment ใหม่
+9. Disclosure Status: Logs/Timelines/AOV Documented; Internal State Snapshot Export/GPU Profiler Undisclosed
+10. Research Gaps: Structured Trace Format, Correlation IDs, Frame CPU/GPU Metrics, Memory Profiler และ Snapshot Serialization API
+167 — ตรวจ Deterministic Divergence ระหว่าง Clients อย่างไร?
+1. Direct Answer: Oriverse ใช้ Deterministic Lockstep พร้อม Prediction/Rollback แต่ไม่พบ Public API สำหรับดึง Deterministic State Hash จากทุก Client และเปรียบเทียบแบบ Frame-by-frame โดยตรง
+2. Architecture: การตรวจสอบเชิง Black-box ทำได้โดยใช้ Identical Inputs, World Revision และ Initial State แล้วเปรียบเทียบค่าที่ส่งออกผ่าน Logs หรือ State Probes แต่ไม่เทียบเท่าการตรวจ Internal Desynchronization
+3. Source Evidence: multiplayer_guidance; playtest → players/actions
+4. API Contract: playtest(players: 2..8, actions: [...]) ช่วยตรวจ Multi-seat Gameplay Logic ได้ แต่ไม่มี GetStateHash() หรือ DumpRollbackState() ที่ยืนยันจากคู่มือในรอบนี้
+5. Working Example: แทรก Print() ของ HP, Coins, Object Positions หรือ Round State หลัง Input Sequence เดียวกัน แล้วตรวจ Consistency จาก Test Harness ภายนอก
+6. Execution Trace — Expected: Start Two Seats → Apply Inputs → Observe State → Compare Expected Invariants → Report Divergence หากพบ
+7. Limits & Failure Modes: Multi-seat Text Lane ไม่ได้พิสูจน์ว่า Clients สองอุปกรณ์ประมวลผลเหมือนกันแบบ Bitwise เพราะใช้ Simulation Test Context เดียวกัน
+8. Verification: Expected: Gameplay Invariants ตรงกัน; Actual: ไม่มีการรัน Cross-device Determinism Test ในหมวดนี้
+9. Disclosure Status: Deterministic Model Documented; Cross-client Hash Comparison Undisclosed / Not Verified
+10. Research Gaps: State Hash API, Replay Seed, Tick-level Trace, Desync Localization และ Rollback Divergence Metrics
+168 — Visual Regression และ Reference-image Comparison ทำอย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือจับภาพจาก Renderer และเปรียบเทียบกับ Reference Images รวมถึง Overlay Alignment, Silhouette Comparison และ AOV Diagnostics แต่ไม่พบ Public Contract สำหรับ Automated Pixel-perfect Regression Threshold หรือ Continuous Visual Test Database ครบวงจร
+2. Architecture: Reference Image → Camera Alignment → Rendered Capture → Overlay/Geometry Metrics → Human/External Acceptance Decision
+3. Source Evidence: playtest → compare_reference/reference_fit; fit_reference_camera, preview_mesh → silhouette, trace_silhouette
+4. API Contract:
+reference_fit ต้องมี Reference และ Camera Record ที่ถูกต้อง พร้อม Fixed View เดียวและ Aspect Ratio ที่ตรงกัน
+5. Working Example: ใช้ attach_reference_image สร้าง Reference Identity ก่อน จากนั้น fit_reference_camera หาตำแหน่งกล้องที่ตรงกับ Landmarks แล้วจึงเรียก playtest เพื่อ Capture และ Overlay
+6. Execution Trace — Expected: Attach Reference → Fit Camera → Capture Frame → Render Overlay → Inspect Double Contours/Color Differences
+7. Limits & Failure Modes: Alignment Quality ไม่เท่ากับ Visual Fidelity Score และ Camera Fit ที่ยอมรับได้ไม่ได้แปลว่า Mesh หรือ Materials ตรง Reference ทั้งหมด
+8. Verification: Expected: ได้ภาพ Reference/Render Overlay ที่ตรวจความคลาดเคลื่อนได้; Actual: Tool Contracts รองรับ แต่ไม่ได้จับภาพเปรียบเทียบใหม่ในรอบนี้
+9. Disclosure Status: Reference Comparison Tooling Documented; Automated Visual Regression Service Undisclosed
+10. Research Gaps: SSIM/LPIPS Integration, Pixel Tolerance Policies, Image Baseline Versioning, Golden Image Storage และ Cross-device Rendering Variance
+169 — Test Reports และ Evidence IDs เก็บรักษานานเท่าไร?
+1. Direct Answer: เครื่องมือ Oriverse บางประเภทคืน evidence_id, render_id, request_id, source_hash และ expected_snapshot เพื่ออ้างอิงผลตรวจหรือระบุ Source Revision แต่ ยังไม่พบเอกสารระบุ Retention Duration มาตรฐานสำหรับ Test Reports และ Evidence IDs ทุกชนิด
+2. Architecture: Evidence Identifiers มีขอบเขตและอายุการใช้งานต่างกัน เช่น Preview Identity อ้าง Source/Settings, Render ID ใช้สำหรับ Pixel Picking และ Snapshot/Revision Tokens ใช้ตรวจความทันสมัยของการแก้ไข
+3. Source Evidence: preview_mesh, rate_asset, inspect_mesh, get_load_status, save_mesh_asset, library_capture_status
+4. API Contract:
+Identifier
+	ใช้ทำอะไร
+	Retention ที่ยืนยันได้
+	evidence_id
+	อ้างภาพ Preview สำหรับ Review
+	ไม่พบระยะเวลาสากล
+	render_id
+	Pixel Picking ของ Preview
+	Stale ได้เมื่อ Snapshot เปลี่ยน
+	request_id
+	ติดตาม Operation
+	ไม่พบ SLA ระยะเก็บ
+	expected_snapshot
+	Revision/State Validation
+	ใช้กับ Snapshot ล่าสุด
+	source_hash
+	Source Identity
+	ไม่ใช่ Retention Guarantee
+	asset_id
+	Asset Library Identity
+	Shared Asset Status แยกจาก Session-only
+	5. Working Example: Asset Review ใช้ evidence_id จาก Preview ของ Source เดียวกันเมื่อเรียก rate_asset แต่หาก Source เปลี่ยน ต้อง Preview ใหม่เพื่อไม่ใช้ Evidence เก่ารับรอง Asset ใหม่
+6. Execution Trace — Expected: Generate Preview → Receive Evidence ID → Review Asset → Store Verdict/Context → Retrieve Related Evidence เมื่อระบบยังเก็บอยู่
+7. Limits & Failure Modes: ไม่ควรใช้การมี evidence_id เป็นหลักประกันว่าไฟล์จะเข้าถึงได้ตลอดไป และการ Share Game ที่มีอายุประมาณ 30 วันเป็นคนละนโยบายกับ Evidence Retention
+8. Verification: Expected: Evidence จาก Source ที่ยังใช้งานได้สามารถเรียกกลับตาม Contract; Actual: ไม่ได้ทดสอบ Expiration หรือ Long-term Retrieval
+9. Disclosure Status: Evidence Identifiers Documented; Retention Policy Undisclosed
+10. Research Gaps: Evidence TTL, Storage SLA, Archival Export, Tamper-evident Hash, Immutable Retention และ Audit Compliance
+170 — ตัวอย่าง CI-style Automated Acceptance Pipeline
+1. Direct Answer: สามารถสร้าง CI-style Acceptance Pipeline สำหรับ KHOSAN AI Game Studio โดยใช้ Oriverse Tooling ที่เปิดเผยร่วมกับ External Orchestrator ซึ่งทำหน้าที่เก็บ Source Revision, Expected Results, Actual Results และ Evidence
+แต่ Oriverse ยังไม่ได้เปิดเผย Public CI Runner ที่ทำงานแบบ Hosted Pipeline พร้อมทุกขั้นดังกล่าวโดยอัตโนมัติ
+2. Architecture: Source/Revision → Compile/Simulate → Gameplay Tests → UI Tests → Multiplayer Tests → Visual Diagnostics → Evidence Aggregation → Human Approval/Delivery
+3. Source Evidence: stage_new_world, patch_and_run_pending_world, run_pending_world, playtest, ui_inspect, preview_mesh, authoring_completion
+4. API Contract: Pipeline ควรทำงานกับ Exact Source Revision และหยุดเมื่อ Compilation Failure หรือ Acceptance Failure พร้อมใช้ expected_revision ในการ Patch เพื่อป้องกัน Stale Updates
+5. Working Example — KHOSAN Proposed CI Orchestrator
+ในตัวอย่างนี้ adapterCompilePassed, adapterGameplayPassed, adapterUiPassed และ adapterRequiredEvidencePresent เป็น ฟังก์ชันที่ KHOSAN ต้อง Implement เอง ไม่ใช่ Oriverse APIs จึงเป็น Orchestration Blueprint ไม่ใช่โค้ดที่เรียกใช้ได้ทันที
+6. Execution Trace — Proposed:
+7. Limits & Failure Modes: การใช้ Source Revision ผิดทำให้ผลทดสอบไม่สามารถรับรอง Source ปัจจุบันได้ และบาง Tests เช่น Cross-device GPU Performance หรือ Packet Loss ไม่สามารถทำได้จาก playtest เพียงอย่างเดียว ต้องใช้ External Test Infrastructure
+8. Verification — Proposed Acceptance Matrix:
+Gate
+	Expected
+	Actual
+	CI-01 — Compile
+	ไม่มี Blocking Diagnostics
+	Not Run
+	CI-02 — 60-frame Simulation
+	ไม่มี Runtime Fault
+	Not Run
+	CI-03 — Gameplay
+	Assertions ครบ
+	Not Run
+	CI-04 — Multiplayer
+	Join/Leave/Rejoin ถูกต้อง
+	Not Run
+	CI-05 — UI
+	ไม่มี Critical Layout Lints
+	Not Run
+	CI-06 — Visual
+	Capture/Reference Review ผ่าน
+	Not Run
+	CI-07 — Evidence
+	ทุก Requirement มีหลักฐาน
+	Not Run
+	CI-08 — Regression
+	ไม่มี Behavior Regression
+	Not Run
+	CI-09 — Delivery
+	Exact Tested Revision ถูกส่ง
+	Not Run
+	9. Disclosure Status: Tool Contracts Documented; Proposed KHOSAN CI Pipeline Not Implemented / Not Verified
+10. Research Gaps: Standardized Tool Response Adapters, CI Runner, Artifact Storage, Regression Baselines, Coverage Reports, Performance Budgets และ Immutable Evidence Ledger
+________________
+
+
+TRR-17 — Consolidated Technical Research Record
+ข้อ
+	ประเด็น
+	Disclosure Status
+	161
+	Compiler Diagnostics
+	Documented; Severity Taxonomy Undisclosed
+	162
+	Real Engine Playtest
+	Documented; New Run Not Executed
+	163
+	Text vs Rendered Capture
+	Documented
+	164
+	UI Inspector
+	Documented
+	165
+	Unit/Integration/Regression
+	Black-box Building Blocks Documented
+	166
+	Traces/Snapshots/Profiling
+	Partial Observability Documented
+	167
+	Deterministic Divergence
+	Model Documented; Hash Inspector Undisclosed
+	168
+	Visual Regression
+	Comparison Tools Documented
+	169
+	Evidence Retention
+	Identifiers Documented; TTL Undisclosed
+	170
+	CI-style Pipeline
+	KHOSAN Design Proposed / Not Run
+	ข้อเท็จจริงจาก Oriverse
+Oriverse มีเครื่องมือสำหรับ Compiler Diagnostics, Simulation, Scripted Gameplay Tests, Multi-seat Player Tests, UI Tree Inspection, AOV/Rendered Captures และ Reference-image Alignment โดยสามารถตรวจพฤติกรรมและภาพได้หลายระดับโดยไม่ต้อง Publish World
+คู่มือ authoring_completion กำหนดแนวทางให้ทดสอบพฤติกรรมจริงกับ Requirements และ References ก่อนสรุปงาน และระบุชัดว่า Validation/Submission เพียงอย่างเดียวไม่ได้ทำให้งานสำเร็จ
+ข้อมูลที่ยังไม่เปิดเผย
+Severity Taxonomy แบบครบถ้วน, Native Unit Test Runner, Internal State Hash Inspector, Full Simulation Snapshot Export, CPU/GPU Profiler APIs, Evidence Retention SLA และ Hosted CI Service
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ระบบ KHOSAN Testing & Observability Platform ควรประกอบด้วย Requirement Traceability, Compiler Diagnostics Adapter, Automated Gameplay Runner, UI/Visual Regression, Multiplayer Determinism Tests, Metrics/Profiling Collector และ Evidence Registry ที่ผูกผลลัพธ์ทั้งหมดกับ Exact Source Revision
+หลักเกณฑ์การปิดงานควรเป็น No Evidence → No Done โดย Test ที่ยังไม่ได้รันต้องแสดง Not Run ไม่ใช่ PASS และ Source ที่ Compile ผ่านแต่ไม่มี Gameplay/Visual Evidence ต้องยังไม่ถือว่า Human Accepted
+สถานะ TRR-17: Documentation Research Completed / Tool Contracts Reviewed / Acceptance Pipeline Designed / No New Runtime Tests Executed.
+ไม่มีการ Stage, Patch, Submit หรือ Publish World ในรอบนี้ จึงไม่เปลี่ยนแปลง World ปัจจุบัน
+หมวดวิจัยถัดไปคือ 18 — Security, Permissions & Sandboxing (ข้อ 171–180) ซึ่งจะศึกษา Weave Sandbox, Script Capability Boundaries, User Permissions, Multiplayer Trust และความปลอดภัยของ Tool-driven Game Authoring
+________________
+
+
