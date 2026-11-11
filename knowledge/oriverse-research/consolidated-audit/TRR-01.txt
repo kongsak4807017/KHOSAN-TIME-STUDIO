@@ -1,0 +1,318 @@
+Oriverse / Weave Technical Research Record — TRR-01
+หมวด 01: Weave Language Architecture | คำถาม 001–010 | วันที่ 8 ตุลาคม 2569
+ผมเชื่อมต่อ Oriverse และอ่านเอกสาร weave_coding จากตัวเชื่อมต่อโดยตรงแล้ว โดยตรวจสอบหัวข้อ weave_language, frame_and_scheduling_model, asset_aliases, multiplayer_guidance, updating_old_worlds และ weave2_migration
+ผลการตรวจเอกสารยืนยันว่า Weave เป็นภาษาที่ใช้กำหนดทั้งโลกเกมและตรรกะการเล่น โดยรวม Scene Declarations, Class Logic, Asset Definitions และการเชื่อมต่อกับ Game Engine ไว้ใน World Description เดียว
+อย่างไรก็ตาม เอกสารสำหรับผู้พัฒนาเกมยังไม่เปิดเผยโครงสร้างภายใน Compiler และ Runtime ทั้งหมด จึงต้องแยก ข้อเท็จจริงที่มีเอกสารรองรับ ออกจาก การอนุมานเชิงสถาปัตยกรรม อย่างเคร่งครัด
+Research Coverage (10 Questions in Scope)
+คำถาม
+10
+เอกสารหลัก
+6
+ภาษาปัจจุบัน
+Weave2
+การตรวจสอบเอกสารเป็นคนละระดับกับการทดสอบ Runtime จริง ซึ่งจะรายงานผลแยกต่างหาก
+001. Weave ถูกออกแบบเพื่อแก้ปัญหาใด และแตกต่างจากภาษาเกมทั่วไปอย่างไร?
+1. Direct Answer
+Weave เป็นภาษาเฉพาะทางสำหรับการสร้างเกมบน Oriverse มีรูปแบบตรรกะที่คล้าย Swift และมีคำสั่งประกาศ Scene อยู่ระดับบนสุดของไฟล์
+จากความสามารถที่เปิดเผย Weave ลดความจำเป็นในการใช้ภาษาและเครื่องมือคนละชุดเพื่อกำหนดฉาก วัตถุ พฤติกรรม และ Procedural Assets แต่เอกสารไม่ได้ระบุคำประกาศเป้าหมายการออกแบบอย่างเป็นทางการจากผู้สร้างภาษา
+2. Architecture
+Weave World Description สามารถประกอบด้วย Scene Declarations และ #class พร้อม Asset Directives ต่าง ๆ ซึ่งถูกประมวลผลโดยระบบที่รองรับของ Oriverse
+3. Source Evidence: weave_coding → weave_language
+4. API Contract: ตัวอย่างโครงสร้างภาษาที่มีเอกสารรองรับคือ object Name { ... }, #class Name ... #end และ #mesh Name ... #end
+5. Working Example: รูปแบบที่คู่มือแสดง:
+ตัวอย่างนี้สาธิต Scene Declaration ส่วนผล Compile ของตัวอย่างแยกนี้ยังไม่ได้ตรวจในรอบปัจจุบัน
+6. Execution Trace: Parse declaration → Resolve object properties → Create world object เป็นลำดับเชิงหน้าที่ที่สอดคล้องกับเอกสาร ไม่ใช่ Compiler Trace ภายใน
+7. Limits & Failure Modes: ไม่รองรับ recursive function calls และมีข้อจำกัดด้านชนิดข้อมูล รวมถึงการใช้ API ที่ไม่อยู่ในรายการที่รองรับ
+8. Verification: การสร้าง Benchmark v0.1 ก่อนหน้านี้ผ่านการ Compile และสร้างวัตถุ 3D จริง แต่ยังไม่ได้ใช้ทดสอบขอบเขตของภาษาทุกด้าน
+9. Disclosure Status: Documented สำหรับคุณสมบัติภาษา; Inferred สำหรับวัตถุประสงค์เชิงการออกแบบ
+10. Research Gaps: Design rationale, language design principles และการเปรียบเทียบอย่างเป็นทางการกับภาษาเกมอื่น
+002. สถาปัตยกรรม Weave ประกอบด้วย Language, Compiler, Runtime และ Engine อย่างไร?
+1. Direct Answer
+คู่มือยืนยันว่ามีภาษาที่ผู้พัฒนาเขียน มี Compiler สำหรับสร้าง Bytecode จาก #class และมี Engine ที่ประมวลผลเกม ส่วนโครงสร้างภายในของ Lexer, Parser, Compiler Intermediate Representation และ Virtual Machine ไม่ได้เปิดเผยครบถ้วน
+2. Architecture
+แผนภาพเชิงตรรกะ แสดงความรับผิดชอบของแต่ละชั้น ไม่ใช่รายละเอียด implementation ภายในที่ยืนยันจากซอร์สโค้ด
+3. Source Evidence: weave_language, weave2_migration, frame_and_scheduling_model
+4. API Contract: #class เป็นหน่วยนิยาม logic; event OnSpawned และ event Update เป็นจุดเข้าสู่การทำงานตาม Event Model
+5. Working Example: ใน Benchmark มี #class DoorLogic ควบคุมสถานะ Open และ object SharedDoor : DoorLogic ผูกตรรกะกับวัตถุ
+6. Execution Trace: Source → Compile/Validate → Instantiate objects → Dispatch events → Update simulation
+7. Limits & Failure Modes: Compiler อาจปฏิเสธชื่อ API หรือชนิดข้อมูลที่ไม่ตรงกัน เช่น diagnostics กลุ่ม W2C
+8. Verification: Benchmark เคยตรวจพบ assignment type mismatch และ argument ผิด ก่อนแก้จน Compile ผ่าน
+9. Disclosure Status: Documented ในระดับหน้าที่; Undisclosed สำหรับ Compiler และ VM internals
+10. Research Gaps: AST, Bytecode Format, VM instruction set, memory allocator และการจัดการ execution stack
+003. หนึ่งไฟล์ Weave กำหนดองค์ประกอบเกมประเภทใดได้บ้าง?
+1. Direct Answer
+หนึ่ง World Description สามารถกำหนดองค์ประกอบได้หลายประเภทดังนี้
+ประเภท
+	คำสั่งที่มีเอกสารรองรับ
+	Scene objects
+	object, physics, display, saved, region
+	Population
+	walker, crowd, climbingCrowd
+	Game logic
+	#class, func, event
+	Geometry
+	#mesh, #tree, #forest, #scatter
+	World layout
+	#terrain, #road_network, #placement
+	Materials
+	#texture, #shader
+	2D Assets
+	#svg, #pixel, #sprite
+	Effects
+	#particles, #sound, #fieldmap
+	UI
+	#html
+	Configuration
+	#set, #render_profile, #adjuster, #rules
+	2. Architecture: องค์ประกอบที่ประกาศใน World Description จะถูกอ้างอิงผ่านชื่อหรือ Asset References ตามประเภทของมัน
+3. Source Evidence: weave_language และ asset_aliases
+4. API Contract: ตัวอย่าง model = "mesh.VillageHouse" อ้างถึง local procedural mesh ที่ประกาศชื่อ VillageHouse
+5. Working Example: Benchmark v0.1 ใช้ #terrain, #texture, #mesh, #class, #html, object, display และ saved ในโลกเดียว
+6. Execution Trace: Asset definitions ถูกใช้เตรียมทรัพยากร ขณะที่ Scene Declarations สร้างวัตถุ และ Class/Event Logic จัดการพฤติกรรมระหว่าง Simulation
+7. Limits & Failure Modes: แต่ละ Directive มีข้อกำหนดเฉพาะ เช่น Shader ใช้ WGSL subset/hook ที่ Engine เปิดให้ และ Mesh ต้องผ่านกฎของ Mesh DSL
+8. Verification: องค์ประกอบส่วนหนึ่งผ่าน Compile ของ Benchmark แล้ว ไม่ใช่การพิสูจน์ทุก Directive ในตาราง
+9. Disclosure Status: Documented สำหรับรายการความสามารถ; Experimentally Verified เฉพาะส่วนที่ใช้ใน Benchmark
+10. Research Gaps: Matrix ความเข้ากันได้ระหว่าง Directives และข้อจำกัดจำนวน Asset Definitions ต่อโลก
+004. มีระบบแยกหลายไฟล์ โมดูล หรือ Package หรือไม่?
+1. Direct Answer
+คู่มือที่ตรวจสอบยืนยันรูปแบบ World Description เป็นข้อความที่รวม Scene และ Classes และมีระบบ Asset Aliases รวมถึง Saved Templates แต่ยังไม่มีหลักฐานเพียงพอที่จะยืนยันว่า Weave รองรับ import, module, package หรือการ Compile หลายไฟล์ในรูปแบบทั่วไป
+2. Architecture: แนวทางที่ยืนยันได้คือ World-local definitions และการอ้างอิง Asset ภายในหรือจาก Library ภายนอก
+3. Source Evidence: weave_language, asset_aliases
+4. API Contract: เอกสารรองรับ Asset Alias เช่น model.goblin และการอ้าง model = "alias.model.goblin" แต่ไม่พบ Module Import Signature ที่ยืนยันได้
+5. Working Example: สร้าง #mesh VillageHouse หนึ่งครั้ง แล้วมี object HouseA, HouseB และ HouseC อ้างถึง mesh.VillageHouse
+6. Execution Trace: Definition ถูกประกาศ → Object References ชี้มายัง Definition เดียวกัน → Engine ใช้ทรัพยากรตามการอ้างอิง
+7. Limits & Failure Modes: World-local aliases ไม่รองรับการ chain alias ต่อ alias ตามเอกสาร
+8. Verification: Benchmark ใช้ mesh definition หนึ่งรายการสร้างบ้านหลายหลังได้
+9. Disclosure Status: Documented สำหรับการใช้ซ้ำแบบ Asset; Undisclosed สำหรับ Multi-file Module System
+10. Research Gaps: Namespace resolution, package management, cyclic dependencies, partial compilation และ reusable code modules
+005. Scene Declarations และ #class เชื่อมโยงกันอย่างไร?
+1. Direct Answer
+สามารถผูก Class เข้ากับ Scene Object ด้วยเครื่องหมาย : ระหว่างชื่อ Object และชื่อ Class เช่น object SharedDoor : DoorLogic
+2. Architecture: Scene Declaration กำหนดการมีอยู่ ตำแหน่ง และคุณสมบัติด้านภาพ/การชน ส่วน Class กำหนดข้อมูลและตรรกะที่จะทำงานกับ Instance
+3. Source Evidence: weave_language
+4. API Contract:
+5. Working Example: SharedDoor : DoorLogic ใน Benchmark ใช้ตัวแปร Open และฟังก์ชัน Toggle()
+6. Execution Trace: Object ถูกสร้าง → Class Logic ถูกผูกกับ Instance → Events และ Functions ทำงานกับ Instance นั้น
+7. Limits & Failure Modes: การเข้าถึงฟังก์ชันเฉพาะ Class จาก Object Reference ต้องใช้ Typed Cast ตามที่คู่มือกำหนด
+8. Verification: Benchmark ตรวจว่า UI Action สามารถเรียก Logic ของประตูและเพิ่มจำนวน Door uses ได้
+9. Disclosure Status: Documented และ Experimentally Verified สำหรับการผูก Class เข้ากับ Object
+10. Research Gaps: รายละเอียดของ Class Instance Layout, Dispatch Table และ Object/Class Metadata ภายใน Runtime
+006. Weave รองรับ Library Import และ Code Reuse อย่างไร?
+1. Direct Answer
+Weave รองรับการใช้ทรัพยากรซ้ำอย่างชัดเจนผ่าน Local Definitions, Asset Aliases, Saved Templates และ Oriverse Asset Library
+แต่ยังไม่มีหลักฐานยืนยันระบบนำเข้าโค้ดลักษณะเดียวกับ import ของ Python หรือ using ของ C#
+2. Architecture
+การใช้ซ้ำแบ่งออกได้เป็นสามระดับ:
+* Local Definitions: ประกาศ #mesh, #texture หรือ #class แล้วใช้ซ้ำภายในโลกเดียว
+* Asset Aliases: สร้างชื่ออ้างอิงกลางสำหรับ model, effect, image และ sound
+* External Asset Library: ค้นหาและนำทรัพยากรที่มีอยู่มาใช้งานตาม Asset ID หรือ URL ที่ระบบรองรับ
+3. Source Evidence: weave_coding → asset_aliases, mesh_dsl_usage
+4. API Contract
+Asset Alias มีรูปแบบชื่อ alias.<type>.<name> โดยชนิดที่คู่มือระบุ ได้แก่ model, effect, image และ sound
+สำหรับ Model Alias ต้องระบุเป้าหมายที่ถูกต้อง ส่วน Effect, Image และ Sound Alias สามารถประกาศเป็นช่องว่างเพื่อให้ระบบค้นหาทรัพยากรได้
+5. Working Example
+ตัวอย่างนี้ดัดแปลงจากโค้ดที่เราใช้ใน Benchmark v0.1 ซึ่งมีบ้านหลายหลังอ้างอิง Mesh Definition เดียวกัน
+6. Execution Trace
+#mesh definition → Mesh Bake → Model Reference Resolution → Object Instantiation
+7. Limits & Failure Modes
+Model Alias ต้องอ้างอิง Asset ที่มีอยู่จริง ห้ามสมมติ URL และ Alias ไม่สามารถ chain ไปยัง Alias อื่นตามคู่มือ
+8. Verification
+Benchmark มีการใช้ mesh.VillageHouse สร้างบ้าน 5 หลัง และผ่านการตรวจ Compile/Simulation
+9. Disclosure Status: Documented + Experimentally Verified สำหรับการใช้ Mesh ซ้ำ; Undisclosed สำหรับระบบ Import Source Modules
+10. Research Gaps: Dependency Graph, Package Versioning, Shared Code Libraries, Linker และการแยก Compile Unit
+007. Weave มี Versioning และ Compatibility อย่างไร?
+1. Direct Answer
+คู่มือปัจจุบันระบุว่า Weave2 เป็น Engine ที่รองรับอยู่ ขณะที่ Weave1 ถูกยกเลิกแล้ว
+World Description ใช้ #doc_version N ระบุเวอร์ชันของเอกสารหรือกฎที่นำมาใช้ปรับปรุง World
+ณ คู่มือที่ตรวจสอบ ค่า Current Document Version คือ 3
+2. Architecture
+ระบบ Compatibility มีอย่างน้อยสองมิติ:
+* การย้ายโค้ดจาก Weave1 ไป Weave2
+* การปรับ Source ตามการเปลี่ยนแปลงที่กำกับด้วย #doc_version
+อย่างไรก็ตาม ยังไม่มีหลักฐานว่า #doc_version เป็น SemVer ของตัว Compiler หรือ Bytecode
+3. Source Evidence: updating_old_worlds, weave2_migration
+4. API Contract
+ถ้า World เก่ายังมี #set Weave2 0 จะถูกปฏิเสธการโหลด และต้องดำเนินการ Migration
+5. Working Example
+Benchmark v0.1 ใช้ #doc_version 3 และไม่ประกาศการย้อนกลับไป Weave1
+6. Execution Trace
+อ่าน World Source → ตรวจ Version/Legacy Constructs → Compile → Diagnostics → แก้ Source → Recompile
+7. Limits & Failure Modes
+API ที่ถูกยกเลิกอาจก่อให้เกิด Compiler Diagnostics เช่น W2C0605 หรือ W2C0614 โดยต้องอ่านรายละเอียดข้อความผิดพลาด ไม่ใช่อาศัย Error Code เพียงอย่างเดียว
+8. Verification
+ผมตรวจโค้ดของ World ที่เปิดอยู่แบบอ่านอย่างเดียว พบ #doc_version 3 และเมื่อนำ Draft ปัจจุบันเข้า Compile/Simulation อีกครั้ง ระบบรายงานว่า ผ่าน 60 frames ภายในประมาณ 90 ms พร้อมข้อความ BENCH_WORLD_READY, PLAYER_READY 0 และ PLAYER_READY 1
+นี่เป็นการตรวจสอบความเข้ากันได้ของ World ปัจจุบัน ไม่ใช่การทดสอบ Migration จาก Weave1 จริง
+9. Disclosure Status: Documented + Experimentally Verified สำหรับ World ปัจจุบัน; Not Verified สำหรับ Migration End-to-End
+10. Research Gaps: Bytecode compatibility, migration automation, backward compatibility guarantees และการรองรับเกมที่สร้างด้วยเวอร์ชันเก่าในระยะยาว
+008. Weave มีข้อจำกัดเมื่อเทียบกับ C#, C++ และ Lua อย่างไร?
+1. Direct Answer
+Weave เป็นภาษาเฉพาะทางที่ใช้ API และ Execution Model ของ Oriverse ต่างจาก C#, C++ และ Lua ซึ่งเป็นภาษาที่มีระบบนิเวศและรูปแบบการใช้งานกว้างกว่า
+ข้อจำกัดที่มีเอกสารยืนยัน ได้แก่ ไม่รองรับ Recursion และต้องใช้ Built-in Functions ที่เปิดให้ใช้งาน รวมถึงต้องปฏิบัติตามข้อจำกัดของ Runtime
+2. Architecture
+Weave ทำงานภายใต้โมเดลที่ Engine กำหนด ไม่ใช่ระบบที่ผู้พัฒนาควบคุมหน่วยความจำ native, threads หรือ operating system APIs ได้อย่างอิสระตามใจชอบ
+ข้อความหลังเป็นการเปรียบเทียบเชิงแนวคิด ยังไม่ใช่การยืนยันรายละเอียด Sandbox ทั้งหมด
+3. Source Evidence: weave_language, frame_and_scheduling_model, weave2_migration
+4. API Contract
+มีข้อจำกัดที่ระบุไว้ เช่น:
+ประเด็น
+	Weave
+	Numeric representation
+	Deterministic fixed-point 48.16
+	Recursive calls
+	ไม่รองรับ
+	Runtime scheduling
+	ขับเคลื่อนด้วย Events และ Ticks
+	Engine access
+	ผ่าน Built-in API ที่รองรับ
+	Concurrent simulation
+	ต้องรักษากฎ Determinism
+	Continuation budget
+	มีงบส่วนกลาง 262,144 slots ตามคู่มือ
+	5. Working Example
+แทนการเขียน recursive function สามารถใช้งานลูปและ List เป็น Explicit Stack ตามคำแนะนำของคู่มือ
+6. Execution Trace
+Compiler ตรวจการเรียกฟังก์ชันและชนิดข้อมูล หากมี recursive call cycle จะปฏิเสธก่อน Runtime
+7. Limits & Failure Modes
+การสร้าง Update หรือ forever จำนวนมากอาจทำให้ CPU overhead สูง การสะสม Continuations มากเกินไปอาจชน Budget ของ Runtime
+8. Verification
+ข้อจำกัดเหล่านี้ปรากฏในคู่มือ แต่ยังไม่ได้ทำ Benchmark เปรียบเทียบกับ C#, C++ และ Lua ด้วยภาระงานที่เทียบเท่ากัน
+9. Disclosure Status: Documented สำหรับข้อจำกัด Weave; Not Verified สำหรับข้อสรุปด้านประสิทธิภาพเปรียบเทียบ
+10. Research Gaps: Garbage Collection, Memory Layout, Embedding ABI, Foreign Function Interface, Threading Model และ Benchmark ข้ามภาษา
+009. อะไรคือข้อกำหนดของภาษา และอะไรเป็นความสามารถของ Engine?
+1. Direct Answer
+ต้องแยก Language Semantics ออกจาก Engine Services
+ภาษาเป็นตัวกำหนดว่าโค้ดถูกต้องอย่างไร ส่วน Engine เป็นตัวกำหนดว่าจะจำลองและแสดงผลสิ่งที่โค้ดระบุอย่างไร
+2. Architecture
+Language / Compiler
+	Engine / Runtime
+	Grammar และ Syntax
+	Object Instantiation
+	Type Checking
+	Physics
+	Function Declaration
+	Collision
+	Class Definition
+	Rendering
+	Event Handler Syntax
+	Event Dispatch
+	Compile Diagnostics
+	Audio
+	Numeric Rules
+	Multiplayer Simulation
+	Asset Reference Syntax
+	Asset Loading และ Baking
+	การแบ่งนี้เป็นการจัดหมวดตามหน้าที่ บางระบบมีขอบเขตทับซ้อนกัน เช่น Event Model และ Deterministic Arithmetic ที่เกี่ยวข้องทั้งภาษาและ Runtime
+3. Source Evidence: weave_language, frame_and_scheduling_model, multiplayer_guidance
+4. API Contract
+ตัวอย่าง event OnSpawned { ... } เป็นการประกาศตามภาษา ส่วน Engine เป็นฝ่ายเรียก Handler เมื่อ Instance เข้าสู่ Lifecycle ที่กำหนด
+5. Working Example
+Class และฟังก์ชันเป็นโครงสร้างภาษา ส่วนการเปลี่ยน Collision หรือภาพวัตถุเมื่อเปิดประตูต้องเรียก Engine APIs ที่เกี่ยวข้อง
+6. Execution Trace
+Language Source → Compiler Validation → Runtime Class Instance → Event Invocation → Engine State Change
+7. Limits & Failure Modes
+โค้ดอาจ Compile ผ่านแต่ให้ผลภาพหรือ Gameplay ที่ไม่ตรงตามความต้องการ เช่น Collider อยู่ผิดตำแหน่งหรือปุ่ม UI อยู่ไกลจุดปฏิสัมพันธ์
+8. Verification
+Benchmark ผ่าน Compile แต่พบปัญหาด้านคุณภาพฉากและเงื่อนไขระยะใกล้ของร้านค้า แสดงให้เห็นความแตกต่างระหว่างความถูกต้องของภาษาและความถูกต้องของ Gameplay
+9. Disclosure Status: Documented สำหรับพฤติกรรมระดับ API; Inferred สำหรับการแบ่งขอบเขตโมดูลภายในทั้งหมด
+10. Research Gaps: Compiler-to-Runtime ABI, Native Binding Layer และ Internal Engine Module Boundaries
+010. Minimal Complete Game ที่แสดงวงจรการทำงานทั้งหมด
+1. Direct Answer
+ตัวอย่างที่เหมาะสำหรับศึกษาการทำงานของ Weave คือเกมขนาดเล็กที่มีพื้น ผู้เล่น วัตถุที่โต้ตอบได้ สถานะภายใน Class และ Event ที่เปลี่ยนสถานะของวัตถุ
+ผมเลือกตัวอย่าง Interactive Switch ซึ่งผู้เล่นกดปุ่ม E ใกล้แท่นเพื่อเปลี่ยนสีและนับจำนวนการใช้งาน
+2. Architecture
+Player Input E
+Player Event
+Switch.Toggle()
+Update State
+SetColor()
+Render Result
+3. Source Evidence
+โครงสร้างจาก weave_coding → example_crop_growth และ API SetDefaultPlayerControlsEnabled(IsOn: Bool)
+4. API Contract
+* event OnSpawned เรียกเมื่อ Object เกิด
+* event ActionDownByThisPlayer[Interact] รับการกระทำ Interact ของผู้เล่นรายนั้น
+* DistanceTo(Object) ตรวจระยะจากผู้เล่นถึงเป้าหมาย
+* SetColor(R, G, B) เปลี่ยนสีของ Object
+* Say(Text) แสดงข้อความในเกม
+5. Working Example
+ตัวอย่างนี้จัดทำเป็น Source เพื่อศึกษาโดยเฉพาะ ยังไม่ได้ Compile แยกจาก Benchmark:
+6. Execution Trace — Expected
+ขั้นตอน
+	เหตุการณ์
+	สถานะ
+	Load
+	สร้าง Ground และ Switch
+	Enabled = false
+	Player Spawn
+	เปิดระบบเดินของผู้เล่น
+	WASD พร้อมใช้
+	Input E
+	ตรวจระยะจาก Switch
+	ต้องไม่เกิน 200 cm
+	Toggle 1
+	เรียก SwitchLogic.Toggle
+	Enabled = true, Uses = 1
+	Toggle 2
+	เรียกซ้ำ
+	Enabled = false, Uses = 2
+	7. Limits & Failure Modes
+เมื่อผู้เล่นอยู่ไกลกว่า 200 cm จะไม่เปลี่ยนสถานะ และหากตัวอย่างถูกดัดแปลงให้ใช้ API ที่ไม่มีใน Engine จะเกิด Compiler Error ต้องตรวจชื่อและ Signature ใหม่
+8. Verification
+* Expected Result: โหลดฉากได้ เดินเข้าใกล้แท่นและกด E เพื่อสลับสี
+* Actual Result: Not Verified สำหรับตัวอย่าง Interactive Switch นี้ เพราะยังไม่ได้ส่ง Source นี้เข้า Compiler
+* Related Evidence: Benchmark World ที่ใช้ Class/Event Pattern คล้ายกันผ่าน Compile และ Simulation 60 Frames อีกทั้งการตรวจ UI ก่อนหน้าเคยยืนยันการเพิ่มจำนวน Door uses เมื่อคลิกปุ่ม
+9. Disclosure Status: Documented สำหรับ API และ Pattern; Not Verified สำหรับโปรแกรมตัวอย่างนี้
+10. Research Gaps: ต้องรัน Source นี้ใน Isolated Draft ทดสอบ E สองครั้ง และตรวจค่า Enabled/Uses จริง โดยไม่เปลี่ยนเกม Benchmark ที่เปิดอยู่
+________________
+
+
+Technical Research Record — สรุปผลหมวด 01
+ข้อ
+	ประเด็น
+	สถานะหลักฐาน
+	001
+	Language Purpose
+	Documented / Inferred
+	002
+	Compiler & Runtime Architecture
+	Partially Documented
+	003
+	World Components
+	Documented
+	004
+	Modules & Packages
+	Partially Documented / Undisclosed
+	005
+	Scene–Class Binding
+	Documented / Verified
+	006
+	Asset Library & Reuse
+	Documented / Verified
+	007
+	Versioning & Compatibility
+	Documented / Partially Verified
+	008
+	Limitations
+	Documented / Comparison Not Verified
+	009
+	Language vs Engine
+	Documented / Partially Inferred
+	010
+	Minimal Complete Game
+	Documented Pattern / Not Verified
+	หลักฐานเพิ่มเติมจาก Runtime
+ผมตรวจ World ที่เปิดอยู่และสั่ง run_pending_world โดยไม่แก้ไข Source ผลคือ:
+* Validation: PASS
+* Simulation: 60 Frames
+* เวลาตรวจสอบ: ประมาณ 90 ms
+* Startup Log: BENCH_WORLD_READY, PLAYER_READY 0, PLAYER_READY 1
+การจำลองแบบสองผู้เล่นเพิ่มเติมสำเร็จในโหมดข้อความ โดยประมวลผล 241 Frames แต่ผลดังกล่าวยังไม่ใช่การรับรองการเชื่อมต่อ Multiplayer ผ่านเครือข่ายจริง
+ข้อค้นพบสำคัญสำหรับ KHOSAN Studio
+สิ่งที่เราสามารถนำมาใช้เป็นแนวทางออกแบบได้ทันทีคือการแยก World Description, Typed Gameplay Logic, Asset Definitions และ Runtime Validation ออกจากกัน โดยกำหนด Interface ระหว่างองค์ประกอบให้ตรวจสอบได้
+ส่วนสิ่งที่ยังไม่ควรนำไปตั้งสมมติฐานว่าเหมือนกับ Oriverse ได้แก่ Internal AST, Bytecode Encoding, VM Instruction Set, Source Module Loader และรายละเอียด Network Rollback Implementation เพราะยังไม่มีเอกสารหรือหลักฐานระดับ Implementation รองรับ
+สถานะหมวด 01: Research Documentation Completed — Internal Architecture Partially Undisclosed.
+มีข้อสังเกตด้านสภาพแวดล้อมด้วย: Oriverse รายงานว่า Editor build 05Oct26-23:23 เก่ากว่ารุ่นที่ระบบใช้อยู่ประมาณ 3 วัน ควร Reload แท็บ Editor ก่อนทำการทดสอบหรือแก้ไขเกมรอบต่อไป
+ลำดับการวิจัยต่อไป: หมวด 02 — Grammar, Types & Semantics (ข้อ 011–020) ซึ่งจะศึกษากฎภาษาระดับละเอียด เพื่อนำไปออกแบบ Schema และ Type System ของ KHOSAN Game IR ต่อไป
+________________
+
+
