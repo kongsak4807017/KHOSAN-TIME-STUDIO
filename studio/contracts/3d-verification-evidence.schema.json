@@ -23,7 +23,7 @@
     "maker": {"$ref": "#/$defs/agentIdentity"},
     "reviewer": {
       "type": "object", "additionalProperties": false,
-      "required": ["agent_id", "session_id", "run_id", "isolated_session", "verdict", "defects", "reviewed_contact_sha256"],
+      "required": ["agent_id", "session_id", "run_id", "isolated_session", "verdict", "defects", "reviewed_contact_sha256", "signature_base64"],
       "properties": {
         "agent_id": {"type": "string", "minLength": 1},
         "session_id": {"type": "string", "minLength": 1},
@@ -32,7 +32,8 @@
         "verdict": {"const": "ACCEPT"},
         "defects": {"type": "array", "maxItems": 0},
         "reviewed_contact_sha256": {"$ref": "#/$defs/hash"},
-        "reviewed_reference_sha256": {"$ref": "#/$defs/hash"}
+        "reviewed_reference_sha256": {"$ref": "#/$defs/hash"},
+        "signature_base64": {"type": "string", "minLength": 32}
       }
     },
     "technical": {
@@ -62,13 +63,14 @@
     },
     "human_approval": {
       "type": "object", "additionalProperties": false,
-      "required": ["approved", "approval_reference", "approved_by", "asset_id", "approved_glb_sha256"],
+      "required": ["approved", "approval_reference", "approved_by", "asset_id", "approved_glb_sha256", "signature_base64"],
       "properties": {
         "approved": {"const": true},
         "approval_reference": {"type": "string", "minLength": 1},
         "approved_by": {"type": "string", "minLength": 1},
         "asset_id": {"type": "string", "minLength": 1},
-        "approved_glb_sha256": {"$ref": "#/$defs/hash"}
+        "approved_glb_sha256": {"$ref": "#/$defs/hash"},
+        "signature_base64": {"type": "string", "minLength": 32}
       }
     }
   },
