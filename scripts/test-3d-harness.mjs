@@ -7,7 +7,7 @@ import {createHash,generateKeyPairSync,sign as signEd25519} from 'node:crypto';
 import {deflateSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {verify3DAcceptance,advanceStage,validateTechnical,reviewerReceiptPayload,humanApprovalPayload} from '../tools/harness-3d/gate.mjs';
+import {verify3DAcceptance,advanceStage,validateTechnical,rendererReceiptPayload,reviewerReceiptPayload,humanApprovalPayload} from '../tools/harness-3d/gate.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));
 const digest=b=>createHash('sha256').update(b).digest('hex');
 function glb(){
@@ -32,12 +32,15 @@ async function fixture(){
  await mkdir(path.join(root,'artifacts'));await mkdir(path.join(root,'evidence'));await mkdir(path.join(root,'references'));
  const objects={ugir_json:{path:'artifacts/house.ugir.json',buf:Buffer.from(JSON.stringify({ugir_version:'0.2.0',asset_id:'house-001',coordinate_system:{unit:'cm',up_axis:'+Z'},layout_nodes:[{instance_name:'Ground',placement_mode:'place_bounds_box',min_xyz_cm:[-500,-500,-20],max_xyz_cm:[500,500,0],is_ground:true},{instance_name:'Wall',placement_mode:'place_bounds_box',min_xyz_cm:[-50,-10,0],max_xyz_cm:[50,10,250]}],expected_adjacent_seams:[['Ground','Wall']]}))},glb:{path:'artifacts/house.glb',buf:glb()},contact_sheet_png:{path:'evidence/contact_sheet_4x4.png',buf:png4x4()},reference:{path:'references/reference.png',buf:png4x4()}};
  const artifacts={};for(const [role,entry] of Object.entries(objects)){await writeFile(path.join(root,entry.path),entry.buf);artifacts[role]={path:entry.path,sha256:digest(entry.buf)}}
- const evidence={schema:'khosan.3d.verification.v1',asset_id:'house-001',task_id:'TASK-3D-HOUSE-001',project_id:'game-001',source_revision:'sha-001',reference_mode:'reference',maker:{agent_id:'04-asset-synthesizer',session_id:'maker-01'},reviewer:{agent_id:'11-independent-reviewer',session_id:'critic-02',isolated_session:true,run_id:'critic-run-001',verdict:'ACCEPT',defects:[],reviewed_contact_sha256:artifacts.contact_sheet_png.sha256,reviewed_reference_sha256:artifacts.reference.sha256},technical:{source_revision:'sha-001',tool_id:'khosan-native-lint',run_id:'lint-run-002',compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:0,max_camera_blocked_frac:0.05,vertex_count:3},artifacts,human_approval:{approved:true,approval_reference:'HG-04-owner-001',approved_by:'executive-producer',asset_id:'house-001',approved_glb_sha256:artifacts.glb.sha256}};
+ const sourceRevision=artifacts.ugir_json.sha256;
+ const evidence={schema:'khosan.3d.verification.v1',asset_id:'house-001',task_id:'TASK-3D-HOUSE-001',project_id:'game-001',source_revision:sourceRevision,reference_mode:'reference',maker:{agent_id:'04-asset-synthesizer',session_id:'maker-01'},renderer:{renderer_id:'08-rendering-engineer',run_id:'render-run-001',source_revision:sourceRevision,rendered_glb_sha256:artifacts.glb.sha256,contact_sheet_sha256:artifacts.contact_sheet_png.sha256,reference_sha256:artifacts.reference.sha256,views_rendered:16,camera_ids:Array.from({length:16},(_,i)=>'camera-'+String(i+1).padStart(2,'0'))},reviewer:{agent_id:'11-independent-reviewer',session_id:'critic-02',isolated_session:true,run_id:'critic-run-001',verdict:'ACCEPT',defects:[],reviewed_contact_sha256:artifacts.contact_sheet_png.sha256,reviewed_reference_sha256:artifacts.reference.sha256},technical:{source_revision:sourceRevision,tool_id:'khosan-native-lint',run_id:'lint-run-002',compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:0,max_camera_blocked_frac:0.05,vertex_count:3},artifacts,human_approval:{approved:true,approval_reference:'HG-04-owner-001',approved_by:'executive-producer',asset_id:'house-001',approved_glb_sha256:artifacts.glb.sha256}};
+ const rendererKey=generateKeyPairSync('ed25519',{publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
  const reviewerKey=generateKeyPairSync('ed25519',{publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
  const humanKey=generateKeyPairSync('ed25519',{publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
+ evidence.renderer.signature_base64=signEd25519(null,Buffer.from(rendererReceiptPayload(evidence),'utf8'),rendererKey.privateKey).toString('base64');
  evidence.reviewer.signature_base64=signEd25519(null,Buffer.from(reviewerReceiptPayload(evidence),'utf8'),reviewerKey.privateKey).toString('base64');
  evidence.human_approval.signature_base64=signEd25519(null,Buffer.from(humanApprovalPayload(evidence),'utf8'),humanKey.privateKey).toString('base64');
- const trust={reviewer_public_key_pem:reviewerKey.publicKey,human_public_key_pem:humanKey.publicKey};
+ const trust={renderer_public_key_pem:rendererKey.publicKey,reviewer_public_key_pem:reviewerKey.publicKey,human_public_key_pem:humanKey.publicKey};
  return {root,evidence,objects,trust};
 }
 async function withFixture(fn){const f=await fixture();try{await fn(f)}finally{await rm(f.root,{recursive:true,force:true})}}
@@ -72,9 +75,26 @@ test('tampering with reviewer or human signed metadata blocks even when unsigned
  evidence.reviewer.run_id='fake-run';assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false);
 }));
 test('CLI can verify with two separately provisioned public keys',()=>withFixture(async ({root,evidence,trust})=>{
- const reviewerFile=path.join(root,'reviewer-public.pem'),humanFile=path.join(root,'human-public.pem'),file=path.join(root,'evidence','signed.json');
- await writeFile(reviewerFile,trust.reviewer_public_key_pem);await writeFile(humanFile,trust.human_public_key_pem);await writeFile(file,JSON.stringify(evidence));
- const r=spawnSync(process.execPath,[path.resolve(dir,'../tools/harness-3d/cli.mjs'),'verify',root,file],{encoding:'utf8',env:{...process.env,KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE:reviewerFile,KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE:humanFile}});
+ const rendererFile=path.join(root,'renderer-public.pem'),reviewerFile=path.join(root,'reviewer-public.pem'),humanFile=path.join(root,'human-public.pem'),file=path.join(root,'evidence','signed.json');
+ await writeFile(rendererFile,trust.renderer_public_key_pem);await writeFile(reviewerFile,trust.reviewer_public_key_pem);await writeFile(humanFile,trust.human_public_key_pem);await writeFile(file,JSON.stringify(evidence));
+ const r=spawnSync(process.execPath,[path.resolve(dir,'../tools/harness-3d/cli.mjs'),'verify',root,file],{encoding:'utf8',env:{...process.env,KHOSAN_3D_RENDERER_PUBLIC_KEY_FILE:rendererFile,KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE:reviewerFile,KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE:humanFile}});
  assert.equal(r.status,0,r.stdout+' '+r.stderr);
  assert.match(r.stdout,/"verdict": "PASS"/);
+}));
+
+test('renderer signature binds the exact GLB, contact sheet, source and all 16 views',()=>withFixture(async ({root,evidence,trust})=>{
+ assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,true);
+ evidence.renderer.rendered_glb_sha256='0'.repeat(64);
+ assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false);
+}));
+test('missing renderer trust key blocks even if reviewer and human signatures are valid',()=>withFixture(async ({root,evidence,trust})=>{
+ assert.equal((await verify3DAcceptance(root,evidence,{reviewer_public_key_pem:trust.reviewer_public_key_pem,human_public_key_pem:trust.human_public_key_pem})).ok,false);
+}));
+test('renderer contact sheet must contain 16 unique camera IDs',()=>withFixture(async ({root,evidence,trust})=>{
+ evidence.renderer.camera_ids=evidence.renderer.camera_ids.slice(1);
+ assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false);
+}));
+test('source revision must equal exact UG-IR file bytes',()=>withFixture(async ({root,evidence,trust})=>{
+ evidence.source_revision='a'.repeat(64);evidence.technical.source_revision=evidence.source_revision;
+ assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false);
 }));
