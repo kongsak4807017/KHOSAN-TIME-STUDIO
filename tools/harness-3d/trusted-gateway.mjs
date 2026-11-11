@@ -52,6 +52,15 @@ function checkedSignature(body,signature,pem){
  if(typeof signature!=='string'||!/^[A-Za-z0-9+/]+={0,2}$/.test(signature))return false;
  try{return verifyEd25519(null,Buffer.from(body),checkPublicKey(pem),Buffer.from(signature,'base64'))}catch{return false}
 }
+export function signGatewayResponse(response,serverPrivateKey){
+ const body=stableJSON(response);
+ return {...response,server_signature_base64:signEd25519(null,Buffer.from(body),serverPrivateKey).toString('base64')};
+}
+export function verifyGatewayResponse(response,serverPublicKeyPem){
+ if(!isObj(response)||typeof response.server_signature_base64!=='string')return false;
+ const {server_signature_base64,...body}=response;
+ return checkedSignature(stableJSON(body),server_signature_base64,serverPublicKeyPem);
+}
 export function authorizeCommand(req,trust,now=Date.now()){
  validateTrust(trust);
  if(!keys(req,['schema','project_id','task_id','actor','action','expected_version','nonce','issued_at','expires_at','payload','signature_base64'])||Object.keys(req).length!==11||req.schema!==PROTOCOL)fail('invalid command schema');
@@ -173,7 +182,7 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
   if(request.action==='status'){
    if(!current)fail('task not initialized');
    if(request.expected_version!==current.version)fail('stale expected state version');
-   return {ok:true,version:current.version,stage:current.stage,source_sha256:current.source?.sha256??null,tools:allowedTools(current.stage,request.actor.role),has_reference:!!current.reference,has_review:!!current.review,has_approval:!!current.approval};
+   return {ok:true,version:current.version,stage:current.stage,source_sha256:current.source?.sha256??null,source_file_sha256:current.source?.file_sha256??null,tools:allowedTools(current.stage,request.actor.role),has_reference:!!current.reference,has_review:!!current.review,has_approval:!!current.approval};
   }
   if(current){
    if(request.expected_version!==current.version)fail('stale task version or replay attempt');
@@ -210,7 +219,7 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
     const p=await getSafeFile(folder,next.source.filename,{suffix:'.json',maxBytes:8*1024*1024});const source=JSON.parse(await readFile(p.file,'utf8'));
     const findings=geometryDiagnostics(source);
     if(findings.length){next.scope=measuredRepairScope(source);next.lint=null;response={verdict:'REWORK',scope:next.scope};}
-    else {next.scope=null;next.lint={run_id:request.nonce,source_sha256:next.source.file_sha256,max_seam_gap_cm:0,issues:[]};next.stage='geometry_verified';response={verdict:'PASS',source_sha256:next.source.sha256};}
+    else {next.scope=null;next.lint={run_id:request.nonce,source_sha256:next.source.file_sha256,max_seam_gap_cm:0,issues:[]};next.stage='geometry_verified';response={verdict:'PASS',source_sha256:next.source.file_sha256};}
     break;
    }
    case 'patch_failing_layout_nodes':{
@@ -221,7 +230,7 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
     const source=JSON.parse(await readFile(p.file,'utf8'));
     const patch=applyDifferentialPatch(source,next.scope,request.payload);
     const issued=await issueSource(folder,patch.state,next.version+1);issued.file_sha256=await fileHash(path.join(folder,issued.filename));
-    next.source=issued;next.scope=null;next.lint=null;response={verdict:patch.complete?'READY_FOR_RECHECK':'REWORK',source_sha256:issued.sha256,issues_after:patch.after};break;
+    next.source=issued;next.scope=null;next.lint=null;response={verdict:patch.complete?'READY_FOR_RECHECK':'REWORK',source_sha256:issued.sha256,source_file_sha256:issued.file_sha256,issues_after:patch.after};break;
    }
    case 'submit_render':{
     validatePayload(request.payload,['glb','contact_sheet_png','camera_blocked_frac','source_sha256','camera_ids','renderer_receipt_signature_base64']);
@@ -279,5 +288,5 @@ export async function readTrustedStatus({projectRoot,trust,projectId,taskId}){
  validateTrust(trust);const root=await realProject(projectRoot,projectId,trust);
  if(!NAME.test(taskId))fail('invalid task id');const folder=path.join(root,'.khosan','harness3d','tasks',taskId);
  const state=await readState(folder,trust);
- return {project_id:state.project_id,task_id:state.task_id,asset_id:state.asset_id,version:state.version,stage:state.stage,source_sha256:state.source?.sha256??null,verification:'state Ed25519 signature validated',allowed_actions:Object.fromEntries([...ROLES].map(role=>[role,allowedTools(state.stage,role)])),read_only:true};
+ return {project_id:state.project_id,task_id:state.task_id,asset_id:state.asset_id,version:state.version,stage:state.stage,source_sha256:state.source?.sha256??null,source_file_sha256:state.source?.file_sha256??null,verification:'state Ed25519 signature validated',allowed_actions:Object.fromEntries([...ROLES].map(role=>[role,allowedTools(state.stage,role)])),read_only:true};
 }
