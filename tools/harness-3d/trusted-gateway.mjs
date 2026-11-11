@@ -216,6 +216,7 @@ export async function executeTrustedCommand({projectRoot,trust,serverPrivateKey,
    }
    case 'lint_geometry':{
     validatePayload(request.payload,[]);
+    if(request.actor.id===next.maker?.agent_id)fail('checker must be independent from maker');
     const p=await getSafeFile(folder,next.source.filename,{suffix:'.json',maxBytes:8*1024*1024});const source=JSON.parse(await readFile(p.file,'utf8'));
     const findings=geometryDiagnostics(source);
     if(findings.length){next.scope=measuredRepairScope(source);next.lint=null;response={verdict:'REWORK',scope:next.scope};}
