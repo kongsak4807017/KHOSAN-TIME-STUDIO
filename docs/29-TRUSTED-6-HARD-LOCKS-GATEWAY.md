@@ -82,3 +82,24 @@ node scripts/verify-oriverse-archive.mjs
 GitHub Actions `harness-gates.yml` runs automatically for PRs to main and pushes to main. A green workflow does **not automatically enable required status checks / rulesets**; a repository administrator must configure rules and require the `trusted-gateway-and-evidence` check. Local Git hooks are optional UX, not a security boundary (`--no-verify` bypasses them).
 
 Tests use synthetic reference PNGs and a minimal synthetic GLB; they prove protocol behavior, not artistic fidelity. Renderer `submit_render` is a *signed receipt ingestion*, not image synthesis. Real Blender/Three.js GPU rendering, 16 independent viewpoints, trustworthy raycast camera measurements, independent VLM evaluation, identity-backed human approvals, all-engine geometry and large-scale multi-user security must still be implemented and verified in the target Windows environment. **Do not claim six fully enforced hard locks until those deployment conditions pass.**
+
+## 6. DevSpace to trusted local IPC (implementation; OS installation still required)
+
+The source includes a local-only **Windows named-pipe / Unix-domain-socket daemon**. The Maker prepares a signed request and sends it to the gateway. The service checks project root, signature, role, phase, version, artifact digests and per-axis permissions before any protected write. There is no arbitrary shell or remote HTTP mutation surface.
+
+Start **only under an OS-isolated trusted gateway service identity**, not under DevSpace's unrestricted Maker Windows account:
+
+```powershell
+node tools/harness-3d/gateway-daemon.mjs serve "C:\KHOSAN\trust\public-registry.json" "C:\KHOSAN\trust\server-private.pem" "\\.\pipe\khosan-harness3d"
+```
+
+Maker-side request creation, signing (Maker private key only), and IPC submission:
+
+```powershell
+node tools/harness-3d/gateway-sign.mjs sign "C:\KHOSAN\maker\maker-private.pem" "C:\KHOSAN\maker\unsigned-request.json" "C:\KHOSAN\maker\signed-request.json"
+node tools/harness-3d/gateway-client.mjs "\\.\pipe\khosan-harness3d" "C:\KHOSAN\maker\signed-request.json"
+```
+
+The IPC accepts at most one signed JSON request per connection, a 1 MiB frame, 30-second timeout and limited concurrent connections. A Maker signature never authorizes Controller, Renderer, Independent Reviewer or Human actions; separate issuer keys, credentials and actual work are mandatory.
+
+**Windows deployment prerequisite:** Create a dedicated gateway service account, enforce real NTFS ACLs so Maker cannot directly modify protected `.khosan/harness3d` task state/accepted evidence or read protected private keys, provision external independent reviewer and human approval issuers, and verify the running identities. `icacls` can be used to inspect and enforce rights by a local administrator; this repository does not blindly modify the user's file permissions or install a background service. Without these operating-system controls, the protocol module is *not* a complete sandbox.
