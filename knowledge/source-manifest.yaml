@@ -31,7 +31,9 @@ oriverse_weave_research:
   interpretation_notes: knowledge/oriverse-research/supplemental/MCP-Pipeline-Interpretive-Notes.txt
   diagram_reconstruction: knowledge/oriverse-research/workflows/WORKFLOWS-16.md
   original_tool_transcripts: incomplete
-  original_diagram_svg_zip: not_mirrored_exact_binary
+  original_diagram_svg_zip: knowledge/oriverse-research/workflows/Oriverse_Capability_Audit_SVG_Workflows.zip
+  original_diagram_zip_sha256: fcf52504a98b4fdcd055eb8afabcd9c9a01a61db94ba6c3483682d385b796ec6
+  original_diagram_provenance: 'Earlier ChatGPT editorial SVG/DOT reconstructions, not original first-party Oriverse diagrams.'
   caveat: 'Consolidated user research is not first-party documentation or new verification of runtime internals.'
   dependency_policy: 'Historical research only: KHOSAN native independent; no Oriverse connection required.'
 
