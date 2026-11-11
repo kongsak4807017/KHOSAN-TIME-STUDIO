@@ -96,6 +96,34 @@ Core 3D Production Tool:
 - KHOSAN จะนำ semantic structure ไปลง Asset IR
 - Three.js เป็น adapter/backend หนึ่ง ไม่ใช่หัวใจของ Studio
 
+### Local headless 3D MCP — source ที่รันในเครื่องได้
+
+เพิ่มสายงาน Blender/MCP สำหรับ asset static ที่เขียนสูตรขึ้นเอง ได้แก่ ไห โต๊ะ เสา ก้อนหิน ภูมิประเทศ และช้างที่ปั้นโดยใช้ภาพอ้างอิง สร้าง BLEND ที่แก้ไขได้, GLB ที่รวม geometry/วัสดุ, ภาพจริงสี่มุม และหลักฐานวัด geometry พร้อม hash งานสร้างโมเดลไม่ต้องใช้ Oriverse หรือ Trellis2
+
+[![ช้าง r6 เดิมที่ผ่านผู้ตรวจอิสระ — ภาพ hero จาก Blender](docs/examples/local3d/elephant-r6/preview_hero.png)](docs/examples/local3d/elephant-r6/README.md)
+
+ตัวอย่าง r6 เดิมมี [ภาพ Blender สี่มุมและหลักฐาน existing V4](docs/examples/local3d/elephant-r6/README.md) ให้ตรวจ ภาพนี้เป็นประวัติของงานเดิม ส่วน build จาก release ใหม่สร้างไฟล์และบันทึก review ของตัวเอง
+
+ติดตั้ง Python 3.12 และ Blender แล้วเรียกจาก checkout โดยแทน path ตัวอย่างด้วย Blender ของเครื่องนี้:
+
+```powershell
+python scripts/local3d.py setup --blender "<path-to-installed-blender-executable>"
+python scripts/local3d.py doctor
+python scripts/local3d.py proof --fixture elephant --quality draft
+python scripts/local3d.py config
+```
+
+Windows มี `SETUP_LOCAL3D.bat` เรียกตัวติดตั้งเดียวกัน ส่วน Linux/macOS ใช้คำสั่ง Python ตามคู่มือ ไฟล์ `.khosan/local3d-mcp.json` ที่สร้างจะใช้ path จริงของ checkout และ Blender บนเครื่องนี้ ไม่ต้องคัดลอก path ของเครื่องเจ้าของ การสร้างโมเดลแบบ standalone ไม่ต้องเปิด Studio Web/API หรือมี source ส่วนตัวของ Harness V4
+
+Quick start เลือก **draft** สำหรับลองบนเครื่องที่ใช้ CPU/software rendering: ภาพ 640×360 ที่ 8 samples แต่ geometry ของโมเดลเหมือนเดิม เมื่อตรวจรูปลักษณ์ขั้นสุดท้ายให้รัน `python scripts/local3d.py proof --fixture elephant --quality standard` เพื่อใช้ภาพ 1280×720 ที่ 64 samples ค่า standard ยังเป็นค่าเริ่มต้นหากไม่ระบุ `--quality` งาน draft และ standard มีตัวตนและหลักฐานแยกกัน การหยุด render standard กลางทางไม่ถือว่าทำ proof เสร็จ
+
+หากต้องการตรวจภาพผ่าน Remotion/Three มี runtime แบบล็อก dependency ให้ติดตั้งเพิ่ม ใช้ area lights แบบ LTC จริงและตรวจเงาพื้นจาก proxy แยกต่างหาก ยังไม่มี rig/animation หรือการอนุมัติภาพอัตโนมัติ ภาพและผลช้าง r6 เดิมเป็นตัวอย่างทางประวัติศาสตร์ งานที่สร้างใหม่มี digest และสถานะ review ของตัวเอง
+
+- **[คู่มือติดตั้งบนเครื่องใหม่และสร้างซ้ำ — ไทย / English](docs/27-LOCAL3D-PORTABLE-INSTALL.md)**
+- [สถาปัตยกรรม Local 3D และผลทดลองฉากแรก](docs/25-LOCAL-3D-MCP.md)
+- [วิธีปั้นช้าง พารามิเตอร์ และหลักฐาน r6 เดิม](docs/26-LOCAL-3D-ELEPHANT.md)
+- [คู่มือเครื่องมือภาษาไทย](tools/local_3d_mcp/README_TH.md)
+
 ### Reference Reconstruction Workflow
 Workflow มาตรฐานสำหรับฉาก, generic asset และ UI ที่อ้างอิงภาพ:
 - Reference Package / Conditioning

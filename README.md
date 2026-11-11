@@ -109,6 +109,34 @@ Source: https://github.com/kongsak4807017/sprite-gen
 
 Source: https://github.com/kongsak4807017/img2threejs
 
+### Local headless 3D MCP — runnable source
+
+The repository also includes a local Blender/MCP pipeline for authored static 3D assets: amphora, table, column, rock, terrain and a reference-guided elephant. It creates editable BLEND, self-contained GLB, four actual preview views, measured geometry and hash-bound review evidence. Modeling runs locally without Oriverse or Trellis2.
+
+[![Original reviewed r6 elephant — native Blender hero view](docs/examples/local3d/elephant-r6/preview_hero.png)](docs/examples/local3d/elephant-r6/README.md)
+
+Original reviewed r6 example, preserved with [four Blender views and existing-V4 evidence](docs/examples/local3d/elephant-r6/README.md). Fresh release builds produce their own artifacts and review records.
+
+After installing Python 3.12 and Blender, run from this checkout, replacing the example Blender path with your executable:
+
+```bash
+python scripts/local3d.py setup --blender "/absolute/path/to/blender"
+python scripts/local3d.py doctor
+python scripts/local3d.py proof --fixture elephant --quality draft
+python scripts/local3d.py config
+```
+
+Use `python3` where that selects your interpreter. Windows also has `SETUP_LOCAL3D.bat`. The generated `.khosan/local3d-mcp.json` contains this machine's MCP stdio configuration; do not copy the original owner's paths. Standalone modeling needs neither the Studio Web/API nor a private Harness V4 checkout.
+
+The quick start selects **draft** previews for CPU/software-rendered machines: 640 × 360 at 8 samples, with the same model geometry. For final visual inspection, run `python scripts/local3d.py proof --fixture elephant --quality standard` to request the original 1280 × 720, 64-sample views. Standard remains the default when `--quality` is omitted. Draft and standard have separate job identities; an incomplete standard render is not a completed proof.
+
+The optional locked Remotion/Three runtime adds a native static-GLB proof with genuine LTC area lights and a separately measured ground-shadow proxy. It does not supply rigging, animation or final art approval. The original elephant's accepted r6 images and measurements are historical examples; a new build has its own digest and review status.
+
+- **[Portable install and reproduction guide — English / ภาษาไทย](docs/27-LOCAL3D-PORTABLE-INSTALL.md)**
+- [Local architecture and original prop proof](docs/25-LOCAL-3D-MCP.md)
+- [Elephant method, parameters and original r6 evidence](docs/26-LOCAL-3D-ELEPHANT.md)
+- [Thai tool runbook](tools/local_3d_mcp/README_TH.md)
+
 ### Reference reconstruction
 KHOSAN now defines a canonical **Reference Reconstruction Workflow** for reference-driven scenes, generic assets and UI: condition the reference, lock art direction, decompose, block out, compare, diagnose, repair only failing dimensions, normalize technically, verify independently and freeze only after human approval.
 

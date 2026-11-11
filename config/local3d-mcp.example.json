@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "khosan-local3d": {
+      "command": "<ABSOLUTE_CHECKOUT_PATH>/.venv-local3d/<Scripts/python.exe_OR_bin/python>",
+      "args": [
+        "<ABSOLUTE_CHECKOUT_PATH>/tools/local_3d_mcp/server.py",
+        "--stdio",
+        "--project-root",
+        "<ABSOLUTE_CHECKOUT_PATH>",
+        "--blender",
+        "<ABSOLUTE_BLENDER_EXECUTABLE>"
+      ],
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
+

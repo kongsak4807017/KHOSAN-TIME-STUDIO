@@ -1,0 +1,855 @@
+{
+  "schema": "khosan.portable-release-proof/1",
+  "task_id": "TASK-LOCAL3D-PORTABLE-001",
+  "created_utc": "2026-11-11T18:30:36Z",
+  "scope": "Fresh-location local MCP/Blender install and standalone static GLB/LTC rendering; public summary of separately preserved raw receipts.",
+  "implementation_sha256": "59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821",
+  "reference_sha256": {
+    "tools/local_3d_mcp/references/ep02_elephant_ref_r7.png": "d71d369974ceb275f3baffad6ca88bd88b1ac10d4c76c1b4db403779897f8bac"
+  },
+  "windows": {
+    "status": "PASS_FRESH_LOCATION_MCP_AND_STANDALONE_RENDERER",
+    "path_case": "Fresh isolated checkout directory containing spaces and Thai characters",
+    "fresh_install": {
+      "python_environment": "Created from requirements-lock.txt, 30 exact distributions, pip check passed",
+      "node_environment": "Fresh npm ci from standalone package-lock.json; no private V4 dependencies",
+      "browser": "Fresh managed Chrome Headless Shell download"
+    },
+    "versions": {
+      "python": "3.12.10",
+      "blender": "Blender 5.2.2 LTS",
+      "mcp": "1.29.0",
+      "node": "v24.20.0",
+      "@react-three/fiber": "9.8.2",
+      "@remotion/bundler": "4.0.542",
+      "@remotion/renderer": "4.0.542",
+      "@remotion/three": "4.0.542",
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "remotion": "4.0.542",
+      "three": "0.187.0"
+    },
+    "job_id": "job-d51740b6569f4a17",
+    "artifact_digest": "924a9134e8896d3f9120a224e40e7c19c5a152f1b52125962a6930c4a0b9b338",
+    "spec_sha256": "925e910f862365c6b2da75e0871a893f06a72bd899ddbbfd1ea3a28d4d0be72f",
+    "official_mcp": {
+      "protocol_version": "2025-11-25",
+      "tools": 11,
+      "actual_mcp_image_delivery": true,
+      "cold_build_seconds": 30.094,
+      "warm_request_seconds": 0.047,
+      "warm_cache_hit": true,
+      "total_seconds": 31.453
+    },
+    "technical_build": "PASS",
+    "export_reimport": "PASS",
+    "measurements": {
+      "schema": "khosan.measurements/1.0",
+      "scene_id": "drkho_elephant_reference_sculpt",
+      "seed": 201117,
+      "blender_version": "5.2.2 LTS",
+      "triangle_count": 428900,
+      "mesh_object_count": 41,
+      "world_bounds": {
+        "min": [
+          -1.5398616790771484,
+          0,
+          -1.8989262580871582
+        ],
+        "max": [
+          1.4665316343307495,
+          3,
+          2.5066356658935547
+        ]
+      },
+      "material_count": 14,
+      "semantic_ids": [
+        "reference_elephant"
+      ],
+      "missing_materials": [],
+      "objects": [
+        {
+          "id": "reference_elephant",
+          "recipe": "elephant",
+          "triangle_count": 428900,
+          "mesh_object_count": 41,
+          "bounds": {
+            "min": [
+              -1.5398616790771484,
+              0,
+              -1.8989262580871582
+            ],
+            "max": [
+              1.4665316343307495,
+              3,
+              2.5066356658935547
+            ]
+          }
+        }
+      ],
+      "render_seconds": 16.808,
+      "roundtrip": {
+        "triangle_count": 428900,
+        "mesh_object_count": 41,
+        "material_count": 11,
+        "bounds": {
+          "min": [
+            -1.5398616790771484,
+            0,
+            -1.8989262580871582
+          ],
+          "max": [
+            1.4665316343307495,
+            3,
+            2.5066356658935547
+          ]
+        },
+        "semantic_ids": [
+          "reference_elephant"
+        ],
+        "missing_materials": [],
+        "max_bounds_delta": 0,
+        "missing_semantic_ids": [],
+        "unexpected_semantic_ids": [],
+        "passed": true
+      },
+      "renderer": "BLENDER_EEVEE",
+      "lighting": {
+        "preset": "elephant_studio",
+        "implementation": "Blender native rectangular AREA lights",
+        "ltc_implementation": false,
+        "camera_preserved": true,
+        "lights": [
+          {
+            "name": "Elephant broad upper-left key",
+            "type": "AREA",
+            "shape": "RECTANGLE",
+            "energy_watts": 1225,
+            "width_m": 4.949999809265137,
+            "height_m": 4.199999809265137,
+            "position_blender": [
+              -5.4177751541137695,
+              -1.08401358127594,
+              6.300000190734863
+            ]
+          },
+          {
+            "name": "Elephant quiet cool fill",
+            "type": "AREA",
+            "shape": "RECTANGLE",
+            "energy_watts": 231,
+            "width_m": 4.199999809265137,
+            "height_m": 3.5999999046325684,
+            "position_blender": [
+              0.8979558944702148,
+              -3.981691598892212,
+              3.4499998092651367
+            ]
+          },
+          {
+            "name": "Elephant soft back separation",
+            "type": "AREA",
+            "shape": "RECTANGLE",
+            "energy_watts": 630,
+            "width_m": 2.549999952316284,
+            "height_m": 4.199999809265137,
+            "position_blender": [
+              1.7588658332824707,
+              2.452695369720459,
+              4.800000190734863
+            ]
+          }
+        ],
+        "render_only_floor": "RENDER_ONLY_ElephantStudioFloor",
+        "ground_shadow_method": "Blender EEVEE area-light shadows",
+        "backdrop_baseline": "Floor emission matched to world radiance to avoid an unlit horizon band",
+        "asset_height_m": 3,
+        "parity_note": "Matched studio-lighting intent; no pixel or algorithm parity with Three.js LTC is claimed."
+      },
+      "materials": "Plain glTF metallic/roughness PBR; all visible details are modeled geometry.",
+      "limitations": [
+        "Procedural modeling guided by stated references; hidden geometry and absolute scale are inferred, not scanned.",
+        "No character rig, animation, cloth or physics simulation is claimed.",
+        "No automated artistic approval; renders require independent review."
+      ]
+    },
+    "artifacts": {
+      "scene.blend": {
+        "sha256": "84bb23e10eebf1dfbddc276d7b569cc82c0104dd5fb6066421b307114af48466",
+        "bytes": 7573066,
+        "relative_path": "scene.blend"
+      },
+      "scene.glb": {
+        "sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+        "bytes": 9982800,
+        "relative_path": "scene.glb"
+      },
+      "measured.json": {
+        "sha256": "83beec3b25f4a6fa7ba46dd3bba715d410d87069abc96575f67785dcdca17e4f",
+        "bytes": 3597,
+        "relative_path": "measured.json"
+      },
+      "preview_front.png": {
+        "sha256": "0364d3e39b5c4b23b9c707e017e7434513bb9dbaa6edd7f3ff7c314424d06893",
+        "bytes": 843682,
+        "relative_path": "preview_front.png"
+      },
+      "preview_side.png": {
+        "sha256": "a49e926ff8dcd8155f23f863f0e48746b9a6824324659438bf59191e1ec3c276",
+        "bytes": 871769,
+        "relative_path": "preview_side.png"
+      },
+      "preview_back.png": {
+        "sha256": "34a1707e2db0604d66bddd3637ed9d2a59f0b72182c079db8c51dcf59c3baae5",
+        "bytes": 847770,
+        "relative_path": "preview_back.png"
+      },
+      "preview_hero.png": {
+        "sha256": "8ed2f46f60e3401f62c8f159e871f4821662f21cb9adea0e233b37cb35f16f22",
+        "bytes": 881578,
+        "relative_path": "preview_hero.png"
+      },
+      "request.json": {
+        "sha256": "3013b19e980befc0bb7a6e22554f9c2180fdebde4218475405d5907396b7bc08",
+        "bytes": 1676,
+        "relative_path": "request.json"
+      },
+      "source.txt": {
+        "sha256": "f30457b4fba8b18a0b06b9de5bb385ba886d09c634f09cf4c228226372599181",
+        "bytes": 1194,
+        "relative_path": "source.txt"
+      }
+    },
+    "pre_review_manifest": {
+      "visual_review": "NOT_REVIEWED",
+      "human_acceptance": "NOT_REVIEWED",
+      "production_ready": false,
+      "v4_render_integration": "NOT_TESTED"
+    },
+    "independent_visual_review": "portable-windows/independent-review.json",
+    "renderer": {
+      "schema": "khosan.local3d-v4-proof/2",
+      "id": "2026-11-11T18-18-53.477Z-d5d8b8",
+      "status": "PASS_STANDALONE_STATIC_GLB_LTC_STILLS",
+      "scope": "STANDALONE_LOCKED_REMOTION_THREE_STATIC_GLB_LTC_960x540",
+      "artifact_sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+      "artifact_bytes": 9982800,
+      "runtime_mode": "standalone_locked",
+      "runtime_lock_sha256": "81af786e5ab58fe104a751af70ef7a0f1f1d044f9ed66875b7a2dbfb16118de4",
+      "dependency_containment": "REQUIRED_WITHIN_SELECTED_RUNTIME",
+      "browser_selection": "managed_cache",
+      "chromium_gl": "swangle",
+      "browser_version": {
+        "value": {
+          "protocolVersion": "1.3",
+          "product": "HeadlessChrome/158.0.8127.2",
+          "revision": "@681cd621e82e606d7536eae8ea2576afb3c7d65c",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.2 Safari/537.36",
+          "jsVersion": "15.8.62"
+        },
+        "size": 297
+      },
+      "bundled_dependency_modules_checked": 408,
+      "original_v4_source_verification": "NOT_APPLICABLE_STANDALONE_RUNTIME",
+      "originalV4SourceUnchanged": null,
+      "semanticObjects": 1,
+      "editableParts": 41,
+      "renderer_integration": "PASS_SCOPED_STATIC_ASSET",
+      "v4_render_integration": "NOT_TESTED_PRIVATE_V4",
+      "originalEpisodesModified": false,
+      "videoCreated": false,
+      "fullEpisode": false,
+      "production_ready": false,
+      "humanArt": "NOT_REVIEWED",
+      "humanAcceptance": "NOT_REVIEWED",
+      "animation": false,
+      "rigging": false,
+      "physics": false,
+      "composition": {
+        "id": "KHOSAN-Local3D-Static-Integration",
+        "width": 960,
+        "height": 540,
+        "fps": 30,
+        "durationInFrames": 60
+      },
+      "visibleAssetComparison": {
+        "changedPixels": 153062,
+        "totalPixels": 518400,
+        "changedFraction": 0.295258487654321,
+        "meanAbsoluteChannelDifference": 6.624610982510288,
+        "maxChannelDifference": 169,
+        "threshold": 8,
+        "path": "visibility-comparison.png",
+        "sha256": "cd26df91190eb772819ee7e270455a725152b8a01ab1ccd6fbbb873035b6a52b",
+        "explanation": "Left: rendered asset. Right: amplified difference from the same camera with asset hidden."
+      },
+      "repeatRender": {
+        "status": "PNG_SHA256_IDENTICAL",
+        "frame": 45,
+        "sha256": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72",
+        "scope": "Repeated renderStill calls in the same browser instance; not a continuous-playback or same-page seek proof"
+      },
+      "ltcContribution": {
+        "status": "PASS_MEASURED_LTC_LIGHT_CONTRIBUTION",
+        "frame": 45,
+        "enabledImage": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72",
+        "disabledImage": "bbb90d30c7ba48d78e9f8febb185a4cba9add99c1390e498f8bc8f85f1026f9b",
+        "changedPixels": 129129,
+        "changedFraction": 0.24909143518518517,
+        "meanAbsoluteChannelDifference": 12.794221965020576,
+        "assetVisibilityRegion": {
+          "maskPixels": 153062,
+          "changedPixels": 128365,
+          "changedFraction": 0.8386470841881067,
+          "meanAbsoluteChannelDifference": 43.18889948735371,
+          "meanOnMinusOff": 43.188895131820225,
+          "maskMeaning": "Pixels changed by showing the asset versus hiding it; includes its ground-shadow region."
+        },
+        "path": "ltc-contribution-comparison.png",
+        "sha256": "73935983858acf9d61f93ed4f9f521ce9363f75ab65dc5041dc67af5b9f5ccd5",
+        "gpuEvidence": {
+          "active_ltc_programs": 1,
+          "lookup_dimensions": [
+            64,
+            64
+          ],
+          "three_revision": "187",
+          "attribution": {
+            "title": "Real-Time Polygonal-Light Shading with Linearly Transformed Cosines",
+            "authors": "Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt",
+            "publication": "ACM SIGGRAPH 2016",
+            "paper": "https://eheitzresearch.wordpress.com/415-2/",
+            "implementation": "Installed Three.js RectAreaLight / RectAreaLightUniformsLib / LTC lookup textures",
+            "documentation": "https://threejs.org/docs/pages/RectAreaLight.html",
+            "shadow_note": "RectAreaLight has no shadow support. The floor shadow is a separate VSM directional proxy, not an LTC shadow."
+          },
+          "preset": "elephant_studio",
+          "rect_area_light_count": 3,
+          "active_rect_area_light_count": 3,
+          "lights": [
+            {
+              "name": "Upper camera-left rectangular key",
+              "type": "RectAreaLight",
+              "intensity_nits": 5,
+              "width_m": 4.949999999999999,
+              "height_m": 4.199999999999999,
+              "position": [
+                -5.417775643446572,
+                6.300000000000001,
+                1.0840139721115114
+              ]
+            },
+            {
+              "name": "Quiet cool rectangular fill",
+              "type": "RectAreaLight",
+              "intensity_nits": 0.8,
+              "width_m": 4.199999999999999,
+              "height_m": 3.5999999999999996,
+              "position": [
+                0.8979558849548268,
+                3.45,
+                3.9816915354640194
+              ]
+            },
+            {
+              "name": "Soft rectangular rim",
+              "type": "RectAreaLight",
+              "intensity_nits": 2.5,
+              "width_m": 2.55,
+              "height_m": 4.199999999999999,
+              "position": [
+                1.758866174691608,
+                4.800000000000001,
+                -2.4526952630604004
+              ]
+            }
+          ],
+          "ground_shadow_method": "Separate zero-illumination directional VSM proxy on ShadowMaterial",
+          "ground_shadows_enabled": true,
+          "shadow_proxy_illumination": 0,
+          "shadow_map_allocated": true,
+          "render_only_floor": true,
+          "backdrop_material": "Unlit neutral studio backdrop; separate ShadowMaterial receiver",
+          "asset_materials_unchanged": true
+        },
+        "explanation": "Only the three RectAreaLight intensities change to zero. Camera, geometry, fill ambience and separate ground-shadow proxy remain fixed. Left: LTC on; right: amplified on/off difference."
+      },
+      "groundShadowContribution": {
+        "status": "PASS_SEPARATE_GROUND_SHADOW_CONTRIBUTION",
+        "frame": 45,
+        "enabledImage": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72",
+        "disabledImage": "3f461598eb9b3084e84f1bc3cdf51bc693be1621ff86053affb79ae656eeed71",
+        "changedPixels": 22836,
+        "changedFraction": 0.044050925925925924,
+        "meanAbsoluteChannelDifference": 0.800434670781893,
+        "path": "ground-shadow-comparison.png",
+        "sha256": "487eaca02206b29f357699fcb656a744935e26d60febe35b753a028f2f5d70ab",
+        "mechanism": "Zero-illumination directional VSM shadow map plus render-only ShadowMaterial floor",
+        "limitation": "A separately projected, blurred ground-shadow approximation; not LTC occlusion, full self-shadowing or global illumination."
+      },
+      "images": [
+        {
+          "name": "frame-000",
+          "frame": 0,
+          "showAsset": true,
+          "ltcEnabled": true,
+          "groundShadowsEnabled": true,
+          "sha256": "8aa869af5a01628cd0bce79553ed20114216e7e7167353aaa560613626c19bfa",
+          "width": 960,
+          "height": 540,
+          "bytes": 200341,
+          "metrics": {
+            "frame": 0,
+            "sourceTime": 0,
+            "showAsset": true,
+            "ltcEnabled": true,
+            "groundShadowsEnabled": true,
+            "scene_id": "drkho_elephant_reference_sculpt",
+            "artifact_sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+            "semantic_objects": 1,
+            "editable_parts": 41,
+            "render_meshes": 44,
+            "attached_asset_meshes": 44,
+            "physical_asset_material_slots": 44,
+            "drawCalls": 93,
+            "renderedTriangles": 857808,
+            "cameraPosition": [
+              -8.6,
+              3,
+              5.8
+            ],
+            "bounds": {
+              "min": [
+                -1.5398616790771484,
+                0,
+                -1.8989262580871582
+              ],
+              "max": [
+                1.4665316343307495,
+                3,
+                2.5066356658935547
+              ]
+            },
+            "cameraTarget": [
+              0,
+              1.43,
+              0.12
+            ],
+            "cameraFov": 23.34973761950172,
+            "lighting": {
+              "active_ltc_programs": 1,
+              "lookup_dimensions": [
+                64,
+                64
+              ],
+              "three_revision": "187",
+              "attribution": {
+                "title": "Real-Time Polygonal-Light Shading with Linearly Transformed Cosines",
+                "authors": "Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt",
+                "publication": "ACM SIGGRAPH 2016",
+                "paper": "https://eheitzresearch.wordpress.com/415-2/",
+                "implementation": "Installed Three.js RectAreaLight / RectAreaLightUniformsLib / LTC lookup textures",
+                "documentation": "https://threejs.org/docs/pages/RectAreaLight.html",
+                "shadow_note": "RectAreaLight has no shadow support. The floor shadow is a separate VSM directional proxy, not an LTC shadow."
+              },
+              "preset": "elephant_studio",
+              "rect_area_light_count": 3,
+              "active_rect_area_light_count": 3,
+              "lights": [
+                {
+                  "name": "Upper camera-left rectangular key",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 5,
+                  "width_m": 4.949999999999999,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    -5.417775643446572,
+                    6.300000000000001,
+                    1.0840139721115114
+                  ]
+                },
+                {
+                  "name": "Quiet cool rectangular fill",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 0.8,
+                  "width_m": 4.199999999999999,
+                  "height_m": 3.5999999999999996,
+                  "position": [
+                    0.8979558849548268,
+                    3.45,
+                    3.9816915354640194
+                  ]
+                },
+                {
+                  "name": "Soft rectangular rim",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 2.5,
+                  "width_m": 2.55,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    1.758866174691608,
+                    4.800000000000001,
+                    -2.4526952630604004
+                  ]
+                }
+              ],
+              "ground_shadow_method": "Separate zero-illumination directional VSM proxy on ShadowMaterial",
+              "ground_shadows_enabled": true,
+              "shadow_proxy_illumination": 0,
+              "shadow_map_allocated": true,
+              "render_only_floor": true,
+              "backdrop_material": "Unlit neutral studio backdrop; separate ShadowMaterial receiver",
+              "asset_materials_unchanged": true
+            },
+            "animation": false,
+            "rigging": false,
+            "physics": false
+          },
+          "path": "frame-000.png"
+        },
+        {
+          "name": "frame-045",
+          "frame": 45,
+          "showAsset": true,
+          "ltcEnabled": true,
+          "groundShadowsEnabled": true,
+          "sha256": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72",
+          "width": 960,
+          "height": 540,
+          "bytes": 198813,
+          "metrics": {
+            "frame": 45,
+            "sourceTime": 1.5,
+            "showAsset": true,
+            "ltcEnabled": true,
+            "groundShadowsEnabled": true,
+            "scene_id": "drkho_elephant_reference_sculpt",
+            "artifact_sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+            "semantic_objects": 1,
+            "editable_parts": 41,
+            "render_meshes": 44,
+            "attached_asset_meshes": 44,
+            "physical_asset_material_slots": 44,
+            "drawCalls": 93,
+            "renderedTriangles": 857808,
+            "cameraPosition": [
+              -8.182834061367856,
+              3,
+              6.386069479675279
+            ],
+            "bounds": {
+              "min": [
+                -1.5398616790771484,
+                0,
+                -1.8989262580871582
+              ],
+              "max": [
+                1.4665316343307495,
+                3,
+                2.5066356658935547
+              ]
+            },
+            "cameraTarget": [
+              0,
+              1.43,
+              0.12
+            ],
+            "cameraFov": 23.34973761950172,
+            "lighting": {
+              "active_ltc_programs": 1,
+              "lookup_dimensions": [
+                64,
+                64
+              ],
+              "three_revision": "187",
+              "attribution": {
+                "title": "Real-Time Polygonal-Light Shading with Linearly Transformed Cosines",
+                "authors": "Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt",
+                "publication": "ACM SIGGRAPH 2016",
+                "paper": "https://eheitzresearch.wordpress.com/415-2/",
+                "implementation": "Installed Three.js RectAreaLight / RectAreaLightUniformsLib / LTC lookup textures",
+                "documentation": "https://threejs.org/docs/pages/RectAreaLight.html",
+                "shadow_note": "RectAreaLight has no shadow support. The floor shadow is a separate VSM directional proxy, not an LTC shadow."
+              },
+              "preset": "elephant_studio",
+              "rect_area_light_count": 3,
+              "active_rect_area_light_count": 3,
+              "lights": [
+                {
+                  "name": "Upper camera-left rectangular key",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 5,
+                  "width_m": 4.949999999999999,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    -5.417775643446572,
+                    6.300000000000001,
+                    1.0840139721115114
+                  ]
+                },
+                {
+                  "name": "Quiet cool rectangular fill",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 0.8,
+                  "width_m": 4.199999999999999,
+                  "height_m": 3.5999999999999996,
+                  "position": [
+                    0.8979558849548268,
+                    3.45,
+                    3.9816915354640194
+                  ]
+                },
+                {
+                  "name": "Soft rectangular rim",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 2.5,
+                  "width_m": 2.55,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    1.758866174691608,
+                    4.800000000000001,
+                    -2.4526952630604004
+                  ]
+                }
+              ],
+              "ground_shadow_method": "Separate zero-illumination directional VSM proxy on ShadowMaterial",
+              "ground_shadows_enabled": true,
+              "shadow_proxy_illumination": 0,
+              "shadow_map_allocated": true,
+              "render_only_floor": true,
+              "backdrop_material": "Unlit neutral studio backdrop; separate ShadowMaterial receiver",
+              "asset_materials_unchanged": true
+            },
+            "animation": false,
+            "rigging": false,
+            "physics": false
+          },
+          "path": "frame-045.png"
+        },
+        {
+          "name": "frame-045-ltc-off",
+          "frame": 45,
+          "showAsset": true,
+          "ltcEnabled": false,
+          "groundShadowsEnabled": true,
+          "sha256": "bbb90d30c7ba48d78e9f8febb185a4cba9add99c1390e498f8bc8f85f1026f9b",
+          "width": 960,
+          "height": 540,
+          "bytes": 98987,
+          "metrics": {
+            "frame": 45,
+            "sourceTime": 1.5,
+            "showAsset": true,
+            "ltcEnabled": false,
+            "groundShadowsEnabled": true,
+            "scene_id": "drkho_elephant_reference_sculpt",
+            "artifact_sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+            "semantic_objects": 1,
+            "editable_parts": 41,
+            "render_meshes": 44,
+            "attached_asset_meshes": 44,
+            "physical_asset_material_slots": 44,
+            "drawCalls": 93,
+            "renderedTriangles": 857808,
+            "cameraPosition": [
+              -8.182834061367856,
+              3,
+              6.386069479675279
+            ],
+            "bounds": {
+              "min": [
+                -1.5398616790771484,
+                0,
+                -1.8989262580871582
+              ],
+              "max": [
+                1.4665316343307495,
+                3,
+                2.5066356658935547
+              ]
+            },
+            "cameraTarget": [
+              0,
+              1.43,
+              0.12
+            ],
+            "cameraFov": 23.34973761950172,
+            "lighting": {
+              "active_ltc_programs": 1,
+              "lookup_dimensions": [
+                64,
+                64
+              ],
+              "three_revision": "187",
+              "attribution": {
+                "title": "Real-Time Polygonal-Light Shading with Linearly Transformed Cosines",
+                "authors": "Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt",
+                "publication": "ACM SIGGRAPH 2016",
+                "paper": "https://eheitzresearch.wordpress.com/415-2/",
+                "implementation": "Installed Three.js RectAreaLight / RectAreaLightUniformsLib / LTC lookup textures",
+                "documentation": "https://threejs.org/docs/pages/RectAreaLight.html",
+                "shadow_note": "RectAreaLight has no shadow support. The floor shadow is a separate VSM directional proxy, not an LTC shadow."
+              },
+              "preset": "elephant_studio",
+              "rect_area_light_count": 3,
+              "active_rect_area_light_count": 0,
+              "lights": [
+                {
+                  "name": "Upper camera-left rectangular key",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 0,
+                  "width_m": 4.949999999999999,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    -5.417775643446572,
+                    6.300000000000001,
+                    1.0840139721115114
+                  ]
+                },
+                {
+                  "name": "Quiet cool rectangular fill",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 0,
+                  "width_m": 4.199999999999999,
+                  "height_m": 3.5999999999999996,
+                  "position": [
+                    0.8979558849548268,
+                    3.45,
+                    3.9816915354640194
+                  ]
+                },
+                {
+                  "name": "Soft rectangular rim",
+                  "type": "RectAreaLight",
+                  "intensity_nits": 0,
+                  "width_m": 2.55,
+                  "height_m": 4.199999999999999,
+                  "position": [
+                    1.758866174691608,
+                    4.800000000000001,
+                    -2.4526952630604004
+                  ]
+                }
+              ],
+              "ground_shadow_method": "Separate zero-illumination directional VSM proxy on ShadowMaterial",
+              "ground_shadows_enabled": true,
+              "shadow_proxy_illumination": 0,
+              "shadow_map_allocated": true,
+              "render_only_floor": true,
+              "backdrop_material": "Unlit neutral studio backdrop; separate ShadowMaterial receiver",
+              "asset_materials_unchanged": true
+            },
+            "animation": false,
+            "rigging": false,
+            "physics": false
+          },
+          "path": "frame-045-ltc-off.png"
+        }
+      ],
+      "errors": [],
+      "warnings": [
+        "THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
+        "[]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content."
+      ],
+      "limitation": "Standalone static GLB composition on pinned Remotion/Three packages. Private V4 Stage/REGISTRY/episodes were not loaded or verified. No episode migration, animation, physics, art acceptance or video parity is implied.",
+      "raw_windows_verification_sha256": "b65904dd44ebb7af032facffc804797f3bcbba585358986a80039b751d3477e4",
+      "raw_report_relative_to_job": "qa-v4/2026-11-11T18-18-53.477Z-d5d8b8/verification.json",
+      "source_fingerprints_unchanged": true,
+      "source_fingerprint_count": 39,
+      "source_fingerprints": {
+        "tools/local_3d_mcp/adapter/v4/entry.tsx": "fd1967e4b4128b6ddb16dd6e2b2e7ab39eeedac8167cebd29fe4381b516a5530",
+        "tools/local_3d_mcp/adapter/v4/verify.mjs": "920859651eaaefd4e30a9188c12c6710d454c2fcd04e2a890bb2c9da1e5a0f92",
+        "tools/local_3d_mcp/adapter/v4/png.mjs": "fc6f9a5fbe3795509cf82547be94177bec99a48afc2825004dad9c8f9dbd75fd",
+        "tools/local_3d_mcp/adapter/v4/lighting-ltc.mjs": "0c7041282bacc00348fa1d50945a12b0fad1b2624f4653b8c984eb426febd4e5",
+        "tools/local_3d_mcp/adapter/local3d-provider.mjs": "16518a99c39c1f3bb0fbb47ad2925ab366a4bacf381d0190b238dbe14301ce90",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/runtime.mjs": "1e5175f15d7f1aa717568a2dbbca2f0024c887480a82baac40f5aba3ac88e9ee",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/loopback.cjs": "ea966759593c728ca3b09ad06a658d9c86d8bc2bb39e48e69cb9b3d91e6bc3ea",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/package.json": "96954c6e45c41ba75cc73bd093bf345b71b536eb8f7cb415809d7a979be6f542",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/package-lock.json": "81af786e5ab58fe104a751af70ef7a0f1f1d044f9ed66875b7a2dbfb16118de4",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/tsconfig.json": "213e5f776a765a427f2c9e0ab774afd4444ef06ff23a14caa227bf61cfc20d52",
+        "scripts/setup-local3d-v4.mjs": "9bbf73690b7ad2ae2f2db38910e77977d84204862a0955de3b01cda4716b5ca7",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@react-three/fiber/package.json": "ad7c861bea13fa0dc8021afa4f4778c45e74554ac5c8e7e66c860b938b381f2b",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js": "bf96c611db1c41688b33f0b0246756517aff27ed81b74e870b1181e466240ed8",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/bundler/package.json": "d54e612a4e08099ae8be9bef07842539e8ba8389b493a95ebd8bcf06c25a817f",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/bundler/dist/index.js": "8c252a6127e46a69dc0e72c0e787ea6fcf3a5773155f7b658d54df880d23946f",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/renderer/package.json": "d9bc611c308dbef1fd0e34560eb371b27199cf04e95ddc140316cf7edab4e0f3",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/renderer/dist/index.js": "7251face2bfd943763f65d64f716bf48a96512334bf7da6b154699ea3a5c6b9c",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/three/package.json": "dff30147c8d06ce9d2a4a8ac47e64836496e79d9a82138e0bbbb641493cf305a",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/three/dist/cjs/index.js": "4bdf0d9b1c364cbd8ed493565b4dea32f34b4150ceb6ad209e63f62c43c11020",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/react/package.json": "6029fda5e660da53952cf5ddcd1e8568fc8dc0c6dcb9deaf7667fdc4c7f5a113",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/react/index.js": "60caffdecbdc5db3bc4ec4e83df9488345ccb271d07533b9210bf5750918d97e",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/react-dom/package.json": "5b479c8bdbdda7bbf6709bb4213aa8e2e1a391d79aa57ca84bc63be17bb2f727",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/react-dom/index.js": "ba1a3e33489f868371561777607e3ee5091df0f7ea3f1a10f789d6b86e4c1505",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/remotion/package.json": "bc13f676d1ed18af1c8476449f797ad67375e63d76782d94de9bb00749d97286",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/remotion/dist/cjs/index.js": "750189697bdef93173d954cdabfdcb2c13cef159b734242ec82baa64c8ba94c6",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/package.json": "87f2c99a8718e5fdd6f5e51427fde52c6075f2f698ddf8f7b4e162882df93940",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/build/three.cjs": "b326d5a8b9639e18e3d8debae1c331eaaf426ec703bf218c5ab72b9d6bfa1e94",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/build/three.core.js": "613e370f76638fdef83926642bf256dc9615684922de1ce1f63a8583e5d78578",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/examples/jsm/lights/RectAreaLightUniformsLib.js": "494fef2d731ff1689050cc6040ad78d927c22b9125a12f532beb0374c2811c6e",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/examples/jsm/lights/RectAreaLightTexturesLib.js": "6dd4043bb052594357a5eeff13dc0519f0a80b100b97ec80c12808f887897bc1",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/src/lights/RectAreaLight.js": "3d602afb9af5a0d62cc94d2c6df050de1778711efa9312566006e14fa0029d11",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/src/renderers/shaders/ShaderChunk/lights_physical_pars_fragment.glsl.js": "deec934ba3b7e01c0d97e0be146e21f6b84e4cffe0a1d70967862d051b0be3d7",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/src/renderers/shaders/ShaderChunk/shadowmask_pars_fragment.glsl.js": "4ab06cb582d93dd035c9180a9781375a6e6ca4423eb5b2663ccc7b5cf7c01d64",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/src/renderers/webgl/WebGLLights.js": "ceb5079e0a3fd6093156d2d207641b26bf383b94de017b4db0647fa5946dd025",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/build/three.module.js": "104f56145899722094556490d787aae0617cc2fc3382f31df02d724ea1aee341",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/three/examples/jsm/loaders/GLTFLoader.js": "532ac726e120039acbcd6cf54328c57acbf7b438176afaa6951257126d11bff1",
+        "tools/local_3d_mcp/adapter/v4/portable-runtime/node_modules/@remotion/three/dist/cjs/ThreeCanvas.js": "21933996cb77a2dab7252a2de7b3ea42f24c7a51d1cbeffdd5230f7aa0af4dfc",
+        ".khosan/local3d/jobs/job-d51740b6569f4a17/scene.glb": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+        ".khosan/local3d/jobs/job-d51740b6569f4a17/harness-asset.json": "c1481086610ddefb29d295322aba3e4d3924e9aeef532d80ec79de7ebb7c618f"
+      },
+      "source_keys_note": "Paths inside the isolated checkout are made checkout-relative. Hash values are unchanged. This summary has different bytes from the raw Windows report.",
+      "independent_renderer_verdict": "ACCEPT_SCOPED_PORTABLE_STATIC_GLB_LTC",
+      "independent_renderer_checks": "37 locally available source hashes independently matched, all 39 before/after equal, exact delivered frame hash and repeat hash matched; actual frame visually inspected."
+    },
+    "unit_suite": {
+      "cases": 39,
+      "passed": 38,
+      "skipped": 1,
+      "seconds": 3.402,
+      "skip_reason": "Windows symlink privilege unavailable; equivalent test passes on Linux"
+    }
+  },
+  "linux": {
+    "base_setup": "PASS_FRESH_LOCKED_INSTALL",
+    "python": "3.12.14",
+    "blender": "4.3.2",
+    "mcp": "1.29.0",
+    "unit_suite": {
+      "cases": 39,
+      "passed": 39,
+      "skipped": 0,
+      "seconds": 3.518
+    },
+    "draft_proof": {
+      "status": "PASS",
+      "job_id": "job-66104484ac0f4a15",
+      "quality": "draft",
+      "width": 640,
+      "height": 360,
+      "samples": 8,
+      "cold_build_seconds": 108.1264,
+      "warm_verified_cache_seconds": 0.036029,
+      "triangles": 428900,
+      "parts": 41,
+      "artifact_digest": "2aa3d0d42c563d9faf9b49fc4af6e3d7af195227821dd78631878e9e352cf975",
+      "glb_sha256": "4bcfe9ca8686d927fb0e807a1c042731d35ed7a9a4b101238ae9011fba3e6872",
+      "note": "Explicitly selected draft changes only scene_id and render settings; source fixture geometry/material/camera/lighting/reference/seed/budget preserved. No final art approval."
+    },
+    "standard_attempt": "Interrupted before completion on CPU; no completed standard result claimed",
+    "standalone_install_and_bundle": "PASS: 188 npm packages, strict containment of 408 bundled modules, repeat setup, 127.0.0.1 binding and invalid Host 403",
+    "standalone_browser_render": "BLOCKED_BY_HOST_SOCKET_POLICY",
+    "browser_evidence": "process_singleton_posix.cc socket() failed Operation not permitted; SIGABRT; zero still images; no bypass attempted"
+  },
+  "macos": {
+    "status": "NOT_TESTED",
+    "note": "Cross-platform paths are implemented; no native macOS validation is claimed"
+  },
+  "github_actions": {
+    "trigger": "workflow_dispatch only",
+    "status": "NOT_RUN_ON_GITHUB",
+    "scope": "Source/contract checks without Blender or browser-render certification"
+  },
+  "performance_note": "These timings describe these actual environments and fixtures. A warm hit verifies and reuses existing artifacts. No comparison with Oriverse or Trellis2 was performed.",
+  "human_acceptance": "NOT_REVIEWED",
+  "production_ready": false
+}

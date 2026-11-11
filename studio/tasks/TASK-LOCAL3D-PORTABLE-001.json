@@ -1,0 +1,94 @@
+{
+  "task_id": "TASK-LOCAL3D-PORTABLE-001",
+  "feature_id": null,
+  "title": "Publish portable local 3D MCP, elephant workflow and standalone LTC proof",
+  "status": "verify",
+  "owner_role": "06-technical-architect",
+  "contributors": [
+    "08-rendering-engineer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer",
+    "12-release-ops"
+  ],
+  "objective": "Publish all local 3D source, documented modeling/critique/lighting methods and reviewable examples to the owner's KHOSAN-TIME-STUDIO GitHub repository, with installation and real fresh-location validation for another computer.",
+  "context_files": [
+    "AGENTS.md",
+    "studio/graph.md",
+    "docs/25-LOCAL-3D-MCP.md",
+    "docs/26-LOCAL-3D-ELEPHANT.md"
+  ],
+  "allowed_paths": [
+    "tools/local_3d_mcp/**",
+    "scripts/*local3d*",
+    "scripts/*elephant*",
+    "config/local3d-mcp.example.json",
+    "SETUP_LOCAL3D.bat",
+    "OPEN_LOCAL3D*.bat",
+    "README.md",
+    "README_TH.md",
+    "docs/25-LOCAL-3D-MCP.md",
+    "docs/26-LOCAL-3D-ELEPHANT.md",
+    "docs/27-LOCAL3D-PORTABLE-INSTALL.md",
+    "docs/examples/local3d/**",
+    ".gitignore",
+    ".gitattributes",
+    ".github/workflows/local3d-verify.yml",
+    "studio/tasks/TASK-LOCAL3D-PORTABLE-001.json",
+    "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json",
+    "studio/handoffs/TASK-LOCAL3D-PORTABLE-001.json",
+    "studio/studio_state.json",
+    "studio/tool-registry.yaml",
+    "progress.md",
+    "session-handoff.md",
+    ".khosan/**",
+    "studio/tasks/TASK-LOCAL-3D-MCP-001.json",
+    "studio/tasks/TASK-LOCAL-3D-ELEPHANT-001.json",
+    "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
+    "studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json",
+    "studio/handoffs/TASK-LOCAL-3D-MCP-001.json",
+    "studio/handoffs/TASK-LOCAL-3D-ELEPHANT-001.json"
+  ],
+  "forbidden_paths": [
+    "existing episode and channel sources",
+    "Trellis2 installation/model files",
+    "global MCP or DevSpace configuration",
+    "secrets or credentials",
+    "unrelated remote repository files"
+  ],
+  "acceptance_criteria": [
+    "Preserve reviewed r6 source/artifacts and history while preparing a separate portable release candidate.",
+    "Base MCP installation and proof run from a fresh directory with spaces/non-Latin characters and explicit Blender discovery; do not require the owner's C drive layout.",
+    "Generate machine-specific MCP configuration locally and keep dependencies, caches, local paths and credentials out of the Git publication set.",
+    "Provide a locked optional standalone V4/LTC proof runtime; existing V4 mode remains explicitly scoped and must not be silently required on a fresh computer.",
+    "Include reproducible recipes, exact owner reference, actual small preview/evidence examples, critic/repair history and truthful limitations; do not label historical images as new-source renders.",
+    "Validate official MCP, Blender build/export/reimport and optional standalone renderer on actual environments; report untested OS/hardware accurately.",
+    "Independent reviewer returns ACCEPT for the portable source and installation workflow before publishing.",
+    "Publish a non-destructive GitHub commit based on the current main head with a lease; read back changed file identities and commit after the update."
+  ],
+  "verification": [
+    "Contract and installer path/argument tests",
+    "Actual fresh-location Windows install, SDK proof and four-view export",
+    "Actual standalone V4 runtime install and LTC-control rendering without private channel sources",
+    "Cross-platform script validation and Linux proof where available",
+    "Curated publication inventory, source/artifact hashes and GitHub readback"
+  ],
+  "human_gates": [
+    "User explicitly authorized publishing all approaches to GitHub and preparing use on another computer in this turn.",
+    "No additional confirmation is required for the bounded non-destructive GitHub publication.",
+    "Do not include credentials, paid side effects, automatic production rendering or schedule changes."
+  ],
+  "dependencies": [
+    "Python 3.12 recommended",
+    "Existing installed Blender for validation; documented install prerequisite",
+    "Official mcp SDK pinned",
+    "Node and optional pinned Remotion/Three runtime"
+  ],
+  "risks": [
+    "Machine-specific Blender and Chrome paths may be lost across stdio child environments.",
+    "Copied old review status must remain historical and cannot approve changed implementation hashes.",
+    "Standalone proof must distinguish its runtime checks from original private V4 source verification.",
+    "Rendering appearance can vary across GPUs and Blender versions."
+  ],
+  "notes": "This is shared Studio tooling, not episode production. Current user approval accepts the progress and authorizes GitHub publication; preserve specific r6 appearance limitations. Work in an isolated release copy, validate before pushing, and keep the accepted owner-PC runtime recoverable."
+}

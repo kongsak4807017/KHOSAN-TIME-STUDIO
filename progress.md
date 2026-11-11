@@ -1,9 +1,48 @@
 # KHOSAN TIME STUDIO Progress
 
 ## Current phase
-**DEPLOYABLE STUDIO BASELINE v0.2.0 — MULTI-PROJECT WORKSPACE**
+**PORTABLE LOCAL 3D RELEASE IS PUBLISH-READY — REMOTE PUBLICATION / READBACK RECEIPT PENDING; STUDIO BROWSER ACCEPTANCE REMAINS OPEN**
 
-## Source shipped on GitHub main
+## Current work — `TASK-LOCAL3D-PORTABLE-001`
+
+- Prepared the portable publication candidate separately from the accepted owner-PC r6 runtime. The original runtime, source snapshots and reviewed artifacts remain untouched. This task does not replace episode sources or the Studio browser-acceptance backlog.
+- Added checkout-relative `scripts/local3d.py` setup/doctor/proof/serve/config commands, Windows and Bash wrappers, locked Python dependencies, explicit Blender forwarding, and generated UTF-8 machine/MCP configuration. Machine-specific settings, environments and caches remain local.
+- Portable implementation SHA-256: `59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821`.
+- Fresh Windows checkout containing spaces and Thai characters: new virtual environment and locked dependencies installed; official MCP SDK standard proof **PASS** using Python 3.12.10, Blender 5.2.2 LTS and MCP SDK 1.29.0. Job `job-d51740b6569f4a17` contains 428,900 triangles and 41 editable mesh parts. Cold build 30.094 s; verified warm-cache request 0.047 s.
+- Fresh optional standalone runtime: `npm ci` and managed Chrome Headless Shell setup reached READY. Actual Windows rendering returned `PASS_STANDALONE_STATIC_GLB_LTC_STILLS`: six native 960×540 captures/control checks, 39 unchanged source/runtime/input fingerprints, zero browser errors and identical repeated frame-45 PNG. This is separate from private Harness V4 source verification.
+- Linux Python 3.12.14 / Blender 4.3.2: full official MCP **draft** proof PASS on CPU, recorded at 108.1264 s. Standard CPU rendering was interrupted and is not a completed standard proof. Standalone dependency installation and contained bundling passed, but the test environment blocked the browser's local socket operation; no Linux V4 stills were produced. macOS rendering is untested.
+- Final local Python suite: Linux **39 tests, OK, 3.518 s**; Windows **39 cases, 38 PASS plus one expected symlink-privilege skip, 3.402 s**. The new `.github/workflows/local3d-verify.yml` is manual-only and has not been run on GitHub; local results do not imply hosted CI execution.
+- Documented explicit `--quality draft` previews at 640×360 / 8 samples with unchanged model geometry; `standard` preserves the original fixture settings and remains the default. New draft/standard jobs receive their own source/artifact identity and review status.
+- Added the bilingual portable runbook, current-root quick starts and historical r6 image gallery. Technical installation/build/renderer results are separate from fresh visual review and human acceptance; no old artistic PASS is copied onto a new artifact set.
+- Canonical portable evidence: `studio/evidence/TASK-LOCAL3D-PORTABLE-001.json`; public reproduction summary: `docs/examples/local3d/portable-proof.json`. Read the historical r6 and prop artifacts through their respective task evidence/handoff records below.
+- **Publication status:** publish-ready local candidate. The actual remote commit and changed-file readback receipt must be recorded after the Git update succeeds. No push, merge or completed GitHub publication is claimed by this entry.
+
+## Historical: 12 November 2026 (Asia/Bangkok) — reference-guided elephant trial
+
+- Created an editable static elephant from the owner's supplied reference using local procedural Blender modeling. Trellis2 was not used. The original PNG is preserved and hashed.
+- Final Windows job `job-bd3b994f2785413c`: 428,900 triangles, 41 editable parts, overall height 3.0 m, self-contained GLB and native BLEND, four 1280×720 previews. GLB reimport preserves topology, semantic identity and bounds.
+- Actual official MCP proof: 11 tools, image delivery, cold build 26.328 s, verified warm-cache request 0.047 s. The cache reuses verified artifacts.
+- Schema/core extension tests: Linux 30 PASS; Windows 29 PASS plus one expected symlink-privilege skip. A real headless Blender budget probe on Linux rejected an excessive first mesh before constructing the subsequent elephant.
+- Independent review retained r4/r5 REWORK, then accepted r6 after the ear-center and skin-pattern repairs. Recorded through actual MCP as `review-7f2be586e1a6.json`; current integrity, technical, export and visual review PASS.
+- Actual separate V4 rendering passed on installed Three 0.187.0 / Remotion 4.0.542: linked LTC GPU program, three rectangular lights, LTC-off and separate shadow-off controls, repeat-frame equality, zero browser errors and 41 unchanged fingerprints.
+- Appearance limits remain: fine face/skin/ear detail is simplified; V4 is darker/browner, with a heavier shadow and faint shadow-proxy edge. This is acceptance of a static modeling and lighting trial. Human art acceptance remains NOT_REVIEWED and production_ready remains false.
+- Added `OPEN_LOCAL3D_ELEPHANT.bat`, `docs/26-LOCAL-3D-ELEPHANT.md`, Thai runbook updates, task evidence/handoff and preserved source snapshots. Existing episodes and the Studio browser-acceptance backlog remain unchanged.
+
+## Historical: 11 November 2026 — local headless 3D implementation
+
+- Installed the verified 155-file GitHub baseline on the owner's Windows PC; all original Git blob hashes matched commit `38ae23cb08829e1867dfac05293e4f3e5683aff2` before additive work. At that historical stage it was a source snapshot without `.git`, and the new local 3D additions had not been published.
+- Added `tools/local_3d_mcp`, isolated SDK environment, Windows launchers, MCP client example, Thai runbook and separate V4 provider/verifier.
+- Actual Windows MCP-to-Blender proof: 11 tools, image delivery, editable BLEND/GLB, four views, 9 semantic objects / 66 editable parts / 39,304 triangles, matching GLB readback. Cold build 11.578 s; verified warm cache request 0.031 s.
+- Contract tests: Linux 28 PASS; Windows 27 PASS plus one expected symlink-privilege skip. Real-GLB Three provider tests: 16 PASS.
+- Separate V4 render on installed Remotion 4.0.542 / Three 0.187.0: native frames 0 and 45, repeated frame hash identical, hidden-asset control and 33 unchanged source fingerprints. No original episode source changed; no video was produced.
+- Independent code and Windows image review: ACCEPT for static v0.1. Recorded through real MCP as `review-23e41bbb2d8c.json`; current integrity, technical, export and visual checks PASS. Human art remains NOT_REVIEWED; production_ready remains false.
+- `TASK-LOCAL-3D-MCP-001` is accepted. Evidence and handoff are under `studio/evidence/` and `studio/handoffs/` with that task ID. See `docs/25-LOCAL-3D-MCP.md` for scope and exact paths.
+- Existing Studio source/API/workspace checks also PASS on Windows. Studio browser acceptance, Docker and external rigging checks remain separate pending work.
+
+
+## Previously shipped Studio baseline on GitHub main
+
+This section describes the pre-existing Studio baseline. Publication of the portable local 3D candidate is tracked separately by `TASK-LOCAL3D-PORTABLE-001` and its actual remote receipt.
 
 ### Master / Harness
 - English and Thai master README
@@ -70,7 +109,7 @@
 
 ## Verification status
 
-### Verified in this implementation session
+### Baseline source verification
 - server source syntax parses
 - browser app source syntax parses
 - workspace smoke-test source syntax parses
@@ -79,18 +118,15 @@
 - multi-project API/source markers verified on GitHub main
 - Project Library / active-project / workspace / manifest integration is present in source
 
-### Pending target-PC/runtime evidence
-Run from a fresh local checkout/DevSpace:
-- `node scripts/verify-source.mjs`
-- `npm run verify:workspace`
-- `python scripts/harness_check.py`
+### Remaining target-PC/runtime acceptance
+Source, harness and multi-project API/restart smoke tests passed on Windows on 11 November 2026. Remaining:
 - browser Project Hub / switcher smoke test
 - `docker compose config` and container health
 - rigging doctor on the actual GPU machine
 - DevSpace local/public MCP connectivity doctor
-- ChatGPT project-root workspaceId reuse and bounded read/write/test smoke
+- complete Studio DevSpace connectivity-pack acceptance if that deployment mode is needed; current task reused the same bounded Studio workspace successfully
 
-`WORKSPACE-001` and `TASK-MULTI-PROJECT-WORKSPACE-001` remain **verify** until the target-PC runtime smoke passes.
+`WORKSPACE-001` and `TASK-MULTI-PROJECT-WORKSPACE-001` remain **verify** while visual browser acceptance is pending; their API/workspace smoke is now verified.
 
 ## Correctly still open
 - safe native/desktop picker for importing arbitrary external project roots
@@ -110,12 +146,14 @@ Run from a fresh local checkout/DevSpace:
 - legacy research mirror Issue #1
 
 ## Next execution order
-1. Fresh target-PC checkout → `node scripts/verify-source.mjs` + `npm run verify:workspace`.
-2. Browser smoke Project A ↔ Project B and verify active context visually.
-3. Confirm one project root → one reusable DevSpace workspace behavior.
-4. Promote `WORKSPACE-001` from `verify` to `accepted`.
-5. Build Asset Registry / Asset Lab on top of the project workspace contract.
-6. Build World Editor only after Asset Registry/project isolation is stable.
+
+1. Publish the reviewed portable candidate against the current remote base with the task's concurrency guard. After the actual Git update, read back changed file identities and record the commit/readback receipt; then update publication status from that evidence.
+2. Keep the accepted owner-PC r6 runtime and historical task artifacts separate and untouched. Use `python scripts/local3d.py` from the current checkout for new installations/proofs; see `docs/27-LOCAL3D-PORTABLE-INSTALL.md`.
+3. Read fresh image-review records before calling new artifacts artistically accepted. Any finished-episode pass should separately address finer reference detail, V4 tone and the known shadow-proxy edge; further recipes need their own fixture and review.
+4. Browser smoke Project A ↔ Project B and verify active context visually. Preserve one project root → one reusable DevSpace workspace.
+5. Promote `WORKSPACE-001` from `verify` to `accepted` only after its own remaining checks.
+6. Build Asset Registry / Asset Lab on top of the project workspace contract, then World Editor after isolation is stable.
 
 ## Rule
 Update this file from evidence, not optimism.
+

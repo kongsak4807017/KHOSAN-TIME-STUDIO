@@ -1,0 +1,67 @@
+{
+  "task_id": "TASK-LOCAL-3D-MCP-001",
+  "from_role": "06-technical-architect",
+  "to_role": "00-studio-orchestrator",
+  "status": "completed",
+  "summary": "Local headless MCP static 3D v0.1 installed and accepted on the owner's Windows PC. Actual MCP-to-Blender generation, image delivery, GLB readback and a separate static V4 render passed. Independent Reviewer returned ACCEPT; human artistic approval remains separate.",
+  "artifacts": [
+    "tools/local_3d_mcp/",
+    "config/local3d-mcp.example.json",
+    "scripts/run-local3d.ps1",
+    "scripts/proof-local3d.ps1",
+    "OPEN_LOCAL3D_PROOF.bat",
+    "docs/25-LOCAL-3D-MCP.md",
+    "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
+    ".khosan/local3d/jobs/job-f79716ca948546c4",
+    ".khosan/local3d/jobs/job-f79716ca948546c4/qa-v4/2026-11-11T16-39-28.201Z-717dae/verification.json"
+  ],
+  "decisions": [
+    "Use the official MCP SDK stdio transport and a local Blender worker; no Oriverse runtime dependency.",
+    "Use explicit khosan.scene/1.0 and a documented small KHOSAN Weave dialect; unsupported features fail.",
+    "Retain semantic object and editable part identity; separate technical checks, independent review and human acceptance.",
+    "Keep current source status and separately verified V4 static rendering as distinct evidence. Preserve historical pre-review snapshots.",
+    "Tool Registry adoption applies only to local static v0.1. No remote Git changes, global client configuration rewrite or episode migration."
+  ],
+  "verification": [
+    {
+      "command": "python scripts/harness_check.py; node scripts/verify-source.mjs; npm run verify:workspace",
+      "result": "PASS on Windows"
+    },
+    {
+      "command": ".venv-local3d/Scripts/python.exe -m unittest discover -s tools/local_3d_mcp/tests -v",
+      "result": "27 PASS, one expected symlink-privilege skip; Linux counterpart 28 PASS"
+    },
+    {
+      "command": "scripts/proof-local3d.ps1",
+      "result": "Actual SDK/Blender proof PASS_SCOPED; 11 tools; 11.578 s cold; 0.031 s verified warm cache"
+    },
+    {
+      "command": "node --test tools/local_3d_mcp/adapter/test/*.test.mjs",
+      "result": "16 PASS with real emitted GLB and Three 0.181.1 in Linux"
+    },
+    {
+      "command": "node tools/local_3d_mcp/adapter/v4/verify.mjs --job .khosan/local3d/jobs/job-f79716ca948546c4",
+      "result": "PASS_SCOPED_STATIC_GLB_STILLS on Windows installed V4 stack"
+    },
+    {
+      "command": "Official SDK local3d_record_review then local3d_job_status",
+      "result": "review-23e41bbb2d8c.json; current integrity/technical/export/visual PASS; production_ready false"
+    }
+  ],
+  "known_risks": [
+    "Acceptance is limited to five bounded static procedural recipe families and one authored fixture, not a complete Oriverse feature replacement.",
+    "Arbitrary image reconstruction, character rigging, skinning, animation, cloth, mocap and physics remain unsupported.",
+    "V4 evidence is a separate static composition using installed dependencies; no original Stage/episode migration, video, continuous playback, same-page seek, every-frame validation or Blender-look parity is claimed.",
+    "Independent agent review is not human artistic approval; human_acceptance remains NOT_REVIEWED and production_ready remains false.",
+    "No local vision model is bundled. Reviewer identity is supplied by the trusted local client and is not cryptographically authenticated.",
+    "Normal owned-process cancellation/timeout was verified; abrupt parent-process kill recovery and durable Blender job resumption remain unimplemented.",
+    "Cold 11.578 s and verified warm 0.031 s are measurements for this fixture on this PC; the warm result reuses artifacts. No comparative superiority against Oriverse was tested.",
+    "Windows symlink-escape test is skipped because the environment lacks symlink privilege; the same test passes in Linux.",
+    "The current dependencies emit nonfatal Pydantic lifespan and Three.Clock deprecation warnings; actual MCP calls and V4 rendering succeed.",
+    "The Studio baseline is a verified 155-file GitHub source snapshot, not a Git checkout. New local changes have not been committed, pushed or merged.",
+    "Local stdio client configuration is provided and actual SDK calls were tested. This does not register new tools automatically in every ChatGPT Web conversation.",
+    "Studio v0.2 browser acceptance, Docker deployment and external rigging GPU acceptance remain separate pending work."
+  ],
+  "open_questions": [],
+  "next_action": "Use the registered local stdio command or proof launcher for new static scene jobs. The next development slice should add representative scene recipes and measured V4 lighting/look matching; use reference review for each new asset. Character/rigging fixtures and original episode integration require separate bounded tasks. Preserve existing Studio browser-acceptance backlog."
+}

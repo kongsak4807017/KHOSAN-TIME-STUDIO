@@ -1,0 +1,18 @@
+{
+  "name": "@khosan/local3d-v4-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./local3d-provider.mjs",
+  "types": "./local3d-provider.d.ts",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "three": ">=0.181.1 <0.188.0"
+  },
+  "devDependencies": {
+    "three": "0.181.1"
+  }
+}
+

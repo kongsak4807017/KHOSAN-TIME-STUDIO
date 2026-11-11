@@ -1,0 +1,39 @@
+name: Manual local 3D contract verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install locked MCP dependencies
+        run: python -m pip install -r tools/local_3d_mcp/requirements-lock.txt
+      - name: Check dependencies
+        run: python -m pip check
+      - name: Validate contracts and portable launch arguments
+        run: python -m unittest discover -s tools/local_3d_mcp/tests -v
+      - name: Verify Studio source and schemas
+        run: |
+          python scripts/harness_check.py
+          node scripts/verify-source.mjs
+      - name: Check Unix launchers
+        if: runner.os == 'Linux'
+        run: bash -n scripts/setup-local3d.sh scripts/run-local3d.sh scripts/proof-local3d.sh scripts/proof-local3d-elephant.sh
+
+# These tests exercise real SDK protocol and discovery fixtures. They do not
+# claim a Blender geometry render or a browser/LTC render on a hosted runner.

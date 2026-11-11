@@ -1,0 +1,52 @@
+{
+  "schema": "khosan.portable-independent-visual-review/1",
+  "task_id": "TASK-LOCAL3D-PORTABLE-001",
+  "reviewer": "independent-install-reviewer",
+  "identity_verified": false,
+  "created_utc": "2026-11-11T18:28:02Z",
+  "job_id": "job-d51740b6569f4a17",
+  "implementation_sha256": "59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821",
+  "artifact_digest": "924a9134e8896d3f9120a224e40e7c19c5a152f1b52125962a6930c4a0b9b338",
+  "glb_sha256": "44d488fc9b40c81eb5422b76e93b5a2924b0438c01d1edff7e5f7c238cbe72ba",
+  "verdict": "PASS",
+  "scope": "Fresh Windows portable-install static elephant Blender views and standalone Remotion/Three still. This is a separate independent review of the current files, not an inherited historical r6 review or a mutation of the job manifest.",
+  "actual_images_viewed": {
+    "preview_hero.png": "8ed2f46f60e3401f62c8f159e871f4821662f21cb9adea0e233b37cb35f16f22",
+    "preview_front.png": "0364d3e39b5c4b23b9c707e017e7434513bb9dbaa6edd7f3ff7c314424d06893",
+    "preview_side.png": "a49e926ff8dcd8155f23f863f0e48746b9a6824324659438bf59191e1ec3c276",
+    "preview_back.png": "34a1707e2db0604d66bddd3637ed9d2a59f0b72182c079db8c51dcf59c3baae5",
+    "frame-045.png": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72"
+  },
+  "checks": {
+    "actual_png_hashes_match_manifest_or_report": true,
+    "standalone_report_glb_hash_matches_current_job": true,
+    "standalone_frame_hash_matches_repeated_frame_record": true,
+    "all_four_blender_views_independently_observed": true,
+    "standalone_frame_045_independently_observed": true,
+    "human_acceptance": "NOT_REVIEWED",
+    "production_ready": false,
+    "private_v4_integration": "NOT_TESTED_PRIVATE_V4"
+  },
+  "summary": "The current four Blender views show a complete, grounded, readable elephant: continuous torso/head/leg/trunk transitions, four feet, tapered trunk, attached ears, mouth-side tusks, small eyes, nails and tail. Surface creases are visible. No obvious missing geometry, clipping or floating parts block the static proof. The actual standalone still displays the same complete asset with measurable lighting and a separate ground-shadow proxy; it has a darker brown appearance and stronger shadow than Blender. No new mandatory repair is required for portable static-asset verification.",
+  "findings": [
+    {
+      "object_id": "reference_elephant",
+      "dimension": "materials",
+      "severity": "info",
+      "instruction": "STATIC_MODEL_SCOPE: Fine facial detail, fine wrinkles and ear folds remain simplified. Treat the example as an authored procedural static interpretation, not photographic reconstruction or an automatic image-to-3D converter."
+    },
+    {
+      "object_id": "reference_elephant",
+      "dimension": "lighting",
+      "severity": "warning",
+      "instruction": "STANDALONE_PRESENTATION_LIMIT: The current standalone still is darker/browner than Blender, with a stronger, sharper separate proxy ground shadow. This PASS verifies usable static geometry and renderer integration, not final art, finished-episode lighting or Blender/Three look parity."
+    }
+  ],
+  "limitations": [
+    "Only frame-045 of the fresh standalone run was visually inspected here; the full six-capture technical controls are supported by the separate renderer report and independent renderer review.",
+    "Single-image hidden anatomy and the three-meter authoring scale are inferred.",
+    "No rigging, animation, physics, continuous playback, full episode or human artistic acceptance is claimed.",
+    "The current job manifest and MCP proof intentionally retain their pre-review NOT_REVIEWED status; this review is a separate evidence record.",
+    "Overall publication acceptance is separate and requires the curated publication inventory check."
+  ]
+}

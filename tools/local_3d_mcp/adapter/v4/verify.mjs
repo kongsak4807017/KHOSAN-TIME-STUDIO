@@ -2,45 +2,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash, randomBytes} from 'node:crypto';
-import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {verifyLocal3dAsset} from '../local3d-provider.mjs';
 import {compareVisibleAsset, decodePng} from './png.mjs';
+import {PORTABLE_ROOT, createRuntime, resolveBrowser, RuntimeContainmentPlugin} from './portable-runtime/runtime.mjs';
 
-const DEFAULT_V4 = 'C:/KHOSAN/KHOSAN TIME ch/KHOSAN_CREATIVE_OS/CHANNELS/studio_harness_v4';
 const ownRoot = path.dirname(fileURLToPath(import.meta.url));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashFile = file => digest(fs.readFileSync(file));
 const {values} = parseArgs({options: {
-  job: {type: 'string'}, 'v4-root': {type: 'string', default: DEFAULT_V4},
-  browser: {type: 'string'}, help: {type: 'boolean', default: false},
+  job: {type: 'string'}, 'v4-root': {type: 'string'},
+  browser: {type: 'string'}, gl: {type: 'string'}, help: {type: 'boolean', default: false},
 }});
 if (values.help || !values.job) {
-  console.log('Usage: node adapter/v4/verify.mjs --job <local3d-job-dir> [--v4-root <existing-V4-dir>] [--browser <Chrome-or-Edge-exe>]');
-  console.log('Renders native 960x540 stills and visibility evidence using existing V4 dependencies. Elephant studio also verifies LTC-light and separate shadow contributions. No video, original V4 edit, or publication.');
+  console.log('Usage: node tools/local_3d_mcp/adapter/v4/verify.mjs --job <job-dir> [--browser <executable>] [--gl swangle|angle] [--v4-root <existing-V4-dir>]');
+  console.log('Default: the isolated locked runtime installed by node scripts/setup-local3d-v4.mjs. Existing V4 mode requires --v4-root or KHOSAN_V4_ROOT.');
+  console.log('Renders native 960x540 static-GLB evidence, with LTC and separate shadow controls for elephant studio. No full episode or video is verified.');
   if (!values.help) process.exitCode = 2;
 } else {
   await verify();
 }
 
 async function verify() {
-  const job = fs.realpathSync(values.job), v4Root = fs.realpathSync(values['v4-root']);
-  const externalRequire = createRequire(path.join(v4Root, 'package.json'));
-  function packageInfo(name) {
-    const entry = externalRequire.resolve(name);
-    let directory = path.dirname(entry);
-    while (directory !== path.dirname(directory)) {
-      const candidate = path.join(directory, 'package.json');
-      if (fs.existsSync(candidate)) {
-        const meta = JSON.parse(fs.readFileSync(candidate, 'utf8'));
-        if (meta.name === name) return {name, version: meta.version, root: directory, entry, packageFile: candidate};
-      }
-      directory = path.dirname(directory);
-    }
-    throw Error(`Cannot locate installed package metadata for ${name}`);
-  }
-  const packages = Object.fromEntries(['remotion', '@remotion/three', '@remotion/bundler', '@remotion/renderer', '@react-three/fiber', 'react', 'react-dom', 'three'].map(name => [name, packageInfo(name)]));
+  const job = fs.realpathSync(values.job);
+  const selectedV4 = values['v4-root'] || process.env.KHOSAN_V4_ROOT;
+  const runtime = createRuntime({v4Root: selectedV4});
+  const runtimeRoot = runtime.root, externalRequire = runtime.require, packages = runtime.packages;
+  const standalone = runtime.mode === 'standalone_locked';
+  const glBackend = values.gl || (standalone ? 'swangle' : 'angle');
+  assert.ok(['swangle', 'angle', 'egl', 'swiftshader', 'vulkan', 'angle-egl'].includes(glBackend), 'Unsupported --gl backend');
   for (const name of ['@remotion/three', '@remotion/bundler', '@remotion/renderer']) assert.equal(packages[name].version, packages.remotion.version, `Mixed Remotion runtime versions: ${name}`);
   const {bundle} = externalRequire('@remotion/bundler');
   const {openBrowser, selectComposition, renderStill} = externalRequire('@remotion/renderer');
@@ -57,7 +48,9 @@ async function verify() {
     path.join(packages['@remotion/three'].root, 'dist', 'cjs', 'ThreeCanvas.js')]))];
   const ownFiles = ['entry.tsx', 'verify.mjs', 'png.mjs', 'lighting-ltc.mjs'].map(name => path.join(ownRoot, name));
   ownFiles.push(path.resolve(ownRoot, '..', 'local3d-provider.mjs'));
-  const originalV4Files = ['package.json', 'package-lock.json', 'REGISTRY.json', 'src/Stage.tsx', 'src/core.mjs', 'scripts/status.mjs', 'scripts/qa.mjs', 'scripts/loopback.cjs'].map(name => path.join(v4Root, name));
+  ownFiles.push(...['runtime.mjs', 'loopback.cjs', 'package.json', 'package-lock.json', 'tsconfig.json'].map(name => path.join(PORTABLE_ROOT, name)));
+  ownFiles.push(path.resolve(ownRoot, '..', '..', '..', '..', 'scripts', 'setup-local3d-v4.mjs'));
+  const originalV4Files = standalone ? [] : ['package.json', 'package-lock.json', 'REGISTRY.json', 'src/Stage.tsx', 'src/core.mjs', 'scripts/status.mjs', 'scripts/qa.mjs', 'scripts/loopback.cjs'].map(name => path.join(runtimeRoot, name));
   const artifactFiles = ['scene.glb', 'harness-asset.json'].map(name => path.join(job, name));
   const sources = [...new Set([...ownFiles, ...runtimeFiles, ...originalV4Files, ...artifactFiles])];
   const before = Object.fromEntries(sources.map(file => [file, hashFile(file)]));
@@ -68,13 +61,8 @@ async function verify() {
   const lightingPreset = manifest.presentation?.lighting?.preset ?? 'storybook';
   assert.ok(['storybook', 'elephant_studio'].includes(lightingPreset), 'Unsupported review lighting preset');
   const isLtcStudio = lightingPreset === 'elephant_studio';
-  const candidates = values.browser ? [values.browser] : [
-    'C:/Program Files/Google/Chrome/Application/chrome.exe',
-    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-    'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
-  ];
-  const browserExecutable = candidates.find(file => fs.existsSync(file));
-  if (!browserExecutable) throw Error('Existing Chrome/Edge executable not found; supply --browser. No browser download was attempted.');
+  const browserInfo = await resolveBrowser(runtime, {browser: values.browser});
+  const browserExecutable = browserInfo.path;
   const id = new Date().toISOString().replaceAll(':', '-') + '-' + randomBytes(3).toString('hex');
   const out = path.join(job, 'qa-v4', id), publicDir = path.join(out, 'public');
   fs.mkdirSync(publicDir, {recursive: true});
@@ -82,13 +70,21 @@ async function verify() {
   fs.writeFileSync(path.join(publicDir, 'harness-asset.json'), manifestBytes);
   const errors = [], warnings = new Set(), logs = [], images = [];
   const report = {
-    schema: 'khosan.local3d-v4-proof/1', id, status: 'RUNNING',
-    scope: isLtcStudio ? 'SEPARATE_REMOTION_THREE_STATIC_GLB_LTC_960x540' : 'SEPARATE_REMOTION_THREE_STATIC_GLB_960x540',
+    schema: 'khosan.local3d-v4-proof/2', id, status: 'RUNNING',
+    scope: `${standalone ? 'STANDALONE_LOCKED' : 'EXISTING_V4'}_REMOTION_THREE_STATIC_GLB${isLtcStudio ? '_LTC' : ''}_960x540`,
     scene_id: manifest.scene_id, artifact_sha256: asset.sha256, artifact_bytes: asset.bytes,
     sourceBefore: before, runtimeVersions: Object.fromEntries(Object.entries(packages).map(([name, info]) => [name, info.version])),
-    browserExecutable, sourceV4Root: v4Root,
+    runtime_mode: runtime.mode, runtime_root: runtimeRoot,
+    runtime_lock_sha256: runtime.lockSha256,
+    runtime_environment: {node: process.version, platform: process.platform, architecture: process.arch},
+    dependency_roots: Object.fromEntries(Object.entries(packages).map(([name, info]) => [name, info.root])),
+    dependency_containment: 'REQUIRED_WITHIN_SELECTED_RUNTIME',
+    browserExecutable, browser_selection: browserInfo.selection, browser_type: browserInfo.type,
+    chromium_gl: glBackend, sourceV4Root: standalone ? null : runtimeRoot,
+    original_v4_source_verification: standalone ? 'NOT_APPLICABLE_STANDALONE_RUNTIME' : 'PENDING_BEFORE_AFTER_HASH_COMPARISON',
+    originalV4SourceUnchanged: null,
     semanticObjects: asset.semanticIds.length, editableParts: asset.partCount,
-    v4_render_integration: 'RUNNING', originalEpisodesModified: false,
+    renderer_integration: 'RUNNING', v4_render_integration: standalone ? 'NOT_TESTED_PRIVATE_V4' : 'RUNNING', originalEpisodesModified: false,
     videoCreated: false, fullEpisode: false, production_ready: false,
     humanArt: 'NOT_REVIEWED', humanAcceptance: 'NOT_REVIEWED',
     animation: false, rigging: false, physics: false,
@@ -100,9 +96,9 @@ async function verify() {
   let browser;
   save();
   try {
-    console.log('Building isolated static-GLB composition with installed V4 dependencies');
-    // Reuse the inspected V4 process-local bind/Host guard, without editing it.
-    externalRequire(path.join(v4Root, 'scripts', 'loopback.cjs'));
+    console.log(`Building isolated static-GLB composition with ${runtime.mode} dependencies`);
+    // This process owns its guard; a private channel checkout is never needed.
+    externalRequire(path.join(PORTABLE_ROOT, 'loopback.cjs'));
     const aliases = {
       'three$': threeModule,
       'three/addons': path.join(packages.three.root, 'examples', 'jsm'),
@@ -115,15 +111,20 @@ async function verify() {
       '@remotion/three$': externalRequire.resolve('@remotion/three'),
       '@react-three/fiber$': externalRequire.resolve('@react-three/fiber'),
     };
+    const containment = new RuntimeContainmentPlugin(runtime);
     const serveUrl = await bundle({
       entryPoint: path.join(ownRoot, 'entry.tsx'), outDir: path.join(out, 'bundle'),
-      rootDir: v4Root, publicDir, enableCaching: false,
-      webpackOverride: config => ({...config, resolve: {...config.resolve,
-        modules: [path.join(v4Root, 'node_modules'), ...(config.resolve?.modules || ['node_modules'])],
+      rootDir: runtimeRoot, publicDir, enableCaching: false,
+      webpackOverride: config => ({...config, plugins: [...(config.plugins || []), containment], resolve: {...config.resolve,
+        modules: [runtime.nodeModules, ...(config.resolve?.modules || ['node_modules'])],
         alias: {...config.resolve?.alias, ...aliases},
       }}),
     });
-    browser = await openBrowser('chrome', {browserExecutable, chromiumOptions: {gl: 'angle'}});
+    report.bundled_dependency_modules_checked = containment.checked.size;
+    browser = await openBrowser('chrome', {browserExecutable, chromeMode: browserInfo.chromeMode, chromiumOptions: {gl: glBackend}});
+    // Browser.getVersion is the standard Chrome DevTools command exposed by
+    // this pinned Remotion browser's connection; record the actual browser.
+    report.browser_version = await browser.connection.send('Browser.getVersion');
     const base = {showAsset: true, ltcEnabled: true, groundShadowsEnabled: true};
     const composition = await selectComposition({serveUrl, id: 'KHOSAN-Local3D-Static-Integration', inputProps: base, puppeteerInstance: browser, logLevel: 'error'});
     assert.equal(composition.width, 960); assert.equal(composition.height, 540); assert.equal(composition.fps, 30); assert.equal(composition.durationInFrames, 60);
@@ -232,12 +233,19 @@ async function verify() {
     assert.equal(errors.length, 0, errors.join('\n'));
     const after = Object.fromEntries(sources.map(file => [file, hashFile(file)]));
     assert.deepEqual(after, before, 'Source/runtime/artifact changed during verification');
-    Object.assign(report, {sourceAfter: after, originalV4SourceUnchanged: true,
-      status: isLtcStudio ? 'PASS_SCOPED_STATIC_GLB_LTC_STILLS' : 'PASS_SCOPED_STATIC_GLB_STILLS', v4_render_integration: 'PASS_SCOPED_STATIC_ASSET',
-      limitation: 'Separate static GLB composition on the installed V4 Remotion/Three stack; no episode migration, animation, physics, art acceptance or video parity is implied'});
+    Object.assign(report, {sourceAfter: after, originalV4SourceUnchanged: standalone ? null : true,
+      original_v4_source_verification: standalone ? 'NOT_APPLICABLE_STANDALONE_RUNTIME' : 'UNCHANGED_SELECTED_PRIVATE_SOURCE_HASHES',
+      status: `PASS_${standalone ? 'STANDALONE' : 'SCOPED'}_STATIC_GLB${isLtcStudio ? '_LTC' : ''}_STILLS`,
+      renderer_integration: 'PASS_SCOPED_STATIC_ASSET',
+      v4_render_integration: standalone ? 'NOT_TESTED_PRIVATE_V4' : 'PASS_SCOPED_STATIC_ASSET',
+      limitation: standalone
+        ? 'Standalone static GLB composition on pinned Remotion/Three packages. Private V4 Stage/REGISTRY/episodes were not loaded or verified. No episode migration, animation, physics, art acceptance or video parity is implied.'
+        : 'Separate static GLB composition on the explicitly selected V4 Remotion/Three stack; no episode migration, animation, physics, art acceptance or video parity is implied'});
     save();
   } catch (error) {
-    report.status = 'FAIL'; report.v4_render_integration = 'FAIL'; report.error = error.stack || String(error);
+    report.status = 'FAIL'; report.renderer_integration = 'FAIL';
+    if (!standalone) report.v4_render_integration = 'FAIL';
+    report.error = error.stack || String(error);
     save(); console.error(error); process.exitCode = 1;
   } finally {
     if (browser) await browser.close({silent: true});

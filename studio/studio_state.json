@@ -3,12 +3,20 @@
   "project": "KHOSAN-TIME-STUDIO",
   "phase": "DEPLOYABLE_STUDIO_V0_2_MULTI_PROJECT",
   "active_feature_id": null,
-  "active_work_item_id": null,
-  "active_roles": [],
+  "active_work_item_id": "TASK-LOCAL3D-PORTABLE-001",
+  "active_roles": [
+    "11-independent-reviewer",
+    "12-release-ops"
+  ],
   "pending_human_gate": null,
-  "last_verification": null,
+  "last_verification": {
+    "task_id": "TASK-LOCAL3D-PORTABLE-001",
+    "timestamp": "2026-11-11T18:30:36Z",
+    "verdict": "PASS_PORTABLE_STATIC_MCP_AND_STANDALONE_LTC",
+    "evidence": "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json"
+  },
   "known_blockers": [
-    "Studio v0.2 multi-project shell source is implemented but fresh local runtime/browser acceptance remains pending",
+    "Studio v0.2 source/API/workspace checks passed on Windows 2026-11-11; browser acceptance remains pending",
     "DevSpace public MCP tunnel acceptance remains pending on the target PC",
     "Prototype Arena UI is not yet implemented",
     "Asset Registry and UG-IR live runtime are not yet implemented",
@@ -17,7 +25,7 @@
     "Legacy research archive remains pending verbatim mirror"
   ],
   "next_milestone": "Local runtime acceptance of v0.2 multi-project shell, then Asset Registry / Asset Lab",
-  "last_updated": "2026-10-03",
+  "last_updated": "2026-11-11T18:30:36Z",
   "creative_intelligence": {
     "foundation": "specified",
     "council_roles": 8,
@@ -29,7 +37,7 @@
   "deployable_studio": {
     "version": "0.2.0",
     "source_status": "shipped_on_main",
-    "runtime_acceptance": "pending_local_v0_2",
+    "runtime_acceptance": "source_api_workspace_pass_browser_pending",
     "local_node": true,
     "docker_compose": true,
     "default_bind": "127.0.0.1:8080",
@@ -54,7 +62,83 @@
       "project_switcher": true,
       "project_manifest": true,
       "project_work_item_contract": true,
-      "local_runtime_acceptance": "pending"
+      "local_runtime_acceptance": "api_and_restart_smoke_pass_browser_pending"
+    }
+  },
+  "local_3d_mcp": {
+    "version": "0.2.0",
+    "task_id": "TASK-LOCAL3D-PORTABLE-001",
+    "status": "verified_portable_source_ready_for_publication",
+    "transport": "stdio",
+    "tools": 11,
+    "recipes": 6,
+    "implementation_sha256": "59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821",
+    "windows_job_id": "job-d51740b6569f4a17",
+    "artifact_digest": "924a9134e8896d3f9120a224e40e7c19c5a152f1b52125962a6930c4a0b9b338",
+    "technical_build": "PASS",
+    "export_reimport": "PASS",
+    "independent_visual_review": "PASS_SEPARATE_RECORD",
+    "independent_publication_review": "PENDING_INVENTORY",
+    "standalone_renderer": "PASS_STANDALONE_STATIC_GLB_LTC_STILLS",
+    "private_v4_render_integration": "NOT_TESTED_PRIVATE_V4",
+    "human_acceptance": "NOT_REVIEWED",
+    "production_ready": false,
+    "cold_build_seconds": 30.094,
+    "warm_verified_cache_seconds": 0.047,
+    "evidence": "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json",
+    "portable_proof": "docs/examples/local3d/portable-proof.json",
+    "install_guide": "docs/27-LOCAL3D-PORTABLE-INSTALL.md",
+    "machine_configuration": "Generated locally under .khosan; not versioned",
+    "github_publication": "PENDING_LEASED_UPDATE_AND_READBACK",
+    "source_baseline": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
+    "platforms": {
+      "windows": "FRESH_MCP_AND_STANDALONE_RENDER_PASS",
+      "linux": "MCP_DRAFT_PASS_BROWSER_BLOCKED_BY_HOST",
+      "macos": "NOT_TESTED"
+    },
+    "owner_original_runtime": "Historical r6 kept unchanged; new portable build exercised in an isolated candidate folder"
+  },
+  "local_3d_mcp_history": {
+    "elephant_r6": {
+      "version": "0.2.0",
+      "task_id": "TASK-LOCAL-3D-ELEPHANT-001",
+      "status": "accepted_scoped_static_elephant_trial",
+      "transport": "stdio",
+      "tools": 11,
+      "implementation_sha256": "7d54ae6d604e7d35869ebdfe816c30fb13f9830b84ff1a58809a55593cb68d82",
+      "job_id": "job-bd3b994f2785413c",
+      "artifact_digest": "006ee0ffea11cfb760333701469f8c67abeb27fbf13882642f1b3524c8468700",
+      "technical_build": "PASS",
+      "export_reimport": "PASS",
+      "visual_review": "PASS",
+      "independent_review": "ACCEPT",
+      "v4_render_integration": "PASS_SCOPED_STATIC_GLB_LTC_STILLS",
+      "human_acceptance": "NOT_REVIEWED",
+      "production_ready": false,
+      "cold_build_seconds": 26.328,
+      "warm_verified_cache_seconds": 0.047,
+      "evidence": "studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json",
+      "latest_review": ".khosan/local3d/jobs/job-bd3b994f2785413c/review-7f2be586e1a6.json",
+      "v4_report": ".khosan/local3d/jobs/job-bd3b994f2785413c/qa-v4/2026-11-11T17-40-32.826Z-85e645/verification.json",
+      "source_baseline": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
+      "git_checkout": false,
+      "github_changes_pushed": false,
+      "recipes": 6,
+      "source_snapshot": ".khosan/local3d/source_snapshots/elephant-r6-7d54ae6d604e.zip",
+      "presentation_warnings": [
+        "REFERENCE_SCOPE",
+        "V4_PRESENTATION_LIMIT",
+        "V4_SHADOW_PROXY_EDGE"
+      ],
+      "previous_accepted_static_fixture": {
+        "task_id": "TASK-LOCAL-3D-MCP-001",
+        "job_id": "job-f79716ca948546c4",
+        "implementation_sha256": "be73aee29b30ee1f47664ed6dafb8e983022f74d5e90b6c86083d0dbec6dcaf3",
+        "artifact_digest": "a1e16e6233d6e0f2fe95f8ede37fce82db930cf535fd23c22c630b36f2fd96cf",
+        "evidence": "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
+        "source_snapshot": ".khosan/local3d/source_snapshots/v0.1-be73aee29b30.zip"
+      },
+      "context": "Historical accepted owner-PC r6 trial; preserved separately, not the portable current-source status"
     }
   }
 }

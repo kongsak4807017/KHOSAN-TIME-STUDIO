@@ -1,13 +1,15 @@
-# Text normalization
-*.md text eol=lf
-*.json text eol=lf
-*.yaml text eol=lf
-*.yml text eol=lf
+* text=auto
 *.py text eol=lf
 *.sh text eol=lf
+*.ps1 text eol=lf
+*.bat text eol=crlf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.png binary
+*.glb binary
+*.blend binary
 
-# Git LFS is planned but is NOT force-enabled here yet.
-# After installing git-lfs on every authoring machine, enable binary patterns with:
-#   git lfs install
-#   git lfs track "*.png" "*.jpg" "*.webp" "*.gif" "*.glb" "*.gltf" "*.ktx2" "*.wav" "*.ogg" "*.mp3" "*.mp4" "*.zip"
-# Commit the resulting .gitattributes change as a deliberate migration.

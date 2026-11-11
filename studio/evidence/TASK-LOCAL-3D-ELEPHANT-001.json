@@ -1,0 +1,80 @@
+{
+  "task_id": "TASK-LOCAL-3D-ELEPHANT-001",
+  "role": "10-qa-playtester",
+  "timestamp": "2026-11-11T17:44:54Z",
+  "checks": [
+    {
+      "name": "Reference provenance and scope",
+      "status": "pass",
+      "evidence": "Exact ep02_elephant_ref_r7.png staged on Windows: 614151 bytes, SHA-256 d71d369974ceb275f3baffad6ca88bd88b1ac10d4c76c1b4db403779897f8bac. The reference contract records visible invariants and inferred hidden anatomy. Image used only as visual guidance; no Trellis2 call."
+    },
+    {
+      "name": "Additive bounded contract and early budget guard",
+      "status": "pass",
+      "evidence": "khosan.scene/1.0 adds five bounded elephant parameters and optional storybook/elephant_studio lighting. Legacy absence stays absent; unknown fields and unsupported capabilities reject. Schema/core tests: Linux 30 PASS; Windows 29 PASS plus one expected symlink skip (30 cases, 3.515 s). Actual headless Blender probe on Linux rejected an 80-triangle first rock against a 50-triangle budget before constructing the following elephant, in 2.277 s."
+    },
+    {
+      "name": "Actual official MCP build and cache",
+      "status": "pass",
+      "evidence": ".khosan/local3d/elephant-proof.json records official SDK stdio protocol 2025-11-25, 11 tools, actual image delivery, job job-bd3b994f2785413c and implementation 7d54ae6d604e7d35869ebdfe816c30fb13f9830b84ff1a58809a55593cb68d82. Cold build 26.328 s, verified warm request 0.047 s, total 28.454 s. Blender 5.2.2 LTS, Python 3.12.10 and mcp 1.29.0 were exercised."
+    },
+    {
+      "name": "Editable geometry and GLB readback",
+      "status": "pass",
+      "evidence": ".khosan/local3d/jobs/job-bd3b994f2785413c/measured.json: 428900 triangles, 41 editable meshes, one semantic asset reference_elephant, overall Y bounds 0.0–3.0 m. Fourteen authored material instances; eleven used after GLB import, with no missing materials. Reimport preserves triangles, meshes, semantic identity and bounds, maximum delta 0.0 m. BLEND 7576743 bytes; GLB 9998572 bytes, SHA-256 8156b2353ad416429837fd8be4e3244cec95993564ede295b419e58977e6b4ad."
+    },
+    {
+      "name": "Four-view criticism and targeted repairs",
+      "status": "pass",
+      "evidence": "Actual Windows 1280×720 hero/front/side/back views were inspected against the owner reference. r4 job-7b6ca5dd01d642c6 / review-44e0dfe181d3.json and r5 job-778ec15bd94a44fa / review-34dcaeec9cd5.json retain REWORK. Final r6 removes the central ear pole with clipped uniform quad topology, reduces all-over grain and adds irregular regional creases while preserving anatomy, eyes, tusks, nails and grounded feet."
+    },
+    {
+      "name": "Independent acceptance recorded through MCP",
+      "status": "pass",
+      "evidence": "Independent reviewer /root/install_studio_baseline returned ACCEPT for this static modeling and LTC integration trial. Separate rendering review concurs on technical scope. Actual local3d_record_review wrote .khosan/local3d/jobs/job-bd3b994f2785413c/review-7f2be586e1a6.json, SHA-256 49839f9318155521d47f7da34d64e41813e677027b6f34a341bdd2fba4463883. REFERENCE_SCOPE, V4_PRESENTATION_LIMIT and V4_SHADOW_PROXY_EDGE remain nonblocking findings. Official status verifies integrity, technical build, export and visual review PASS against artifact digest 006ee0ffea11cfb760333701469f8c67abeb27fbf13882642f1b3524c8468700."
+    },
+    {
+      "name": "Primary-source LTC implementation",
+      "status": "pass",
+      "evidence": "Reviewed https://eheitzresearch.wordpress.com/415-2/ and official Three RectAreaLight / RectAreaLightUniformsLib documentation. V4 uses installed Three LTC 64×64 lookup textures, three rectangular lights and an active linked GPU program with LTC samplers. Blender uses native rectangular AREA lights; no algorithm or pixel parity is claimed."
+    },
+    {
+      "name": "Actual V4 static rendering",
+      "status": "pass",
+      "evidence": ".khosan/local3d/jobs/job-bd3b994f2785413c/qa-v4/2026-11-11T17-40-32.826Z-85e645/verification.json: PASS_SCOPED_STATIC_GLB_LTC_STILLS on Remotion 4.0.542, Three 0.187.0, R3F 9.8.2, React 19.2.0 and local Chrome. Native 960×540 frames 0 and 45 show 1 semantic asset, 41 editable parts and 44 render meshes. Repeated frame 45 PNG SHA matches; hidden control has zero attached asset meshes; browser errors are empty."
+    },
+    {
+      "name": "Measured lighting and separate shadow controls",
+      "status": "pass",
+      "evidence": "Zeroing only three rectangular light intensities changes 128909 pixels (24.87% of the frame), including 128102 of 153277 visibility-mask pixels (83.58%); mean absolute RGB difference inside the mask is 43.0382 levels. The mask includes the shadow region. Visible LTC-off retains 44 asset meshes and one active LTC program. Hiding only the separate shadow receiver changes 23204 pixels (4.48%); proxy illumination is zero with an allocated shadow map."
+    },
+    {
+      "name": "Final source and artifact verification",
+      "status": "pass",
+      "evidence": "All 41 before/after V4 fingerprints match and were rechecked against current Windows bytes after review. Actual Windows V4 report SHA-256 f76e5a748da61849e27c4e655c6af90dae9e4b52da947077abc7cd9488de1abc. Current MCP implementation and artifact digests verify. Original V4 source files were not edited. Pre-review harness-asset.json and smoke proof remain preserved; current review/status are separate evidence."
+    },
+    {
+      "name": "Preserved runtime snapshots and local access",
+      "status": "pass",
+      "evidence": "Prior v0.1 source snapshot v0.1-be73aee29b30.zip is preserved, SHA-256 564c77786518d30ec7d68843720d7fc31793df65709bbaae85904a37651cf019. r4/r5 snapshots are also preserved. Final runtime/fixture/reference snapshot elephant-r6-7d54ae6d604e.zip has 19 files, SHA-256 66a55da7b8fe2a94cd9a8027b9d62b9ce3ad111e5b9507ae3b0ed53ae44ee1a3. OPEN_LOCAL3D_ELEPHANT.bat opens the bounded latest artifact folder; docs/26-LOCAL-3D-ELEPHANT.md and the Thai README describe usage."
+    },
+    {
+      "name": "Human and complete-episode acceptance",
+      "status": "skipped",
+      "evidence": "Approval of the previous scene does not approve this new elephant. human_acceptance=NOT_REVIEWED and production_ready=false. Task acceptance covers the local static modeling and integration trial, with V4 presentation warnings retained."
+    }
+  ],
+  "verdict": "PASS",
+  "limitations": [
+    "Single-view guidance produces an authored procedural interpretation. Hidden anatomy and the overall 3.0 m scale are inferred. Fine wrinkles, facial detail and ear-fold complexity remain simpler than the reference.",
+    "V4 is darker and browner than Blender, with a heavier projected ground shadow and a faint dotted shadow-proxy edge behind the trunk. Finished episode lighting and renderer appearance parity are not accepted.",
+    "LTC supplies rectangular area-light shading. Floor shadows use a separate zero-illumination directional VSM proxy; this does not establish LTC occlusion, full self-shadowing or global illumination.",
+    "V4 verification covers an isolated static composition and repeated stills. It does not cover original episode migration, video, continuous playback, same-page seek or every-frame validation.",
+    "No rig, animation, cloth or physics is implemented. Trellis2 was not used or modified. No external generation service, pretrained model, downloaded elephant or texture pipeline was used.",
+    "Human acceptance remains NOT_REVIEWED and production_ready remains false. Independent reviewer identity is supplied by the trusted local client, not cryptographically authenticated.",
+    "The measured 26.328 s cold build and 0.047 s warm request apply to this fixture on this PC. The warm request reuses verified artifacts; no Oriverse or Trellis2 comparison was performed.",
+    "Windows contract tests have one expected symlink-privilege skip, which passes on Linux. Nonfatal Pydantic lifespan and Three.Clock dependency warnings remain recorded.",
+    "The verified GitHub source snapshot has no .git checkout. No commit, push, publishing or episode changes were made. Studio browser, Docker and external GPU rigging acceptance remain separate work."
+  ]
+}
+

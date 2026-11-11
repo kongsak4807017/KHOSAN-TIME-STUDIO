@@ -1,0 +1,75 @@
+{
+  "task_id": "TASK-LOCAL-3D-MCP-001",
+  "feature_id": null,
+  "title": "Local headless procedural 3D proof and Harness V4 provider",
+  "status": "accepted",
+  "owner_role": "06-technical-architect",
+  "contributors": [
+    "04-asset-synthesizer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Install the verified Studio source snapshot on the owner's Windows PC and add an offline local headless MCP that builds actual editable Blender/GLB scenes, renders review views and binds evidence to an isolated Harness V4-compatible static provider.",
+  "context_files": [
+    "AGENTS.md",
+    "docs/05-UGIR.md",
+    "docs/20-CHARACTER-FACTORY.md",
+    "docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md"
+  ],
+  "allowed_paths": [
+    "tools/local_3d_mcp/**",
+    "scripts/setup-local3d.ps1",
+    "scripts/run-local3d.ps1",
+    "scripts/proof-local3d.ps1",
+    "config/local3d-mcp.example.json",
+    "docs/25-LOCAL-3D-MCP.md",
+    "studio/tasks/TASK-LOCAL-3D-MCP-001.json",
+    "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
+    "studio/handoffs/TASK-LOCAL-3D-MCP-001.json",
+    "studio/studio_state.json",
+    "progress.md",
+    "session-handoff.md",
+    "studio/tool-registry.yaml",
+    "scripts/open-local3d-proof.ps1",
+    "OPEN_LOCAL3D_PROOF.bat"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env*",
+    "all existing episode source and accepted masters",
+    "all sibling game project contents"
+  ],
+  "acceptance_criteria": [
+    "Strict versioned scene subset rejects unsupported shapes, animation, rigging and physics rather than dropping them.",
+    "Actual Blender background build produces separate editable objects in .blend, self-contained .glb and four rendered views; output geometry budgets and export/reimport are measured.",
+    "Official MCP SDK stdio initialize/tools calls run; bounded asynchronous jobs have cancellation, timeout, one worker per configured root and verified cache.",
+    "Missing or changed source/artifacts/review invalidates evidence; missing visual review is NOT_REVIEWED and never auto-PASS.",
+    "Separate critic can record per-object repair instructions and at most three repair revisions change only failing objects.",
+    "Static GLB provider matches V4 group/objects/update(absoluteSeconds)/dispose; full V4 film rendering remains NOT_TESTED unless separately exercised.",
+    "Record source baseline, exact environment, tests, timings, independent review and all unverified target-PC steps."
+  ],
+  "verification": [
+    "python -m unittest discover -s tools/local_3d_mcp/tests -v",
+    "Official MCP client smoke builds the authored fixture, polls, exports manifest and verifies a warm cache hit.",
+    "node --test tools/local_3d_mcp/adapter/test/*.test.mjs with real emitted GLB where supported",
+    "Independent code and actual-image review; no user-art approval inferred.",
+    "Separate V4 verifier: real installed Remotion/Three, native stills, hidden-asset control and repeated-frame SHA-256; original V4 sources unchanged."
+  ],
+  "human_gates": [
+    "Human art acceptance before using proof as approved production asset; no automatic production approval.",
+    "No GitHub push/merge, publishing, persistent public server or paid API action in this task."
+  ],
+  "dependencies": [
+    "Blender executable already present on target",
+    "Python 3.12 or later",
+    "mcp==1.29.0 in isolated .venv-local3d"
+  ],
+  "risks": [
+    "DevSpace connection intermittent; source materialization and target execution must be verified independently.",
+    "Procedural recipes cover static props/terrain only, not arbitrary image-to-3D, rigging, cloth, mocap or a completed DR.KHO episode.",
+    "No local vision model bundled; visual judgment is performed by a separate reviewing agent using rendered evidence.",
+    "Source snapshot is not a Git checkout; no .git initialization or remote write is implied."
+  ],
+  "notes": "User request on 11 November 2026 explicitly authorizes a local independent headless MCP. This is additive; no existing UG-IR contract or Harness V4 checker is relaxed. Accepted on 11 November 2026 for local static v0.1 after Independent Reviewer ACCEPT. The two open-proof launchers are bounded convenience entrypoints for the authorized local installation. Current implementation be73aee29b30ee1f47664ed6dafb8e983022f74d5e90b6c86083d0dbec6dcaf3. Human art acceptance and full-episode integration are outside this acceptance."
+}

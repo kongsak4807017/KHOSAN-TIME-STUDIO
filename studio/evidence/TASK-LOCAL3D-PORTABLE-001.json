@@ -1,0 +1,62 @@
+{
+  "task_id": "TASK-LOCAL3D-PORTABLE-001",
+  "role": "10-qa-playtester",
+  "timestamp": "2026-11-11T18:30:36Z",
+  "checks": [
+    {
+      "name": "Portable setup and generated configuration",
+      "status": "pass",
+      "evidence": "Fresh Windows venv and 30 locked distributions installed under a directory with spaces and Thai characters. Python3.12.10, Blender5.2.2 LTS, mcp1.29.0. Driver resolves local paths, explicitly forwards Blender to stdio children, writes UTF-8 machine-local config and leaves global config unchanged."
+    },
+    {
+      "name": "Source and argument contracts",
+      "status": "pass",
+      "evidence": "Linux39/39 tests passed in3.518s; Windows38PASS+1expected symlink-privilege skip in3.402s. Includes actual SDK stdio in non-ASCII/spaced/shell-metacharacter paths, explicit Blender propagation, absent PATH and draft fixture preservation."
+    },
+    {
+      "name": "Fresh official MCP model build",
+      "status": "pass",
+      "evidence": "job-d51740b6569f4a17: actual SDK protocol2025-11-25,11tools,image delivery,30.094s cold and0.047s verified warm reuse. 428900triangles,41editable parts,GLB9982800bytes,zero roundtrip bounds delta/no missing semantic IDs or materials. Exact source/artifact identities in docs/examples/local3d/portable-proof.json."
+    },
+    {
+      "name": "Fresh standalone renderer",
+      "status": "pass",
+      "evidence": "Fresh locked npm install and managed browser; PASS_STANDALONE_STATIC_GLB_LTC_STILLS. Six native captures, identical repeat45PNG,408modules contained,39fingerprints unchanged,zero browser errors. LTC changes83.8647% of visibility region; separate ground shadow changes22836pixels. No private V4 sources required."
+    },
+    {
+      "name": "Independent current-artifact review",
+      "status": "pass",
+      "evidence": "Separate independent reviewer viewed all four fresh native Blender images and actual frame45, matched hashes to current implementation/artifact/GLB, returned visual PASS for scoped static proof. Independent renderer review returned ACCEPT after source/hash and renderer-control checks. Evidence: docs/examples/local3d/portable-windows/independent-review.json."
+    },
+    {
+      "name": "Linux portability and limitations",
+      "status": "pass",
+      "evidence": "Fresh locked Python install and official SDK draft build passed on Python3.12.14/Blender4.3.2:108.1264s cold,0.036029s cache. npm/408module bundle/loopback+Host checks passed. Standard CPU build interrupted without completion claim."
+    },
+    {
+      "name": "Linux browser and macOS",
+      "status": "blocked",
+      "evidence": "Linux Chromium failed at socket() with host Operation not permitted; no Linux stills produced. macOS not tested. Neither is advertised as rendered/validated."
+    },
+    {
+      "name": "Historical source and review preservation",
+      "status": "pass",
+      "evidence": "Reviewed r6 source is preserved separately from portable source; historical task/evidence/gallery retains its exact old hashes and warnings. New source does not inherit old PASS. Git history source snapshot is documented in the gallery."
+    },
+    {
+      "name": "Curated GitHub publication",
+      "status": "skipped",
+      "evidence": "Publication candidate is prepared from remote main38ae23cb08829e1867dfac05293e4f3e5683aff2. Independent final inventory, leased non-force branch update and readback are pending; their actual receipt will be committed after remote verification."
+    }
+  ],
+  "verdict": "PASS",
+  "limitations": [
+    "Windows fresh-location MCP and standalone static renderer passed. Linux base setup and draft build passed, but browser rendering was blocked by this host socket policy. macOS is untested.",
+    "This is an authored static procedural modeling and scoped LTC still-render pipeline: no rigging, animation, physics, original episode migration, continuous playback or full video acceptance.",
+    "Reference face/skin/ear detail remains simplified. Standalone Three is darker/browner than Blender with a stronger separate shadow proxy; no finished-episode look parity is accepted.",
+    "First installation requires package/browser downloads and separately installed Python/Blender (plus Node for optional renderer). Virtual environments, browser binaries and local machine config are intentionally regenerated on each computer.",
+    "Fresh independent visual PASS is recorded separately. Raw MCP manifest remains its pre-review NOT_REVIEWED state. Human acceptance remains NOT_REVIEWED and production_ready=false.",
+    "Pydantic lifespan, Three Clock and Chromium software-WebGL warnings are nonfatal and recorded. GitHub manual CI has not been run.",
+    "Owner accepted r6 runtime and historical snapshots remain intact; portable proof used a separate candidate directory. Historical paths and no-push statements describe their original task timestamps, not this publication."
+  ]
+}

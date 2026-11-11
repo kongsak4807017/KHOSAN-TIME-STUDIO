@@ -1,0 +1,58 @@
+{
+  "task_id": "TASK-LOCAL-3D-ELEPHANT-001",
+  "from_role": "06-technical-architect",
+  "to_role": "00-studio-orchestrator",
+  "status": "completed",
+  "summary": "Created a reference-guided static elephant on the owner's Windows PC through local headless MCP/Blender without Trellis2. Editable asset and actual four-view review accepted; V4 LTC integration passed with recorded presentation warnings. Human appearance approval remains separate.",
+  "artifacts": [
+    "tools/local_3d_mcp/",
+    "scripts/proof-local3d-elephant.ps1",
+    "OPEN_LOCAL3D_ELEPHANT.bat",
+    "docs/26-LOCAL-3D-ELEPHANT.md",
+    "studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json",
+    ".khosan/local3d/jobs/job-bd3b994f2785413c",
+    ".khosan/local3d/jobs/job-bd3b994f2785413c/qa-v4/2026-11-11T17-40-32.826Z-85e645/verification.json",
+    ".khosan/local3d/jobs/job-bd3b994f2785413c/review-7f2be586e1a6.json",
+    ".khosan/local3d/jobs/job-bd3b994f2785413c/acceptance-receipt.json",
+    ".khosan/local3d/source_snapshots/elephant-r6-7d54ae6d604e.zip"
+  ],
+  "decisions": [
+    "Use the reference for visual direction and author real editable geometry locally; Trellis2 remains the owner's selected manual tool.",
+    "Add a bounded recipe and optional lighting while preserving legacy spec behavior and the eleven-tool surface.",
+    "Use installed Three LTC for rectangular light shading; distinguish Blender native lights and the separate V4 shadow proxy.",
+    "Preserve r4/r5 REWORK and final r6 PASS against exact images. Retain reference-detail and V4 presentation limitations.",
+    "Keep original episode sources and pre-review snapshots intact; runtime archives preserve historical implementations."
+  ],
+  "verification": [
+    {
+      "command": "Schema/core contract tests and actual early-budget probe",
+      "result": "Linux 30 PASS; Windows 29 PASS + one expected symlink skip. Probe rejected the first over-budget mesh before constructing the next recipe."
+    },
+    {
+      "command": "scripts/proof-local3d-elephant.ps1",
+      "result": "Actual MCP/Blender PASS_SCOPED; 428900 triangles / 41 parts; 26.328 s cold / 0.047 s verified warm; export/readback bounds delta 0."
+    },
+    {
+      "command": "node tools/local_3d_mcp/adapter/v4/verify.mjs --job .khosan/local3d/jobs/job-bd3b994f2785413c",
+      "result": "PASS_SCOPED_STATIC_GLB_LTC_STILLS; native frames and on/off controls; 41 fingerprints unchanged; zero browser errors."
+    },
+    {
+      "command": "Independent image review, local3d_record_review and local3d_job_status",
+      "result": "ACCEPT with three nonblocking findings; review-7f2be586e1a6.json; integrity/technical/export/visual PASS; human NOT_REVIEWED."
+    }
+  ],
+  "known_risks": [
+    "Single-view guidance produces an authored procedural interpretation. Hidden anatomy and the overall 3.0 m scale are inferred. Fine wrinkles, facial detail and ear-fold complexity remain simpler than the reference.",
+    "V4 is darker and browner than Blender, with a heavier projected ground shadow and a faint dotted shadow-proxy edge behind the trunk. Finished episode lighting and renderer appearance parity are not accepted.",
+    "LTC supplies rectangular area-light shading. Floor shadows use a separate zero-illumination directional VSM proxy; this does not establish LTC occlusion, full self-shadowing or global illumination.",
+    "V4 verification covers an isolated static composition and repeated stills. It does not cover original episode migration, video, continuous playback, same-page seek or every-frame validation.",
+    "No rig, animation, cloth or physics is implemented. Trellis2 was not used or modified. No external generation service, pretrained model, downloaded elephant or texture pipeline was used.",
+    "Human acceptance remains NOT_REVIEWED and production_ready remains false. Independent reviewer identity is supplied by the trusted local client, not cryptographically authenticated.",
+    "The measured 26.328 s cold build and 0.047 s warm request apply to this fixture on this PC. The warm request reuses verified artifacts; no Oriverse or Trellis2 comparison was performed.",
+    "Windows contract tests have one expected symlink-privilege skip, which passes on Linux. Nonfatal Pydantic lifespan and Three.Clock dependency warnings remain recorded.",
+    "The verified GitHub source snapshot has no .git checkout. No commit, push, publishing or episode changes were made. Studio browser, Docker and external GPU rigging acceptance remain separate work."
+  ],
+  "open_questions": [],
+  "next_action": "Open OPEN_LOCAL3D_ELEPHANT.bat to inspect scene.blend, scene.glb and previews. Further finished-episode work should separately address finer face/skin detail, V4 tone/exposure and the known shadow-proxy edge before rigging or episode integration. Preserve the Studio browser-acceptance backlog."
+}
+

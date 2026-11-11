@@ -1,0 +1,77 @@
+{
+  "task_id": "TASK-LOCAL-3D-ELEPHANT-001",
+  "feature_id": null,
+  "title": "Reference-guided procedural elephant and LTC area-light proof",
+  "status": "accepted",
+  "owner_role": "06-technical-architect",
+  "contributors": [
+    "04-asset-synthesizer",
+    "08-rendering-engineer",
+    "09-engine-adapter",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Create an editable static elephant from the owner's ep02_elephant_ref_r7.png as visual guidance, using local procedural modeling without Trellis2, and verify Blender plus separate Harness V4 previews with researched LTC area-light integration.",
+  "context_files": [
+    "AGENTS.md",
+    "docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md",
+    "docs/25-LOCAL-3D-MCP.md"
+  ],
+  "allowed_paths": [
+    "tools/local_3d_mcp/**",
+    "scripts/*elephant*",
+    "OPEN_LOCAL3D_ELEPHANT.bat",
+    "docs/26-LOCAL-3D-ELEPHANT.md",
+    "studio/tasks/TASK-LOCAL-3D-ELEPHANT-001.json",
+    "studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json",
+    "studio/handoffs/TASK-LOCAL-3D-ELEPHANT-001.json",
+    "studio/studio_state.json",
+    "studio/tool-registry.yaml",
+    "progress.md",
+    "session-handoff.md",
+    ".khosan/local3d/**"
+  ],
+  "forbidden_paths": [
+    ".git/**",
+    ".env*",
+    "existing episode sources and accepted masters",
+    "all sibling game project contents",
+    "Trellis2 installation and model files"
+  ],
+  "acceptance_criteria": [
+    "Preserve the owner's reference identity and record visible invariants plus inferred hidden anatomy; do not claim a scan or exact reconstruction.",
+    "Actual editable Blender model shows connected elephant masses, four plausible weight-bearing legs, broad fan ears, long curved trunk, two ivory tusks, small eyes, nails, tail and detailed matte skin; no placeholder primitive assembly is presented as final.",
+    "Add a bounded static elephant recipe to the local MCP contract; preserve existing recipe behavior and unsupported rig/animation/physics rejection.",
+    "Export self-contained GLB and verify actual reimport topology, bounds, semantic IDs and materials; budget below one million evaluated triangles.",
+    "Render four actual Blender views and obtain independent reference-based criticism; patch identified defects with repeatable evidence.",
+    "Research the supplied LTC paper using primary sources; apply actual RectAreaLight/LTC support in isolated V4 proof and distinguish shading from shadowing.",
+    "Verify the actual Windows MCP build and native V4 still output; preserve a source archive for the previously accepted v0.1 implementation.",
+    "Persist current task, provenance, source/evidence hashes, limitations, documentation and a local opener; human approval of the new elephant remains separate."
+  ],
+  "verification": [
+    "Strict schema tests including elephant parameter limits and legacy fixture acceptance.",
+    "Real official SDK stdio build and image retrieval on Windows.",
+    "Blender export/reimport and multi-view visual review.",
+    "Separate V4 render with actual installed dependencies, image visibility and repeat-frame checks.",
+    "Independent code/asset review and source-bound evidence."
+  ],
+  "human_gates": [
+    "The user's current instruction authorizes creating the elephant and local lighting experiment.",
+    "Human acceptance applies to final appearance; do not infer it from approval of the previous prop scene.",
+    "No paid generation, GitHub push, publishing, episode migration or schedule changes."
+  ],
+  "dependencies": [
+    "Existing Blender 5.2.2 LTS",
+    "Existing .venv-local3d with official MCP SDK",
+    "Installed Harness V4 Remotion/Three stack",
+    "User-provided elephant PNG"
+  ],
+  "risks": [
+    "Single view does not determine hidden anatomy or exact physical dimensions.",
+    "Procedural skin can differ from reference; actual images must be inspected.",
+    "LTC area-light shading does not itself establish area-light shadows.",
+    "The added recipe changes implementation hashes; preserve the old runtime source for historical evidence."
+  ],
+  "notes": "User explicitly reserves Trellis2 for their own selected cases; use the image for visual direction only. This is a shared Studio tool fixture, not a new episode project or a rigged-character claim. Final r6 independently accepted for the scoped static trial. Retain REFERENCE_SCOPE, V4_PRESENTATION_LIMIT and V4_SHADOW_PROXY_EDGE. Evidence: studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json."
+}
+

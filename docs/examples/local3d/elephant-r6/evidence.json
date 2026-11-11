@@ -1,0 +1,78 @@
+{
+  "schema": "khosan.published-example/1",
+  "historical_example": true,
+  "task_id": "TASK-LOCAL-3D-ELEPHANT-001",
+  "job_id": "job-bd3b994f2785413c",
+  "implementation_sha256": "7d54ae6d604e7d35869ebdfe816c30fb13f9830b84ff1a58809a55593cb68d82",
+  "artifact_digest": "006ee0ffea11cfb760333701469f8c67abeb27fbf13882642f1b3524c8468700",
+  "reference_sha256": {
+    "tools/local_3d_mcp/references/ep02_elephant_ref_r7.png": "d71d369974ceb275f3baffad6ca88bd88b1ac10d4c76c1b4db403779897f8bac"
+  },
+  "blender_version": "Blender 5.2.2 LTS",
+  "measurements": {
+    "triangles": 428900,
+    "editable_parts": 41,
+    "height_m": 3.0,
+    "cold_seconds": 26.328,
+    "warm_verified_seconds": 0.047
+  },
+  "files": {
+    "preview_hero.png": "1c7ad20db9b31e1838fa5e9f09356b1bcb2e8bf7460269badb7a22153a4194b0",
+    "preview_front.png": "c22dc741c7f581793888ee73bafea0ffc59545c78b5f2968a1e844b921e711b5",
+    "preview_side.png": "ebdbf58ca935057a2e8314485eb1421ee97b03c70226fdff6c4845b36c278263",
+    "preview_back.png": "d6a4417d8914815ef1d64156671bdbdeeeeb0e34bc2ec593f703398d6cd8c65d",
+    "frame-045.png": "1b1e6bc0db0a632931d09aec8ead219c744d0017c88fc935b58617e66f89494b"
+  },
+  "review": {
+    "schema": "khosan.local3d.review/1.0",
+    "reviewer": "independent-install-reviewer",
+    "identity_verified": false,
+    "artifact_digest": "006ee0ffea11cfb760333701469f8c67abeb27fbf13882642f1b3524c8468700",
+    "verdict": "PASS",
+    "findings": [
+      {
+        "object_id": "reference_elephant",
+        "dimension": "materials",
+        "severity": "info",
+        "instruction": "REFERENCE_SCOPE: The reference-guided static sculpt has readable irregular body creases and localized trunk/ankle folds, but fine wrinkle density, facial detail and ear-fold complexity remain simplified versus the supplied image. Describe it as an authored procedural interpretation; do not claim photographic reconstruction or fine-detail parity."
+      },
+      {
+        "object_id": "reference_elephant",
+        "dimension": "lighting",
+        "severity": "warning",
+        "instruction": "V4_PRESENTATION_LIMIT: Actual native V4 frames are darker/browner than Blender previews and the separate proxy ground shadow is heavier/sharper. Keep this recorded as a static integration/lighting experiment; it is not finished-episode lighting or Blender-look parity acceptance."
+      },
+      {
+        "object_id": "reference_elephant",
+        "dimension": "composition",
+        "severity": "warning",
+        "instruction": "V4_SHADOW_PROXY_EDGE: A faint dotted horizontal edge is visible behind the trunk toward the right background and in the ground-shadow difference image. Retain this as a known presentation artifact of the separate shadow proxy; it does not invalidate the static GLB/LTC contribution proof."
+      }
+    ],
+    "summary": "Independently inspected the exact owner reference and all four actual Windows r6 PNGs; each PNG SHA256 matches the job manifest. Previous EAR_CENTER_GATHER and SURFACE_WRINKLE_HIERARCHY errors are resolved. Continuous torso/head/leg/trunk anatomy, four grounded feet, trunk taper and inward curl, mouth-side tusk roots, thin attached ears, small recessed eyes and low-profile nails are readable across views. Warm matte skin and ivory tusks are distinguishable. Actual native V4 images and controls support scoped static GLB/LTC integration with retained presentation warnings. PASS is limited to the reference-guided static procedural elephant; hidden anatomy and 3m scale are inferred, no rig/animation/physics/human acceptance is claimed.",
+    "created_utc": "2026-11-11T17:44:16Z",
+    "human_acceptance": "NOT_REVIEWED"
+  },
+  "v4": {
+    "status": "PASS_SCOPED_STATIC_GLB_LTC_STILLS",
+    "runtime_versions": {
+      "remotion": "4.0.542",
+      "@remotion/three": "4.0.542",
+      "@remotion/bundler": "4.0.542",
+      "@remotion/renderer": "4.0.542",
+      "@react-three/fiber": "9.8.2",
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "three": "0.187.0"
+    },
+    "repeat": {
+      "status": "PNG_SHA256_IDENTICAL",
+      "frame": 45,
+      "sha256": "1b1e6bc0db0a632931d09aec8ead219c744d0017c88fc935b58617e66f89494b",
+      "scope": "Repeated renderStill calls in the same browser instance; not a continuous-playback or same-page seek proof"
+    },
+    "changed_ltc_visibility_fraction": 0.8357548751606568,
+    "ground_shadow_changed_pixels": 23204
+  },
+  "replay_note": "These exact PNGs are the reviewed r6 output on the original Windows PC. They are reference examples, not current-source or cross-machine pixel-parity certification. New builds create new hashes and reviews."
+}

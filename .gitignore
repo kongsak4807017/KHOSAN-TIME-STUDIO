@@ -56,3 +56,9 @@ ngrok.zip
 devspace.log*
 ngrok.log*
 connectivity-state/
+
+# Local 3D generated machine state, runtimes and artifacts
+.venv-local3d/
+.khosan/
+**/.remotion/
+tools/local_3d_mcp/elephant_debug/

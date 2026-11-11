@@ -1,0 +1,87 @@
+{
+  "task_id": "TASK-LOCAL-3D-MCP-001",
+  "role": "10-qa-playtester",
+  "timestamp": "2026-11-11T16:49:20Z",
+  "checks": [
+    {
+      "name": "Verified source baseline on target PC",
+      "status": "pass",
+      "evidence": "Materialized 155 UTF-8 tracked files from kongsak4807017/KHOSAN-TIME-STUDIO commit 38ae23cb08829e1867dfac05293e4f3e5683aff2 into C:\\KHOSAN\\KHOSAN-TIME-STUDIO; all 155 Git blob hashes matched before additive changes. No .git directory or remote write."
+    },
+    {
+      "name": "Windows baseline source/API/workspace checks",
+      "status": "pass",
+      "evidence": "python scripts/harness_check.py, node scripts/verify-source.mjs and npm run verify:workspace all PASS on Windows Node 24.20.0 / Python 3.12.10. Browser acceptance is not inferred."
+    },
+    {
+      "name": "Isolated dependency installation",
+      "status": "pass",
+      "evidence": "Blender 5.2.2 LTS build d13f752e3b9c at C:\\KHOSAN\\Blender 5.2\\blender.exe; official mcp==1.29.0 in .venv-local3d; pip check reports no broken requirements. Initial cached pip download stalled; --no-cache-dir completed without disabling TLS or deleting caches."
+    },
+    {
+      "name": "Actual official MCP protocol and images",
+      "status": "pass",
+      "evidence": ".khosan/local3d/proof.json: official SDK client initialized stdio protocol 2025-11-25, discovered 11 tools, built actual geometry, polled completion and received actual image content. Final implementation SHA-256 be73aee29b30ee1f47664ed6dafb8e983022f74d5e90b6c86083d0dbec6dcaf3."
+    },
+    {
+      "name": "Actual editable asset and export roundtrip",
+      "status": "pass",
+      "evidence": ".khosan/local3d/jobs/job-f79716ca948546c4/measured.json: 9 semantic objects, 66 editable mesh parts, 39,304 evaluated triangles, 22 materials; four 960x540 views; .blend plus self-contained scene.glb (908,112 bytes). Fresh-scene GLB reimport preserves counts, materials and IDs; max bounds delta 0.0 m. Artifact-set digest a1e16e6233d6e0f2fe95f8ede37fce82db930cf535fd23c22c630b36f2fd96cf."
+    },
+    {
+      "name": "Measured build and cache",
+      "status": "pass",
+      "evidence": ".khosan/local3d/proof.json: cold_build_seconds=11.578, warm_request_seconds=0.031, warm_cache_hit=true, total_seconds=13.14. Cache verifies source/spec/implementation/Blender/references and current artifacts."
+    },
+    {
+      "name": "Contract and negative-path tests",
+      "status": "pass",
+      "evidence": "Linux 28/28 pass; Windows 27 pass plus one expected symlink-privilege skip. Tests cover real official SDK initialize/ping/list/call/recovery, strict syntax and schema, unsupported capabilities, path and symlink boundaries, changed source/artifact/review, wrong job/scene/cache identity, missing-review false PASS and bounded repair lineage."
+    },
+    {
+      "name": "Normal process ownership, contention and timeout",
+      "status": "pass",
+      "evidence": "Independent reviewer exercised real temporary sleeping child subprocesses substituted for Blender: overlapping job returned BUSY, normal cancellation terminated owned child and returned CANCELLED, 15-second timeout produced FAILED/TimeoutError after about 15.08 s with child ended."
+    },
+    {
+      "name": "Static Three provider tests",
+      "status": "pass",
+      "evidence": "16/16 Node tests passed with Three 0.181.1 and an actual emitted GLB, including semantic assembly/part retention, no animation claims, absolute-time validation, disposal and strict identity checks. Windows integration separately exercised installed Three 0.187.0."
+    },
+    {
+      "name": "Actual Windows V4 static rendering",
+      "status": "pass",
+      "evidence": ".khosan/local3d/jobs/job-f79716ca948546c4/qa-v4/2026-11-11T16-39-28.201Z-717dae/verification.json: PASS_SCOPED_STATIC_GLB_STILLS using installed Remotion 4.0.542, React Three Fiber 9.8.2, React 19.2.0, Three 0.187.0 and local Chrome. Native frames 0 and 45 at 960x540 contain the scene; frame45 repeated PNG SHA-256 identical; hiding asset changes 52,361 pixels and produces zero draw calls; visible load retains 9 semantic objects, 66 editable parts and 80 render meshes. Zero captured browser errors; all 33 before/after fingerprint entries unchanged."
+    },
+    {
+      "name": "Independent code and actual-image acceptance",
+      "status": "pass",
+      "evidence": "Independent agent /root/install_studio_baseline returned formal ACCEPT for TASK-LOCAL-3D-MCP-001 after prior core review and inspection of all four actual Windows Blender PNGs plus both V4 frames and the comparison. findings=[]; no required rework for the scoped static implementation. Separate /root/harness_v4_contract review confirmed artifact/render/source binding and no defect requiring changes."
+    },
+    {
+      "name": "Review recorded through real MCP and current integrity",
+      "status": "pass",
+      "evidence": ".khosan/local3d/jobs/job-f79716ca948546c4/review-23e41bbb2d8c.json (SHA-256 d73ccbf58986e27c81073a2a6152be008f37ecd6113a6735b574103364b3ebe1) was written through local3d_record_review. Subsequent official SDK local3d_job_status confirms VISUAL_REVIEW_RECORDED; integrity, technical_build, export_reimport and visual_review all PASS; implementation/artifact digests remain exact. human_acceptance=NOT_REVIEWED and production_ready=false."
+    },
+    {
+      "name": "Human art / complete episode approval",
+      "status": "skipped",
+      "evidence": "No human art approval was requested or inferred. The accepted deliverable is the local static tool and proof fixture. The original pre-review proof.json and harness-asset.json snapshots and separate V4 report are preserved; later review evidence is in the current manifest and review file."
+    }
+  ],
+  "verdict": "PASS",
+  "limitations": [
+    "Acceptance is limited to five bounded static procedural recipe families and one authored fixture, not a complete Oriverse feature replacement.",
+    "Arbitrary image reconstruction, character rigging, skinning, animation, cloth, mocap and physics remain unsupported.",
+    "V4 evidence is a separate static composition using installed dependencies; no original Stage/episode migration, video, continuous playback, same-page seek, every-frame validation or Blender-look parity is claimed.",
+    "Independent agent review is not human artistic approval; human_acceptance remains NOT_REVIEWED and production_ready remains false.",
+    "No local vision model is bundled. Reviewer identity is supplied by the trusted local client and is not cryptographically authenticated.",
+    "Normal owned-process cancellation/timeout was verified; abrupt parent-process kill recovery and durable Blender job resumption remain unimplemented.",
+    "Cold 11.578 s and verified warm 0.031 s are measurements for this fixture on this PC; the warm result reuses artifacts. No comparative superiority against Oriverse was tested.",
+    "Windows symlink-escape test is skipped because the environment lacks symlink privilege; the same test passes in Linux.",
+    "The current dependencies emit nonfatal Pydantic lifespan and Three.Clock deprecation warnings; actual MCP calls and V4 rendering succeed.",
+    "The Studio baseline is a verified 155-file GitHub source snapshot, not a Git checkout. New local changes have not been committed, pushed or merged.",
+    "Local stdio client configuration is provided and actual SDK calls were tested. This does not register new tools automatically in every ChatGPT Web conversation.",
+    "Studio v0.2 browser acceptance, Docker deployment and external rigging GPU acceptance remain separate pending work."
+  ]
+}
