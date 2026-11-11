@@ -23,6 +23,16 @@ tools:
     input_contract: studio/contracts/3d-verification-evidence.schema.json
     capability: bounded_z_up_cm_aabb_lint_artifact_digest_and_governance_gate
     notes: "17 isolated Node tests pass; gate requires separate Ed25519 reviewer/human public trust anchors; trusted signing services, independent VLM, actual Blender render, authenticated UI and full mesh validation remain pending; not a full production release"
+  - id: khosan-native-differential-patch-lock
+    name: KHOSAN Part 7 Differential Patch Lock (bounded AABB)
+    status: evaluate
+    priority: p0
+    deterministic: true
+    owner: 06-technical-architect
+    entrypoint: "tools/ugir-geometry-linter/hard_lock_enforcer.py"
+    verification: "python -m unittest discover -s scripts -p test_part7_hard_locks.py"
+    capability: source_revision_bound_atomic_coordinate_patch_and_phase_tool_mask
+    limitations: "standalone checker only; NOT yet enforced by trusted Studio/DevSpace dispatcher; no native anchors, CSG, skinned meshes, browser UI or authenticated permission boundary"
   - id: harness-reference
     name: learn-harness-engineering
     source: https://github.com/kongsak4807017/learn-harness-engineering
