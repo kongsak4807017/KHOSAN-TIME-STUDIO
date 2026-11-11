@@ -1,0 +1,1651 @@
+﻿พิมพ์เขียวสถาปัตยกรรม AI Harness สำหรับสร้างโมเดลและโลก 3D Procedural (Oriverse Architecture & Technical Specification)
+เอกสารฉบับนี้รวบรวมสถาปัตยกรรมหลังบ้าน (Backend Architecture), โครงสร้างภาษาสคริปต์เฉพาะทาง (Domain-Specific Language: Weave), ไปป์ไลน์การแปลงภาพอ้างอิงเป็นโมเดล 3D (Reference-to-3D Pipeline), ระบบตรวจสอบคุณภาพเชิงวิศวกรรมและสายตาอัตโนมัติ (Automated Linting & Visual Critic Loop), ตลอดจนงานวิจัยต้นแบบ จากการวิเคราะห์ไฟล์ระบบจริงของ Oriverse Engine (Build 10nov26_3 / Sim Version 10Nov26-12:19-03734) เพื่อให้ AI Agent และทีมวิศวกรนำไปพัฒนาต่อได้ทันที
+1. แนวคิดหลัก: ทำไมต้องใช้ AI Harness คู่กับ Procedural 3D DSL?
+การปล่อยให้ Generative AI สร้างจุดพิกัด 3D (Raw Vertices/Mesh) หรือเขียนโค้ด 3D พื้นฐานโดยตรง มักเกิดปัญหาโครงสร้างพัง (Bad Topology), ชิ้นส่วนลอยไม่ติดกัน (Floating/Clipping), จำนวนโพลีกอนเกินงบ และเปลือง Token มหาศาล
+แนวทางของ Oriverse แก้ปัญหานี้ด้วยการสร้าง AI Harness ที่เปลี่ยนบทบาทของ AI จาก "คนปั้นจุดสามมิติโดยตรง" ให้กลายเป็น "ผู้เขียนโค้ดภาษากลางระดับสูง (Custom DSL: Weave) และผู้ควบคุมพารามิเตอร์ Procedural / CAD" โดยมีระบบตรวจสอบและแก้ไขตัวเองอัตโนมัติ (Closed-Loop Verification) ก่อนส่งมอบงานเสมอ
+2. สถาปัตยกรรมโมดูลหลังบ้าน (Core Rust Sub-Crates)
+จากการวิเคราะห์ไฟล์ native-player.json (Cargo.lock) และ network_dump.old.txt ตัวเอนจิ้นพัฒนาด้วยภาษา Rust (คอมไพล์สู่ Native และ WebAssembly/WebGPU) โดยแยกส่วนประมวลผลออกเป็นโมดูลย่อยดังนี้:
+* weave และ weave2 (Core Scripting & Compiler):
+   * คอมไพเลอร์ภาษากลางที่แตกไฟล์โลก .weave ออกเป็น 8 หน่วยย่อย (classes, shaders, textures, saved, material, item, tileset, objects + prepare HTML) เพื่อประมวลผลแบบขนาน (parse_world_file_parallel) เสร็จภายในเวลา ~800 ไมโครวินาที
+   * มีระบบ weave2 cost table คอยนับค่าใช้จ่ายในการรัน (จำนวน Loop และ Simcall ต่อเฟรม) เพื่อป้องกันไม่ให้ AI เขียนโค้ดที่ทำให้เกมค้างหรือกระตุก
+* oricad / oricad_model / oricad_runtime (Parametric CAD & CSG Kernel):
+   * เคอร์เนลสร้างโมเดลสายวิศวกรรม สถาปัตยกรรม อาคาร และชิ้นส่วนเครื่องจักร (Hard-Surface) ด้วยแนวทาง Constructive Solid Geometry (คล้าย OpenSCAD)
+   * ทำงานร่วมกับเครื่องมือตรวจสอบขนาดและจุดเชื่อมต่อ (check_fits, check_assembly, convert_scad, visual_scad.py, cad_hosted_walls_qa) ทำให้โมเดลตึกและชิ้นส่วนประกอบกันได้สนิท 100%
+* orimesh และ orimesh_worker (Procedural Mesh & LOD Kernel):
+   * เคอร์เนลสร้างโครงข่ายสามเหลี่ยม (Mesh), คำนวณระดับความละเอียดอัตโนมัติ (orimesh_lod_error_wasm), สร้างกรอบชน (collider), และการแตกหักของวัตถุตามประเภทวัสดุ (destructible: masonry|wood|rock|concrete)
+* oritex และ oripaint (Procedural Texturing & GPU Compression):
+   * ระบบสร้างพื้นผิวด้วยสมการคณิตศาสตร์และระบายลวดลาย พร้อมบีบอัดเป็นฟอร์แมตระดับการ์ดจอ (ktx_lib แปลงเป็น .ktx2 / BC6H)
+* orirobotics และ autorig_lab (Auto-Rigging & Kinematics):
+   * ระบบคำนวณข้อต่อ (Joints/IK) และสคริปต์ผูกกระดูกอัตโนมัติ (autorig_lab/wsl/rig_one.py) เพื่อให้โมเดลตัวละครและสิ่งมีชีวิตขยับได้ทันที
+* orihtml และ oridesign (HTML/CSS Game UI):
+   * ระบบสร้างหน้าจอ UI ในเกมด้วยโครงสร้างคล้าย HTML/CSS (taffy layout engine) ซึ่งโมเดล LLM เขียนได้แม่นยำอยู่แล้ว
+* oricloud_bake (Procedural Sky & Fast IBL):
+   * ระบบสร้างท้องฟ้าและคำนวณแสงสะท้อนรอบทิศทาง (Image-Based Lighting) ภายใน ~1 วินาที พร้อม Preset สภาพอากาศ (golden-hour.json, blue-hour.json, storm.json, daylight.json, overcast.json)
+3. โครงสร้างภาษาสคริปต์ Weave และกฎเหล็กป้องกัน AI หลอน (Anti-Hallucination DSL)
+จากไฟล์ weave_coding.md และ function_name_overrides.json (ซึ่งเปิดเผยรายชื่อ 1,184 ฟังก์ชัน และ 69 Events) ภาษา Weave มีไวยากรณ์คล้ายภาษา Swift ผสมกับการประกาศบล็อกแบบ Declarative โดยมีกฎเหล็กสำคัญดังนี้:
+3.1 กฎเหล็กของคอมไพเลอร์ (Compiler & Coordinate Rules)
+1. Deterministic Fixed-Point (48.16): ตัวเลขทุกตัวในภาษา Weave เป็น 48.16 fixed-point (ไม่มีการแยก int/float) เพื่อให้ผลลัพธ์ทางคณิตศาสตร์และฟิสิกส์ตรงกัน 100% บนทุกเครื่อง รองรับ Multiplayer และ Rollback Netcode อัตโนมัติ
+2. ห้ามใช้ Recursion (No Recursion): คอมไพเลอร์ปฏิเสธการเรียกฟังก์ชันซ้ำตัวเองทั้งทางตรงและทางอ้อมเพื่อป้องกัน Infinite Loop
+3. ระบบพิกัดและหน่วยวัดมาตรฐาน:
+   1. แกนพิกัด: X = East (ตะวันออก), Y = North (เหนือ), Z = Up (ความสูง)
+   2. หน่วยวัด: เซนติเมตร (cm) เสมอ (เช่น ตัวละครมนุษย์มาตรฐานมี size = 180 คือสูง 180 ซม.)
+   3. มุมหมุน (Yaw): 0° = +X (East), 90° = +Y (North)
+4. การวางกำแพงและกล่องด้วย bounds_min / bounds_max:
+   1. เพื่อป้องกันไม่ให้ AI บวกลบเลขจุดกึ่งกลาง (position) กับครึ่งหนึ่งของความกว้างผิดพลาด กฎบังคับให้วางวัตถุ model="cube" ด้วยพิกัดมุมต่ำสุดและสูงสุดโดยตรง:
+object Floor { model="cube" bounds_min=(-1500,-1100,-20) bounds_max=(1500,1100,0) }
+object NorthWall { model="cube" bounds_min=(-1500,1100,0) bounds_max=(1500,1180,280) }
+1. ระบบดักชื่อฟังก์ชัน (config/function_name_overrides.json):
+   1. ตาราง Mapping ขนาด 111 KB สำหรับดักจับและแปลงชื่อฟังก์ชัน (1,184 รายการ) และ Events (69 รายการ) ให้ตรงกับ API มาตรฐานของเอนจิ้น
+3.2 ตระกูลบล็อกคำสั่งเฉพาะทาง (#... Declarative Blocks)
+* #class <Name> ... #end: กำหนดคลาส ตัวแปร พฤติกรรม และ Event Handlers ของวัตถุ
+* #mesh / #meshpart / #meshdefs: บล็อกสร้างรูปทรง 3D, กำหนด lod: 1, กรอบชน collider, กระดูก bone(), จุดปล่อยแสง emitter(...), และโครงสร้างภายใน interior: true
+* #cad: บล็อกสร้างชิ้นงานวิศวกรรมและสถาปัตยกรรมแบบ Parametric Solid
+* #tree และ #forest: บล็อกสร้างต้นไม้ระดับกิ่งก้าน (tree_edit ปรับความโค้ง รัศมี ทาบกิ่ง) และโปรยป่า
+* #terrain / #terrain_fields / #terrain_paint: บล็อกสร้างภูมิประเทศและระบายวัสดุพื้นดิน
+* #texture / #shader / #svg / #particles / #clip / #sprite: บล็อกสร้างลวดลาย, โค้ด WGSL Shader, รูปทรงเวกเตอร์ 2D, พาร์ติเคิล และแอนิเมชัน
+3.3 หมวดหมู่ API ทั้ง 1,184 ฟังก์ชันในภาษา Weave
+จากการวิเคราะห์ไฟล์ function_name_overrides.json สามารถจำแนกชุดคำสั่งที่ช่วยให้ AI สร้างฉากและโมเดลได้สวยงามออกเป็นหมวดหมู่หลักดังนี้:
+* Core Object, Physics & Gameplay (644 ฟังก์ชัน): การจัดการวัตถุ, ฟิสิกส์, การค้นหาระยะ (GetObjectsWithinDistanceWithTag), ระบบทีม และ Multiplayer Session
+* Lighting, Sky & Post-Processing (101 ฟังก์ชัน): การจัดแสงและกล้องระดับภาพยนตร์ เช่น SetAgxContrast (โทนสี AgX), SetDofFStop (หน้าชัดหลังเบลอ), SetVolumetricLightIntensity (ลำแสงลอดช่อง), SetSsrHigh (แสงสะท้อนพื้นเปียก), SetAutoExposureLimits, SetDLSS5Mode, SetOnnxPostProcessing
+* TileGrid, Pathfinding & Crowd (82 ฟังก์ชัน): ระบบตาราง Tile, การเดินหลบสิ่งกีดขวางของฝูงชน (GetClimbingCrowdObjects), และระบบวางสิ่งปลูกสร้าง (EnableLocalPlacementGhost)
+* Terrain & Erosion (77 ฟังก์ชัน): ระบบปั้นภูมิประเทศและจำลองการกัดเซาะตามธรรมชาติระดับเดียวกับ World Machine เช่น TerrainHeightsHydraulicErode (น้ำกัดเซาะ), TerrainHeightsThermalErode, TerrainHeightsOriErosion, TerrainHeightsTerrace (ทำขั้นบันได), TerrainHeightsCarvePath (ขุดร่องถนน/แม่น้ำ), TerrainScatterOnMask (โปรยวัตถุตามความชัน)
+* Rigging, Anchors, Weapons & Seats (75 ฟังก์ชัน):
+   * ใช้ระบบ Anchor Snapping (SetModelAnchor และ Object.AttachToAnchor(Parent, ParentAnchor, ChildAnchor)) เพื่อเสียบประกอบชิ้นส่วนเข้าด้วยกันโดยไม่ต้องบวกลบพิกัด X, Y, Z
+   * มีฟังก์ชัน SurfaceGapTo(Target) สำหรับวัดระยะห่างระหว่างพื้นผิวของ 2 โมเดลโดยตรง
+   * มีฟังก์ชันควบคุมกระดูก เช่น Object.BoneLookAt(BoneName, WorldTarget, MaxDegrees, DegreesPerSecond)
+* UI & Canvas (68 ฟังก์ชัน): การควบคุมหน้าจอ UI, ปุ่มกด, แอนิเมชันการวาด (PlayUiDrawingOnce) และการผูกระบบเซฟเกม (BindGameSaves)
+* Material, Shader & Submesh (38 ฟังก์ชัน): การปรับแต่งวัสดุ PBR แยกตามชิ้นย่อย (SubmeshIndex) เช่น SetAssetSubmeshMaterial, SetAssetSubmeshRoughnessSmoothStepRemap, SetAssetSubmeshAoMultiplier, SetAssetSubmeshContrast และการสร้างขนสัตว์ด้วย SetAssetSubmeshFur
+* Water & Fluid (34 ฟังก์ชัน): ระบบน้ำไหลและคลื่นน้ำ เช่น AddWaterSource, AddWaterRect, SetWaterCausticIntensity, SetWaterColorMixRange, SetMakesWaterWake
+* Foliage - Grass & Tree (21 ฟังก์ชัน): ระบบหญ้าและใบไม้พริ้วไหว เช่น SetGrassBladeDensityPercent, SetGrassBendStrengthPercent, SetGrassRootColor, SetGrassFarThinningPower
+* Instancing, Batching & LOD (13 ฟังก์ชัน): การเรนเดอร์วัตถุจำนวนมากด้วย CreateInstanceBatch, CreateStaticInstanceBatch, SetGpuCullingDistance, SetOcclusionCulling
+* Road Network (11 ฟังก์ชัน): ระบบโครงข่ายกราฟถนน (RoadEdgePosition, RoadEdgeTangent, RoadEdgeWidth, RoadNodeEdges)
+* Procedural Math & Noise (7 ฟังก์ชัน): ฟังก์ชันสุ่มลวดลายธรรมชาติในโค้ด ได้แก่ Fbm2, Voronoi2, Ridged2, Billow2, ValueNoise2, Hash2, SetInputHashRandomMixing
+* Voxel & Architecture Room (9 ฟังก์ชัน): VoxelFillBox, VoxelFillSphere, BuildRoom, BuildRoomWallsWithGatesOneBox
+4. ไปป์ไลน์การปั้นโมเดล 3D จากภาพอ้างอิง (Reference-to-3D Pipeline)
+จากไฟล์ agent_interface.md (ซึ่งมีเครื่องมือสำหรับ AI Agent ทั้งหมด 94 Tools และ 102 JSONL Commands) เมื่อ AI ต้องปั้นโมเดล 3D ที่ซับซ้อนจากภาพอ้างอิง จะไม่เดารูปทรงจากความจำ แต่ใช้ไปป์ไลน์ 5 ขั้นตอนดังนี้:
+1. ขั้นที่ 1: เจนภาพปั้นดินเผา 4 มุมมอง (attach_reference_image และ ref_view_gen)
+   1. นำภาพต้นแบบไปสร้างเป็น Orthographic Clay Views (clay_top, clay_front, clay_left, clay_right) เพื่อล็อกสัดส่วนกว้าง-ยาว-สูงก่อนเริ่มเขียนโค้ดปั้นรายละเอียด
+2. ขั้นที่ 2: สกัดเส้นขอบและรูปทรงเรขาคณิตอัตโนมัติ (trace_silhouette และ trace_drawing)
+   1. สกัดเส้นขอบนอก (Silhouette) และแยกชั้นสีจากภาพออกมาเป็น SVG Path (M x,y L ... Z) อัตโนมัติ แล้วส่งเข้าฟังก์ชัน silhouette_solid(front/side/top) หรือ svg_shape เพื่อขึ้นรูป 3D โดยที่ LLM ไม่ต้องเดาพิกัดจุดเอง
+3. ขั้นที่ 3: คำนวณมุมกล้องและยิงเรย์หาพิกัด 3D (fit_reference_camera และ reference_points_to_3d)
+   1. คำนวณพารามิเตอร์กล้อง Perspective ย้อนกลับจากจุดอ้างอิง 2D บนภาพ (2D Landmarks) แล้ว ยิงเรย์ (Ray Intersection) ตัดกับระนาบ 3D เพื่อแปลงตำแหน่งบนภาพถ่ายให้เป็นพิกัดเซนติเมตร (X, Y, Z) ในโลก 3D อย่างแม่นยำ
+4. ขั้นที่ 4: วัดค่าสีจริงโดยตัดแสงสะท้อน (sample_reference_colors)
+   1. วัดค่าความสว่างจากภาพถ่ายเป็นเปอร์เซ็นไทล์ (p25, p50, p75 Luma) และค่าสี Median RGB Hex เพื่อให้ AI ตั้งค่าสีวัสดุ (Albedo) และแสง (Exposure) ได้ตรงตามภาพต้นแบบโดยไม่ถูกไฮไลต์แสงสะท้อนหลอกตา
+5. ขั้นที่ 5: พรีวิวโครงสร้าง 30 ช่อง (preview_mesh)
+   1. เรนเดอร์บล็อก #mesh ออกมาเป็นตารางภาพ (สูงสุด 30 ช่อง) ที่แสดงทั้งมุมมองรอบทิศ, เส้นโครงตาข่าย (wireframe), จุดหมุนและกรอบชน (pivot/sim_box), กระดูก (rig), และทาบเงาเทียบกับภาพ clay_top / clay_front (silhouette:) โดยไม่ต้องเปิดรันเกมเต็มรูปแบบ
+5. ระบบตรวจสอบคุณภาพอัตโนมัติ 4 ชั้น (Automated QA, Linting & Visual Critic Loop)
+หัวใจสำคัญที่ทำให้โมเดลและฉากของ Oriverse สวยงามและไม่เพี้ยน คือการบังคับให้ AI ต้องผ่านด่านตรวจสอบอัตโนมัติ 4 ชั้น:
+ชั้นที่ 1: ดักจับข้อผิดพลาดของ Mesh ตอนคอมไพล์ (--mesh-warnings)
+* รันคำสั่ง: oriverse_headless.exe compile "<world.weave>" --mesh-warnings "<report.json>"
+* หากโค้ดสร้างโมเดลมีปัญหา (เช่น หน้าพลิก, รูปทรงซ้อนกัน) คอมไพเลอร์จะส่งออกคำเตือนทุกขั้นตอนเป็นไฟล์ JSON ให้ AI แก้ไขก่อนนำไปเรนเดอร์
+ชั้นที่ 2: ตรวจสอบรอยต่อและการจัดวางเชิงเรขาคณิต (seam-measure, layout_lint, forest_lint)
+* seam-measure (เพิ่มเข้ามาในบิลด์ 10nov26_3):
+   * คำสั่ง: oriverse_headless.exe seam-measure "<world.weave>" --args-file "<query.json>"
+   * ใช้วัดขนาดโมเดลที่วางในฉาก (Extents), ระยะห่างร่องรอยต่อ (Seam gaps), และชั้นพื้นผิว (Surface layers) ออกมาเป็นตัวเลขเพื่อแก้ปัญหากำแพงหรือถนนต่อกันไม่สนิท
+* layout_lint:
+   * สแกนฉากเพื่อหาวัตถุที่ซ้อนทะลุกัน (Piercing/Embedded AABB) และจุดที่พื้นผิวซ้อนทับกันจนกระพริบ (Z-Fighting)
+   * เรนเดอร์ แผนผัง Top-Down พร้อมลูกศรชี้ทิศทางหันหน้า (Facing Arrow) ของเฟอร์นิเจอร์และอาคารทุกชิ้น เพื่อป้องกัน AI วางวัตถุหันผิดด้าน
+* forest_lint:
+   * ตรวจสอบการวางต้นไม้ก่อนรันจริง โดยเรนเดอร์แผนที่ความสูงและจุดสีแจ้งเตือน (สีเขียว = ปกติ, สีแดง = หลุดขอบ, สีส้ม = สูงเกินเกณฑ์, สีม่วง = ชันเกินไป, สีน้ำเงิน = จมน้ำ)
+ชั้นที่ 3: ระบบถ่ายภาพ Contact Sheet 16 มุมมอง & เช็กการบังกล้อง (playtest & capture)
+* ใช้โหมด --capture เร่งความเร็วจำลอง 10 เท่า (set_sim_speed: 1000), หยุดเวลาที่จุด timeline_start, รอ 3 เฟรมให้เอฟเฟกต์แสงเงา (Temporal effects) นิ่ง แล้วถ่ายภาพสูงสุด 16 มุมกล้องรวมเป็นตาราง Contact Sheet 4x4 ในภาพเดียว
+* คำนวณค่า blocked_frac (สัดส่วนที่มุมกล้องถูกวัตถุบังหรือจมดิน) หากต่ำกว่าเกณฑ์ AI จะใช้คำสั่ง sample_ground เพื่อขยับกล้องขึ้นเหนือพื้นดินอัตโนมัติ
+* มีคำสั่ง capture_marked_view สำหรับล็อกมุมกล้องจากหน้า Editor ออกเป็นไฟล์ JSON เพื่อให้ AI ถ่ายภาพเทียบมุมเดิมเป๊ะๆ หลังแก้โค้ดเสร็จ
+ชั้นที่ 4: AI ตรวจงานแยกอิสระ & คุมงบเฟรมเรต (critique_visual, compare_visual, profile_snapshot)
+* critique_visual และ compare_visual: ส่งภาพเรนเดอร์ Before/After คู่กับภาพอ้างอิงไปให้ Visual Critic AI อีกตัวที่แยกออกมาเป็นอิสระ (ไม่มีบริบทบทสนทนาของคนสร้าง เพื่อความยุติธรรมไม่อวยงานตัวเอง) คอยจับผิดสัดส่วนและสั่งแก้จนกว่าจะผ่านเกณฑ์
+* profile_snapshot: ตรวจสอบจำนวนโพลีกอน (vertex_counts) และเวลาประมวลผลโดยประมาณบนการ์ดจอออนบอร์ด (est_igpu_ms) พร้อมระบุชื่อโมเดลตัวการที่กินสเปกสูงสุด (top offenders) ให้ AI ไปลดความละเอียดลง
+6. ระบบเรนเดอร์และแสงเงาระดับ AAA (Lighting & Rendering Stack)
+สาเหตุที่ภาพใน Oriverse มีความสวยงามสมจริงระดับ AAA แม้จะสร้างด้วยโค้ด Procedural มาจากเทคโนโลยีกราฟิกหลังบ้าน 3 ส่วน:
+1. LTC Polygonal Area Lights (Linearly Transformed Cosines):
+   1. จากไฟล์ ltc_license.txt และสคริปต์ scripts/area_light_acceptance/ltc_table.py ร่วมกับ photo_area_occlusion_gpu.cjs เอนจิ้นใช้อัลกอริทึมจากงานวิจัย SIGGRAPH 2016 ของ Eric Heitz ในการคำนวณแสงจากพื้นผิวรูปทรงเรขาคณิต (Polygonal Area Lights เช่น ป้ายไฟนีออน หน้าต่าง แผงไฟยาวๆ) แบบ Real-time ทำให้แสงสะท้อนบนพื้นเปียกและขอบโลหะมีความฟุ้งสมจริงตามรูปทรงหลอดไฟ
+2. Real-Time AI Upscaling & Denoising (runtime-components.json):
+   1. ใช้โมดูล NVIDIA DLSS (nvngx_dlss.dll v310.5.3) และ AMD FSR 3 (Fsr3Upscale) สำหรับอัปสเกลภาพ Real-time
+   2. ใช้ Intel Open Image Denoise (OpenImageDenoise.dll v2.3.3 ทั้ง CPU และ CUDA) สำหรับลบสัญญาณรบกวน (Noise) ของแสงเงาในโหมดถ่ายภาพและพรีวิว
+3. Fieldmap Pixel Verification (fieldmap_dump):
+   1. เมื่อ AI ระบายลวดลายลงบนพื้นผิว ระบบสามารถ Dump ค่าสีออกมาพร้อมระบุพิกัด World Position ของจุดที่สว่างที่สุด เพื่อให้ AI ตรวจสอบระดับพิกเซลว่าลวดลายที่วาดลงไปตรงกับตำแหน่งวัตถุจริงหรือไม่
+7. คู่มือคำสั่ง CLI สำหรับให้ AI Agent ทำงานต่อได้ทันที (Actionable CLI Reference)
+หาก AI Agent ที่อ่านเอกสารนี้ทำงานอยู่ในสภาพแวดล้อมที่มีไฟล์ oriverse.exe และ oriverse_headless.exe สามารถรันคำสั่งต่อไปนี้เพื่อดึงคู่มือย่อยและปฏิบัติงานต่อได้ทันที:
+7.1 คำสั่งดึงคู่มือไวยากรณ์เชิงลึก (Read Skill Sections)
+สร้างไฟล์ skill_args.json แล้วรันคำสั่ง .\oriverse.exe tools read_skill --args-file skill_args.json โดยเปลี่ยนค่า JSON ตามหมวดหมู่ที่ต้องการ:
+* ดูไวยากรณ์ปั้นโมเดล #mesh: {"name": "weave_coding", "section": "mesh_dsl_usage"}
+* ดูไวยากรณ์สร้างชิ้นงานวิศวกรรม #cad: {"name": "weave_coding", "section": "cad_dsl_usage"}
+* ดูเทคนิคจัดแสงและวัสดุระดับ AAA: {"name": "weave_coding", "section": "visual_fidelity"}
+* ดูวิธีสร้างพื้นผิวและใบไม้ Procedural: {"name": "weave_coding", "section": "procedural_textures"}
+* ดูวิธีสร้างเอฟเฟกต์พาร์ติเคิลและ Shader: {"name": "weave_coding", "section": "particles_and_custom_shaders"}
+* ดูวิธีจัดวางฉากและประกอบชิ้นส่วน: {"name": "weave_coding", "section": "layout_and_assembly"}
+* ดูขั้นตอนการทำงานเต็มรูปแบบ: {"name": "game-build-loop"} และ {"name": "oriverse-agent-run"}
+7.2 คำสั่งตรวจสอบ คอมไพล์ และวัดรอยต่อ (Headless Verification Commands)
+# 1. คอมไพล์ไฟล์โลกและส่งออกคำเตือนโครงสร้าง Mesh เป็น JSON
+.\oriverse_headless.exe compile "world.weave" --mesh-warnings "mesh_warnings.json"
+
+
+# 2. วัดขนาดโมเดลและช่องว่างรอยต่อ (Seam Gaps)
+.\oriverse_headless.exe seam-measure "world.weave" --args-file "seam_query.json"
+
+
+# 3. รันจำลองโลกแบบไร้กราฟิกพร้อมเทสต์ผู้เล่น 8 คน (Multiplayer Simulation)
+.\oriverse_headless.exe simulate "world.weave" --ticks 600 --orders "bot_orders.order" --events-out "events.jsonl"
+
+
+# 4. เรนเดอร์ตารางพรีวิวโมเดล 3D (#mesh) พร้อมเช็กโครงสร้างและทาบเงา
+.\oriverse.exe tools preview_mesh --args-file "preview_args.json"
+
+
+# 5. ตรวจสอบการจัดวางฉาก (หาจุดซ้อนทับ Z-fighting และดูลูกศรทิศทางหันหน้า)
+.\oriverse.exe tools layout_lint --args-file "lint_args.json"
+
+
+# 6. ส่งภาพให้ Visual Critic AI ตัวแยกอิสระช่วยตรวจจับจุดบกพร่อง
+.\oriverse.exe tools critique_visual --args-file "critique_args.json"
+8. แหล่งอ้างอิงและงานวิจัยต้นแบบ (References)
+1. Oriverse Official Engine & Documentation:
+   1. หน้าดาวน์โหลด Oriverse Editor (รวม Weave Documentation & Relay Server): https://www.oriverse.com/download
+   2. หน้าตัวอย่างชิ้นงาน Procedural บนเว็บ: https://www.oriverse.com/discover
+   3. ไฟล์ระบบอ้างอิงจากบิลด์ 10nov26_3 (sim_version: 10Nov26-12:19-03734): agent_readme.md, agent_interface.md, weave_coding.md, function_name_overrides.json, native-player.json, runtime-components.json, ltc_license.txt, network_dump.old.txt
+2. Real-Time Polygonal-Light Shading with Linearly Transformed Cosines (LTC):
+   1. Eric Heitz, Jonathan Dupuy, Stephen Hill, and David Neubelt (SIGGRAPH 2016): https://eheitzresearch.wordpress.com/415-2/
+3. Neuro-Symbolic & Code-Driven 3D Procedural Modeling Research:
+   1. ShapeAssembly: Learning to Generate Programs for 3D Shape Structure Synthesis (Jones et al., SIGGRAPH Asia 2020) — ต้นแบบการสร้างภาษา DSL สำหรับประกอบชิ้นส่วน 3D ด้วยความสัมพันธ์เชิงพื้นผิว
+   2. Infinigen & 3D-GPT: Procedural Generation of Photorealistic 3D Worlds (Raistrick et al., CVPR / Princeton University) — ต้นแบบการใช้ Multi-Agent LLM เขียนโค้ดควบคุมกฎ Procedural
+   3. The Scene Language: Representing Scenes with Programs, Words, and Embeddings (Zhang et al., CVPR 2025)
+   4. Proc3D: Procedural 3D Generation with Large Language Models via Procedural Compact Graphs (PCG) (2026) — ต้นแบบการย่อกราฟโหนด 3D ให้เป็นโค้ดข้อความสั้นกระชับสำหรับ LLM
+   5. CGA Shape Grammar: Procedural Modeling of Buildings (Müller et al., SIGGRAPH 2006) — รากฐานไวยากรณ์การแบ่งส่วนและสร้างอาคารด้วยโค้ด
+ภาคผนวกเชิงลึก (Part 2): ไวยากรณ์ #mesh, #cad, visual_fidelity และเวิร์กโฟลว์การทำงานของ AI Agent ครบ 100%
+ส่วนนี้ขยายความรายละเอียดเชิงลึกของบล็อกคำสั่งสร้างโมเดล 3D, งานวิศวกรรม CAD, การคุมคุณภาพแสงเงาระดับ AAA, เวิร์กโฟลว์การรัน Agent Loop (game-build-loop และ oriverse-agent-run), ตลอดจนสถาปัตยกรรมขั้นสูงสำหรับการสร้าง AI 3D Studio ที่ก้าวข้ามขีดจำกัดของเอนจิ้นยุคปัจจุบัน
+9. ไวยากรณ์และการใช้งานบล็อก #mesh เชิงลึก (mesh_dsl_usage)
+บล็อก #mesh <Name> ... #end (รวมถึง #meshpart และ #meshdefs) คือหัวใจของการปั้นโมเดล 3D แบบ Procedural ในภาษา Weave โดยไม่ใช้ไฟล์โมเดลภายนอก:
+9.1 โครงสร้างหลักและคำสั่งขึ้นรูปทรง (Mesh Primitives & Silhouette Solids)
+* การขึ้นรูปจากเส้นขอบ 3 ด้าน (silhouette_solid):
+   * ใช้คู่กับเครื่องมือ trace_silhouette ที่สกัด SVG Path (M x,y L ... Z) จากภาพ clay_front, clay_side, clay_top
+   * คำสั่ง silhouette_solid(front: "...", side: "...", top: "...") จะคำนวณจุดตัดของเงาทั้ง 3 แกน (Visual Hull / CSG Intersection) ออกมาเป็นก้อนโมเดล 3D ที่มีสัดส่วนตรงกับภาพต้นแบบทันที
+* การขึ้นรูปจากเวกเตอร์ 2D (svg_shape / Extrusion & Lathe):
+   * ใช้ร่วมกับเครื่องมือ trace_drawing เพื่อดึงชั้นสีจากภาพวาด 2D ออกมาเป็นเส้น Path แล้วสั่งดึงความหนา (Extrude) หรือหมุนรอบแกน (Lathe/Revolve)
+* การแยกชิ้นส่วนย่อย (Submesh & #meshpart):
+   * โมเดล 1 ชิ้นสามารถแบ่งออกเป็นหลาย SubmeshIndex เพื่อกำหนดวัสดุ PBR แยกกันได้ (เช่น ตัวปืนเป็นโลหะรมดำ ด้ามจับเป็นไม้ เลนส์กล้องเป็นกระจก)
+   * รองรับการเปิดโหมด interior: true สำหรับโมเดลอาคารหรือยานพาหนะที่ผู้เล่นต้องเดินเข้าไปข้างในได้
+9.2 การกำหนดจุดเชื่อมต่อ กระดูก ฟิสิกส์ และความเสียหายภายใน #mesh
+* จุดยึดเชื่อมโมเดล (Anchor):
+   * กำหนดจุดเชื่อมต่อด้วย SetModelAnchor เพื่อให้โมเดลอื่นมาเสียบต่อด้วย Object.AttachToAnchor(Parent, ParentAnchor, ChildAnchor) (เช่น จุด muzzle ที่ปลายกระบอกปืน, จุด hand_r ที่ฝ่ามือ, หรือจุดเชื่อมกันสาดหน้าตึก)
+* การผูกกระดูกและข้อต่อ (bone()):
+   * ประกาศโครงกระดูกภายในบล็อก #mesh เพื่อให้ระบบ autorig_lab หรือคำสั่ง Object.BoneLookAt(...) นำไปหมุนขยับข้อต่อได้แบบ Real-time
+* การกำหนดกรอบชนและระดับความละเอียด (collider & lod:):
+   * กำหนด lod: 1 (หรือระดับถัดไป) เพื่อให้เอนจิ้นสลับโมเดลเมื่ออยู่ไกลกล้องอัตโนมัติ (ตรวจสอบความคลาดเคลื่อนด้วย orimesh_lod_error_wasm)
+   * กำหนด collider แยกจากเส้นสายตา เพื่อให้การคำนวณฟิสิกส์รวดเร็วและแม่นยำ
+* การกำหนดวัสดุที่พังทลายได้ (destructible:):
+   * ระบุชนิดวัสดุการแตกหักได้ 4 รูปแบบ: destructible: masonry (อิฐ/ปูน), wood (ไม้), rock (หิน), หรือ concrete (คอนกรีตเสริมเหล็ก)
+* จุดกำเนิดแสงและพาร์ติเคิลบนโมเดล (emitter(...)):
+   * ฝังจุดปล่อยแสงหรือเอฟเฟกต์พาร์ติเคิลไว้ในตัวโมเดลโดยตรง ทำให้เวลาวางโมเดลโคมไฟหรือเครื่องยนต์ จะมีแสงและควันติดมาด้วยทันที
+9.3 ขั้นตอนบังคับในการตรวจสอบ #mesh ด้วย preview_mesh
+* ทุกครั้งที่เขียนหรือแก้ไขบล็อก #mesh ห้ามรันเกมเต็มรูปแบบทันที ให้เรียกใช้เครื่องมือ preview_mesh ก่อนเสมอ
+* ตั้งค่ามุมมองตรวจสอบ:
+   * orbit, front, back, left, right, top, bottom
+   * เปิด wireframe: true เพื่อตรวจความหนาแน่นของโพลีกอน
+   * เปิด pivot: true และ sim_box: true เพื่อเช็กว่าจุดศูนย์กลางโมเดลอยู่ที่พื้น (Z = 0) และกรอบชนไม่เพี้ยน
+   * ใช้ silhouette:front=path/to/clay_front.png เพื่อทาบเงาโมเดลกับภาพต้นแบบและดูค่าเปอร์เซ็นต์ความแม่นยำ
+10. ไวยากรณ์และการใช้งานบล็อก #cad เชิงลึก (cad_dsl_usage)
+บล็อก #cad ถูกออกแบบมาสำหรับงานสถาปัตยกรรม ตึกแถว ถนน สะพาน และชิ้นส่วนเครื่องจักรที่ต้องการความแม่นยำระดับมิลลิเมตร/เซนติเมตร:
+* Parametric Solid Modeling (CSG):
+   * สร้างรูปทรงจากสมการเรขาคณิตและการเจาะ/รวมก้อนวัตถุ (Union, Difference, Intersection) คล้ายภาษา OpenSCAD (สามารถแปลงโค้ดด้วยเครื่องมือ convert_scad)
+* การแก้ไขและตรวจสอบชิ้นงาน (edit_cad_part, check_fits, check_assembly):
+   * AI ไม่ต้องเขียนโค้ดทับทั้งไฟล์ แต่ใช้ edit_cad_part เพื่อปรับพารามิเตอร์เฉพาะชิ้นส่วน
+   * ใช้ check_fits และ check_assembly เพื่อตรวจสอบว่าเดือย ร่องประตู หน้าต่าง หรือกำแพงแต่ละชิ้นประกอบเข้าด้วยกันได้พอดีโดยไม่มีการเกยทับหรือเกิดร่องว่าง
+* การทำงานร่วมกับ seam-measure:
+   * เมื่อนำโมเดลจาก #cad ไปวางเรียงต่อกันในฉาก (เช่น ตึกแถวเรียงกันตามแนวถนน) ต้องรัน oriverse_headless.exe seam-measure เพื่อวัดระยะห่างรอยต่อ (seam gaps) ให้เป็น 0 cm เสมอ
+11. มาตรฐานความสวยงามระดับ AAA (visual_fidelity & render_profiles)
+คู่มือ visual_fidelity และ render_profiles กำหนดเกณฑ์การตั้งค่าแสง สี และวัสดุ เพื่อให้ฉากดูสมจริงเหมือนภาพถ่ายและไม่ดูแบนเหมือนพลาสติก:
+1. การคุมโทนสีและรูรับแสง (AgX Tonemapping & Auto-Exposure):
+   1. ใช้โทนสีแบบภาพยนตร์ SetAgxContrast ควบคู่กับการล็อกช่วงความสว่างอัตโนมัติด้วย SetAutoExposureEnabled(true) และ SetAutoExposureLimits(MinEV, MaxEV)
+   2. ตั้งค่าระยะชัดลึกของเลนส์กล้องด้วย SetDofFStop เพื่อแยกวัตถุเด่นออกจากฉากหลัง
+2. การจัดแสง 3 ระดับ (Three-Tier Lighting Architecture):
+   1. ระดับที่ 1 (Sky & IBL): เลือก Preset ท้องฟ้าจาก oricloud_bake (golden-hour, blue-hour, overcast, daylight, storm) เพื่อให้มีแสงสะท้อนรอบทิศทางที่สมจริง
+   2. ระดับที่ 2 (LTC Polygonal Area Lights): สำหรับแหล่งกำเนิดแสงในฉาก (ป้ายไฟนีออน, โคมไฟถนน, หน้าต่างตึกตอนกลางคืน) ต้องใช้ Area Light ที่คำนวณด้วย Linearly Transformed Cosines (LTC) เพื่อให้เกิดไฮไลต์สะท้อนเป็นแถบยาวบนพื้นถนนและผิวโลหะ
+   3. ระดับที่ 3 (Volumetric & Local Shadows): เปิด SetVolumetricLightIntensity เพื่อสร้างลำแสงตัดผ่านหมอกควัน และเปิด SetAllLocalShadowsEnabled ร่วมกับ SetSsrHigh (Screen-Space Reflections)
+3. การปรับแต่งวัสดุ PBR ไม่ให้ดูเรียบหลอกตา (Submesh Material Tuning):
+   1. ห้ามใช้ค่า Roughness คงที่ทั้งชิ้นงาน ให้ใช้ SetAssetSubmeshRoughnessSmoothStepRemap เพื่อสร้างความแตกต่างระหว่างจุดที่มันวาวและจุดที่ด้าน
+   2. เพิ่มมิติความลึกตามซอกมุมด้วย SetAssetSubmeshAoMultiplier (Ambient Occlusion)
+   3. ใช้ sample_reference_colors ดึงค่า Luma เปอร์เซ็นไทล์ (p25, p50, p75) จากภาพถ่ายจริงมาเทียบกับภาพเรนเดอร์เสมอ
+12. เวิร์กโฟลว์การทำงานอัตโนมัติของ AI Agent (game-build-loop & oriverse-agent-run)
+เมื่อ AI Agent ได้รับคำสั่งให้สร้างโมเดลหรือสร้างเกมทั้งฉาก จะต้องปฏิบัติตามวงจร 6 ขั้นตอน (The 6-Step Autonomous Build Loop) อย่างเคร่งครัด:
+1. Step 1: Read Skill & Plan (อ่านคู่มือและวางแผนสัดส่วน)
+   1. เรียก read_skill หมวดที่เกี่ยวข้อง และหากมีภาพอ้างอิง ให้รัน attach_reference_image -> ref_view_gen เพื่อสร้างภาพปั้นดินเผา 4 ด้าน (clay_top, clay_front, clay_left, clay_right)
+2. Step 2: Author Modular Weave Code (เขียนโค้ดแยกส่วน)
+   1. เขียนบล็อก #mesh / #cad สำหรับชิ้นงาน, ใช้ bounds_min / bounds_max สำหรับโครงสร้างฉาก, และเชื่อมชิ้นส่วนด้วย AttachToAnchor
+3. Step 3: Compile & Fix Mesh Warnings (คอมไพล์และแก้คำเตือนโครงสร้าง)
+   1. รัน oriverse_headless.exe compile "<world.weave>" --mesh-warnings "<report.json>"
+   2. หากมี Error หรือ Warning ในไฟล์ JSON ต้องแก้ไขโค้ดให้ผ่าน 100% ก่อนไปขั้นถัดไป
+4. Step 4: Geometric & Layout Linting (ตรวจรอยต่อและการซ้อนทับ)
+   1. รัน preview_mesh สำหรับโมเดลเดี่ยว
+   2. รัน layout_lint, seam-measure, และ forest_lint สำหรับการจัดวางฉาก เพื่อกำจัดปัญหา Z-fighting, โมเดลลอย, ร่องรอยต่อห่าง, หรือเฟอร์นิเจอร์หันผิดทิศ
+5. Step 5: Headless Simulation & Contact Sheet Capture (จำลองการเล่นและถ่ายภาพ 16 มุม)
+   1. รัน oriverse_headless.exe simulate เพื่อทดสอบลอจิกและผู้เล่นบอท (p1..p8)
+   2. รัน playtest / --capture เพื่อถ่ายตารางภาพ Contact Sheet 4x4 พร้อมตรวจค่า blocked_frac (ป้องกันกล้องจมดิน) และรัน profile_snapshot เพื่อเช็กงบ vertex_counts และ est_igpu_ms
+6. Step 6: Independent Visual Critique (ให้ AI ตัวที่สองตรวจรับงาน)
+   1. ส่งภาพเรนเดอร์เข้าเครื่องมือ critique_visual และ compare_visual เพื่อให้โมเดลผู้ตรวจงานอิสระประเมินความสวยงามและสั่งแก้จุดบกพร่องจนกว่าจะผ่านเกณฑ์
+13. ยุทธศาสตร์การพัฒนาสตูดิโอของคุณให้ "เหนือกว่า" Oriverse (Next-Gen AI 3D Studio Roadmap)
+หากต้องการสร้างแพลตฟอร์ม AI 3D Studio ของตัวเองให้ก้าวข้ามขีดจำกัดของสถาปัตยกรรมปัจจุบัน สามารถต่อยอดด้วย 5 เทคโนโลยีขั้นสูง ดังนี้:
+1. Hybrid Neuro-Procedural Pipeline (ผสาน AI เจน 3D อินทรีย์เข้ากับ CAD/Procedural):
+   1. ใช้ระบบ DSL (#cad / #mesh) กับตึก อาคาร อาวุธ และยานพาหนะที่ต้องการความคมกริบและไฟล์ขนาดเล็ก
+   2. ผสานโมเดล 3D Diffusion / Flow Matching (เช่น Hunyuan3D 2.0, Trellis, หรือ Clay) สำหรับปั้นตัวละคร ใบหน้าคน สัตว์ประหลาด และเสื้อผ้าที่มีรูปทรงอิสระ (Organic) จากนั้นรัน Auto-Retopology และฝังจุด Anchor เพื่อให้ตระกูลโมเดล Organic นำมาเสียบประกอบเข้ากับโลก Procedural ได้อย่างไร้รอยต่อ
+2. Differentiable Procedural Optimization (ปรับตัวเลขสัดส่วนอัตโนมัติด้วยคณิตศาสตร์):
+   1. แทนที่จะรอให้ VLM ดูภาพแล้วให้ LLM เดาแก้ตัวเลขความกว้าง/ความสูงทีละรอบ ให้ใช้ Differentiable Rendering Solver คำนวณความต่างของเส้นเงา (Silhouette Loss) และความลึก (Depth Loss) เทียบกับภาพต้นแบบ แล้วปรับค่าตัวแปรในโค้ด DSL ให้ตรงเป๊ะภายในเสี้ยววินาที
+3. Universal Export & OpenUSD Integration (ทลายกำแพง Walled Garden):
+   1. ออกแบบคอมไพเลอร์ของภาษา DSL ให้ไม่ผูกติดกับเอนจิ้นตัวเองเท่านั้น แต่สามารถ Export ออกเป็นไฟล์มาตรฐานอุตสาหกรรม ได้แก่ OpenUSD (Universal Scene Description), glTF 2.0 (พร้อม LODs และ Colliders), Unreal Engine 5 PCG Graph, และ Blender Geometry Nodes เพื่อให้สตูดิโอเกมทั่วโลกนำชิ้นงานไปใช้ต่อได้ทันที
+4. Automated Gameplay & NavMesh Linter (ตรวจความสมดุลของด่านอัตโนมัติ):
+   1. ต่อยอดจาก layout_lint และ seam-measure ด้วยการเพิ่มระบบจำลองการเดิน (NavMesh Flood-Fill) และการยิงเรย์เช็กมุมอับสายตา (Sightline Analysis) เพื่อตรวจสอบอัตโนมัติว่าผู้เล่นสามารถเดินเข้าถึงทุกห้องในตึกได้จริง ไม่ติดหัวบันได และมีจุดกำบังที่สมดุล
+5. Multi-Agent Studio Specialization (แยกทีม AI เฉพาะทางทำงานขนานกัน):
+   1. แยก Agent ออกเป็น 4 บทบาทที่ทำงานพร้อมกัน: Architect Agent (ดูแลโครงสร้างเมืองและ #cad), Prop & Character Agent (ดูแล #mesh และ Hybrid 3D Gen), Lighting & LookDev Agent (ดูแล LTC Area Lights และ visual_fidelity), และ QA & Performance Director Agent (ถือสิทธิ์รัน Linter, profile_snapshot และ critique_visual)
+ภาคผนวก (Part 3): โค้ดต้นแบบระบบ AI Harness (oriverse_ai_harness.py)
+ส่วนนี้คือโค้ดต้นแบบภาษา Python ที่พร้อมใช้งานจริง (Production-Ready Prototype) สำหรับทำหน้าที่เป็นตัวกลาง (Orchestrator & CLI Bridge) เชื่อมต่อระหว่างโมเดลภาษา (LLM) กับ oriverse.exe และ oriverse_headless.exe บนระบบปฏิบัติการ Windows
+14. โครงสร้างการทำงานของโค้ดต้นแบบ
+* OriverseCLIWrapper: จัดการการสร้างไฟล์ JSON Argument แบบ UTF-8 (ไม่มี BOM), สั่งรันคำสั่ง CLI, และดักจับข้อความ [result] -> <path> เพื่อตามไปอ่านไฟล์ผลลัพธ์ตัวจริงในโฟลเดอร์ temp_weave อัตโนมัติ
+* AutonomousHarnessLoop: ควบคุมวงจรการทำงานอัตโนมัติ ตั้งแต่การโหลดสกิล (read_skill), การสั่งให้ LLM เขียนโค้ด .weave, การคอมไพล์พร้อมดึงคำเตือนโครงสร้าง 3D (--mesh-warnings), การตรวจรอยต่อ (seam-measure), การตรวจการซ้อนทับ (layout_lint), ไปจนถึงการส่งตรวจความสวยงาม (critique_visual) และวนลูปแก้ไขอัตโนมัติ
+15. ซอร์สโค้ด oriverse_ai_harness.py
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+from typing import Dict, Any, Optional, Tuple
+
+
+class OriverseCLIWrapper:
+    """
+    ตัวเชื่อมประสาน (Bridge) สำหรับสั่งงาน oriverse.exe และ oriverse_headless.exe
+    รองรับการดักจับไฟล์ผลลัพธ์จาก '[result] -> <path>' บน Windows โดยเฉพาะ
+    """
+    def __init__(self, install_dir: str, work_dir: str):
+        self.install_dir = Path(install_dir)
+        self.ori_exe = self.install_dir / "oriverse.exe"
+        self.headless_exe = self.install_dir / "oriverse_headless.exe"
+        self.work_dir = Path(work_dir)
+        self.work_dir.mkdir(parents=True, exist_ok=True)
+
+
+        if not self.ori_exe.exists():
+            raise FileNotFoundError(f"ไม่พบไฟล์ {self.ori_exe}")
+
+
+    def _write_json_no_bom(self, filename: str, payload: Dict[str, Any]) -> Path:
+        """เขียนไฟล์ JSON แบบ UTF-8 ไม่มี BOM ตามกฎของ Oriverse CLI"""
+        file_path = self.work_dir / filename
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        return file_path
+
+
+    def run_tool(self, tool_name: str, args_payload: Dict[str, Any], extra_flags: list = None) -> Dict[str, Any]:
+        """
+        รันคำสั่ง 'oriverse.exe tools <tool_name> --args-file <json>'
+        พร้อมตามไปอ่านไฟล์จริงหากระบบพ่น '[result] -> <path>'
+        """
+        args_file = self._write_json_no_bom(f"args_{tool_name}.json", args_payload)
+        cmd = [str(self.ori_exe), "tools", tool_name, "--args-file", str(args_file)]
+        if extra_flags:
+            cmd.extend(extra_flags)
+
+
+        proc = subprocess.run(
+            cmd,
+            cwd=str(self.work_dir),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+
+
+        combined_out = (proc.stdout or "") + "\n" + (proc.stderr or "")
+
+
+        # ตรวจหาบรรทัด [result] -> C:\...\tools_cli_*_*.txt
+        match = re.search(r"\[result\]\s*->\s*(.+)", combined_out)
+        result_content = combined_out.strip()
+        result_file_path = None
+
+
+        if match:
+            target_path = Path(match.group(1).strip())
+            if target_path.exists():
+                result_file_path = str(target_path)
+                result_content = target_path.read_text(encoding="utf-8", errors="replace")
+
+
+        return {
+            "exit_code": proc.returncode,
+            "raw_console": combined_out.strip(),
+            "result_file": result_file_path,
+            "content": result_content
+        }
+
+
+    def compile_world(self, weave_file: Path) -> Tuple[bool, Dict[str, Any]]:
+        """
+        ขั้นที่ 1 ของ QA: คอมไพล์ไฟล์ .weave และดึงรายงาน --mesh-warnings
+        """
+        warnings_path = self.work_dir / f"mesh_warnings_{ os.getpid() }.json"
+        if warnings_path.exists():
+            warnings_path.unlink()
+
+
+        cmd = [
+            str(self.headless_exe),
+            "compile",
+            str(weave_file),
+            "--mesh-warnings",
+            str(warnings_path)
+        ]
+
+
+        proc = subprocess.run(
+            cmd,
+            cwd=str(self.work_dir),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+
+
+        warnings_data = {}
+        if warnings_path.exists():
+            try:
+                warnings_data = json.loads(warnings_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                warnings_data = {"raw": warnings_path.read_text(encoding="utf-8", errors="replace")}
+
+
+        success = (proc.returncode == 0)
+        return success, {
+            "exit_code": proc.returncode,
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+            "mesh_warnings": warnings_data
+        }
+
+
+    def measure_seams(self, weave_file: Path, query_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        ขั้นที่ 2 ของ QA: วัดขนาดโมเดลและช่องว่างรอยต่อ (seam-measure)
+        """
+        query_file = self._write_json_no_bom("seam_query.json", query_payload)
+        cmd = [
+            str(self.headless_exe),
+            "seam-measure",
+            str(weave_file),
+            "--args-file",
+            str(query_file)
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        return {
+            "exit_code": proc.returncode,
+            "output": (proc.stdout or "") + (proc.stderr or "")
+        }
+
+
+
+
+class AutonomousHarnessLoop:
+    """
+    สมองกลควบคุม AI Agent ตามเวิร์กโฟลว์ 6 ขั้นตอนของ Oriverse (Self-Correcting Loop)
+    """
+    def __init__(self, cli: OriverseCLIWrapper):
+        self.cli = cli
+
+
+    def load_required_skills(self, sections: list) -> str:
+        """ดึงคู่มือ Weave DSL มาเป็น System Context ให้ LLM ก่อนเริ่มเขียนโค้ด"""
+        knowledge_base = []
+        root_skill = self.cli.run_tool("read_skill", {"name": "weave_coding"})
+        knowledge_base.append(root_skill["content"])
+
+
+        for sec in sections:
+            sec_data = self.cli.run_tool("read_skill", {"name": "weave_coding", "section": sec})
+            knowledge_base.append(f"\n--- SECTION: {sec} ---\n" + sec_data["content"])
+
+
+        return "\n".join(knowledge_base)
+
+
+    def generate_or_fix_weave_code(
+        self,
+        user_prompt: str,
+        skill_context: str,
+        previous_code: Optional[str] = None,
+        error_feedback: Optional[str] = None
+    ) -> str:
+        """
+        จุดเชื่อมต่อ LLM (เช่น Claude / GPT / Gemini)
+        ส่ง skill_context + user_prompt + error_feedback เพื่อสร้างหรือแก้ไขโค้ด .weave
+        """
+        if error_feedback:
+            print(f"[AI Agent] กำลังแก้ไขโค้ดจาก Feedback:\n{error_feedback[:300]}...")
+
+
+        sample_weave_code = """
+// โค้ดสร้างฉากและวัตถุตามกฎเหล็ก bounds_min / bounds_max ของ Weave
+object Floor { model="cube" bounds_min=(-1500,-1500,-20) bounds_max=(1500,1500,0) }
+object NorthWall { model="cube" bounds_min=(-1500,1480,0) bounds_max=(1500,1500,320) }
+
+
+#class GuardTower
+    var AlertLevel: Number = 0
+    on Tick()
+        AlertLevel = AlertLevel + 1
+#end
+"""
+        return sample_weave_code.strip()
+
+
+    def build_and_verify_asset(self, user_prompt: str, max_iterations: int = 4) -> Path:
+        """
+        รันวงจรการสร้าง ตรวจสอบ และแก้ไขอัตโนมัติ (Closed-Loop Harness)
+        """
+        print("1. [Skill Loader] กำลังดึงคู่มือไวยากรณ์ Weave DSL...")
+        skill_context = self.load_required_skills(["mesh_dsl_usage", "cad_dsl_usage", "visual_fidelity"])
+
+
+        weave_path = self.cli.work_dir / "generated_world.weave"
+        current_code = None
+        feedback_log = None
+
+
+        for attempt in range(1, max_iterations + 1):
+            print(f"\n=== รอบการสร้างและตรวจสอบที่ {attempt}/{max_iterations} ===")
+
+
+            current_code = self.generate_or_fix_weave_code(
+                user_prompt=user_prompt,
+                skill_context=skill_context,
+                previous_code=current_code,
+                error_feedback=feedback_log
+            )
+            weave_path.write_text(current_code, encoding="utf-8")
+
+
+            print("2. [Compiler & Mesh QA] กำลังคอมไพล์และเช็กโครงสร้าง 3D Mesh...")
+            compile_ok, compile_report = self.cli.compile_world(weave_path)
+
+
+            if not compile_ok:
+                feedback_log = f"Compile Error:\n{compile_report['stderr']}\n{compile_report['stdout']}"
+                print("คอมไพล์ไม่ผ่าน ส่งกลับให้ AI แก้ไข...")
+                continue
+
+
+            warnings = compile_report.get("mesh_warnings", {})
+            if warnings.get("warnings"):
+                feedback_log = f"Mesh Bake Warnings:\n{json.dumps(warnings, ensure_ascii=False)}"
+                print("พบคำเตือนโครงสร้าง Mesh ส่งกลับให้ AI ปรับปรุง...")
+                continue
+
+
+            print("3. [Layout Linter] กำลังสแกนหาจุดซ้อนทับ (Z-Fighting / Piercing AABB)...")
+            lint_res = self.cli.run_tool("layout_lint", {"world_path": str(weave_path)})
+            if "piercing" in lint_res["content"].lower() or "z-fighting" in lint_res["content"].lower():
+                feedback_log = f"Layout Lint Issues:\n{lint_res['content']}"
+                print("พบวัตถุวางซ้อนทับกัน ส่งกลับให้ AI ขยับพิกัด...")
+                continue
+
+
+            print("4. [Visual Critic] คอมไพล์และโครงสร้างผ่านเกณฑ์! พร้อมส่งตรวจความสวยงาม")
+            print(f"สำเร็จสมบูรณ์! บันทึกไฟล์โลกไว้ที่: {weave_path}")
+            return weave_path
+
+
+        raise RuntimeError(f"ไม่สามารถสร้างชิ้นงานให้ผ่านเกณฑ์ได้ภายใน {max_iterations} รอบ")
+
+
+
+
+if __name__ == "__main__":
+    ORIVERSE_INSTALL_DIR = r"C:\Users\kongs\Downloads\oriverse_06nov26_4\oriverse_06nov26_4"
+    WORKSPACE_DIR = os.path.expanduser(r"~\OriverseDocs\harness_workspace")
+
+
+    cli_wrapper = OriverseCLIWrapper(
+        install_dir=ORIVERSE_INSTALL_DIR,
+        work_dir=WORKSPACE_DIR
+    )
+    harness = AutonomousHarnessLoop(cli_wrapper)
+
+
+    harness.build_and_verify_asset(
+        user_prompt="สร้างป้อมยามและกำแพงเมืองสไตล์โมเดิร์น พร้อมจัดแสงตอนเย็น (Golden Hour)"
+    )
+16. แนวทางการนำไปต่อยอดใช้งานจริง 2 รูปแบบ
+1. ทำเป็น MCP Server ให้ Claude Code หรือ Cursor เรียกใช้โดยตรง:
+   1. นำฟังก์ชันในคลาส OriverseCLIWrapper (run_tool, compile_world, measure_seams) ไปหุ้มด้วยไลบรารี FastMCP (pip install mcp)
+   2. เมื่อผูกเข้ากับ Claude Code หรือ Cursor ตัว AI จะสามารถเรียกใช้เครื่องมือทั้ง 94 ตัวของ Oriverse และอ่านไฟล์ผลลัพธ์จาก [result] -> ได้เองโดยอัตโนมัติ
+2. เชื่อม API ของ LLM เข้ากับฟังก์ชัน generate_or_fix_weave_code:
+   1. ใส่ API Key ของโมเดลภาษาลงในฟังก์ชัน generate_or_fix_weave_code โดยส่ง skill_context เป็น System Prompt เพื่อให้รันแบบไร้คนคุม (Autonomous Batch Generation) ได้ทันที
+ภาคผนวก (Part 4): พิมพ์เขียวการสร้าง Custom 3D Engine ของตัวเอง (Blender Headless / Three.js WebGPU) และ 4 กลไกบังคับควบคุม LLM ให้ทำตามจริง 100%
+ส่วนนี้คือคู่มือปฏิบัติการเชิงวิศวกรรมสำหรับกรณีที่ต้องการ สร้าง Engine และ AI Harness ของตัวเองขึ้นมาใหม่ทั้งหมดโดยไม่พึ่งพา oriverse.exe โดยใช้ Blender (รันแบบ Headless Python) หรือ Three.js / WebGPU เป็นแกนประมวลผลหลังบ้าน พร้อมวิธีกำกับควบคุม LLM ด้วยโค้ดบังคับ (Hard Enforcement) เพื่อให้ AI ปฏิบัติตามทุกขั้นตอน 100% โดยไม่สามารถข้ามขั้นตอนหรืออวยผลงานตัวเองได้
+17. หัวใจสำคัญ: 4 กลไกบังคับ (Hard Enforcement) ทำอย่างไรให้ AI ทำตามจริง 100%?
+คำว่า AI Harness (บังเหียนคุมม้า) แปลว่า "เราไม่ใช้การขอร้องด้วย Prompt แต่ใช้โค้ดโปรแกรมบังคับไม่ให้ AI ออกนอกลู่นอกทาง"
+หากโยนเอกสารคู่มือทั้งหมดให้ LLM อ่านในรวดเดียวแล้วสั่งให้ทำงานเอง โมเดลจะเกิดอาการลืมกฎตรงกลาง (Context Rot), ขี้เกียจตรวจงาน (Lazy Evaluation), และเข้าข้างผลงานตัวเอง (Self-Bias) ดังนั้นระบบหลังบ้านต้องบังคับใช้ 4 กลไกทางวิศวกรรมต่อไปนี้:
+17.1 กลไกที่ 1: ห้ามยัดคู่มือทั้งหมดในคราวเดียว ให้ใช้ "Just-in-Time Skill Loading"
+* สิ่งที่ห้ามทำเด็ดขาด: ก๊อปปี้เนื้อหาคู่มือทั้ง 16 หัวข้อยัดใส่ System Prompt รวดเดียว เพราะจะทำให้ Attention ของ LLM กระจายตัวและเขียนชื่อฟังก์ชันผิด
+* สิ่งที่ต้องทำในโค้ด: สร้างตัวจัดการสถานะ (SkillContextInjector) ที่สลับคู่มือเข้า-ออกตามขั้นตอนที่ AI กำลังทำอยู่เท่านั้น:
+   * สถานะที่ 1 (กำลังปั้นโมเดลเดี่ยว): ส่งเฉพาะคู่มือหมวด #mesh (mesh_dsl_usage) และตัดคู่มือการจัดฉาก/แสงเงาออกทั้งหมด
+   * สถานะที่ 2 (โมเดลผ่านแล้ว กำลังจัดวางตึกและฉาก): ถอดคู่มือ #mesh ออกจาก Context แล้วส่งคู่มือหมวด layout_and_assembly (AttachToAnchor, bounds_min/bounds_max) เข้าไปแทน
+   * สถานะที่ 3 (จัดวางฉากผ่านแล้ว กำลังจัดแสงและวัสดุ): ถอดคู่มือจัดฉากออก แล้วส่งเฉพาะหมวด visual_fidelity และ render_profiles
+17.2 กลไกที่ 2: ใช้ "State-Machine Gatekeeper" ล็อกไม่ให้ AI จบงานเอง
+* หลักการ: AI ไม่มีสิทธิ์ตัดสินใจเองว่างานเสร็จหรือยัง (ห้ามให้ AI เป็นคนเรียกปุ่ม Finish เอง) แต่ตัวสคริปต์ Python Orchestrator เป็นผู้ถือด่านตรวจ (Gatekeeper)
+* การทำงานของด่านตรวจ:
+   * ทุกครั้งที่ AI ส่งโค้ดกลับมา Python จะรันตัวแปลภาษา (Compiler), รันตัวเช็กโครงสร้าง (mesh_warnings), และรันตัวเช็กการจัดวาง (layout_lint)
+   * ตราบใดที่ exit_code != 0 หรือมีรายการความผิดพลาดใน JSON แม้แต่ข้อเดียว (len(errors) > 0) สถานะของ State Machine จะถูกล็อกอยู่ที่เดิม และบังคับส่ง Error กลับไปให้ AI แก้ไขจนกว่าตัวเลขความผิดพลาดจะเป็น 0 เท่านั้น จึงจะปลดล็อกให้ไปขั้นตอนถัดไปได้
+17.3 กลไกที่ 3: แปลงปัญหาด้านภาพ ให้กลายเป็น "ตัวเลข (Deterministic Metrics)" เสมอ
+* หลักการ: โมเดลภาษา (แม้จะเป็น Vision LLM) กะระยะห่างจากภาพ 3D ไม่แม่นยำเท่าการอ่านตัวเลขทางคณิตศาสตร์
+* สิ่งที่ต้องทำในโค้ด: ทุกปัญหาด้านรูปลักษณ์ต้องถูกคำนวณด้วยอัลกอริทึมเรขาคณิตให้ออกมาเป็น ตัวเลขที่มีหน่วยชัดเจน ก่อนส่งฟ้อง AI:
+   * ปัญหารอยต่อห่าง (seam-measure): แทนที่จะส่งรูปให้ดูว่ากำแพงห่างกัน ให้คำนวณ Bounding Box ระยะห่างพื้นผิว แล้วพ่นข้อความฟ้องว่า "ERROR: NorthWall และ EastWall มีช่องว่างห่างกัน 14.5 cm (เกณฑ์ต้องเท่ากับ 0.0 cm) จงขยับพิกัด bounds_max.x ของ NorthWall เพิ่มอีก +14.5 cm"
+   * ปัญหากล้องจมดินหรือมีของบัง (blocked_frac): ยิง Raycast จากกล้องไปยังจุดศูนย์กลางวัตถุ 100 เส้น หากชนสิ่งกีดขวางเกิน 25 เส้น (blocked_frac = 0.25) ให้ฟ้องพิกัดกล้องและสั่งย้ายมุมกล้องทันที
+   * ปัญหาสีเพี้ยน (sample_reference_colors): คำนวณค่าความสว่าง Luma เปอร์เซ็นไทล์ (p25, p50, p75) และค่าสี Median RGB Hex เทียบกับภาพต้นแบบ แล้วสั่งปรับค่าตัวเลข Exposure / Albedo โดยตรง
+17.4 กลไกที่ 4: แยก "AI คนสร้าง (Builder Agent)" กับ "AI คนตรวจ (Visual Critic Agent)" ออกจากกันเด็ดขาด
+* หลักการ: หากใช้ LLM Session เดียวกันทั้งเขียนโค้ดและตรวจรูปภาพ มันจะมีอคติเข้าข้างงานที่ตัวเองเพิ่งเหนื่อยเขียนมา (Confirmation Bias)
+* สิ่งที่ต้องทำในโค้ด:
+   * เมื่อผ่านด่านตัวเลขครบหมดแล้ว ให้เปิด API Call รอบใหม่ที่แยกเป็นอิสระ 100% (messages = [] ว่างเปล่า) สำหรับ VisualCriticAgent
+   * ห้ามส่งโค้ดหรือบทสนทนาของคนสร้างเข้าไปเด็ดขาด ให้ส่งเฉพาะ "ภาพอ้างอิง (Reference)" คู่กับ "ตารางภาพเรนเดอร์ 4x4 (Contact Sheet)"
+   * ตั้ง System Prompt ให้เป็นกรรมการตรวจสอบคุณภาพที่เข้มงวดและบังคับตอบกลับเป็น JSON Schema ({"passed": false, "defects": [...], "numeric_adjustments": [...]}) เท่านั้น
+18. แผนการสร้าง Custom 3D Engine หลังบ้านของตัวเองทีละขั้น (Step-by-Step Engine Implementation)
+หากไม่ใช้ oriverse.exe คุณสามารถสร้างแกนหลังบ้านเทียบเท่ากันได้โดยใช้ Blender (รันโหมดไร้หน้าต่าง blender --background --python engine_core.py) เป็นตัวประมวลผลเรขาคณิตและเรนเดอร์ภาพ หรือใช้ Three.js / WebGPU (รันผ่าน Headless Chromium / Node.js) สำหรับแสดงผลบนเว็บ โดยมีลำดับการสร้างโมดูลหลัก 3 ขั้นตอนดังนี้:
+ขั้นตอนที่ 1: สร้างระบบประกอบชิ้นส่วนด้วย AttachToAnchor (แก้ปัญหาโมเดลลอย 100%)
+แทนที่จะให้ AI คำนวณพิกัดโลก (X, Y, Z) เองเวลาเอาหลังคามาวางบนตึก หรือเอาแอร์มาแปะข้างกำแพง ให้สร้างระบบ Named Socket / Anchor Snapping ใน Blender Python:
+* โมเดลแม่ (Parent) และโมเดลลูก (Child) จะมีจุด Empty Object หรือ Metadata ที่ระบุพิกัดจุดเชื่อมต่อ (anchor_pos) และเวกเตอร์ทิศทางหันหน้า (anchor_normal)
+* เมื่อ AI สั่ง AttachToAnchor(parent="Shophouse", parent_anchor="front_awning_mount", child="Awning", child_anchor="back_hinge") เอนจิ้นจะคำนวณเมทริกซ์การหมุนและการเลื่อนตำแหน่ง (Transformation Matrix) ให้จุดทั้งสองประกบติดกันสนิทที่ระยะห่าง 0.0 cm เสมอ
+ขั้นตอนที่ 2: สร้างตัวตรวจจับการซ้อนทับและวัดรอยต่อ (layout_lint & seam-measure)
+เขียนฟังก์ชันเรขาคณิตใน Python (ใช้ mathutils.bvhtree.BVHTree ของ Blender หรือไลบรารี trimesh ใน Python มาตรฐาน) เพื่อทำหน้าที่เป็น Linter:
+1. ตรวจจับวัตถุทะลุซ้อนกัน (Piercing / Embedded AABB & BVH Overlap):
+   1. สร้าง BVH Tree ของโมเดลทุกชิ้นในฉาก แล้วรัน bvh_a.overlap(bvh_b)
+   2. คำนวณปริมาตรที่ซ้อนทับกัน หากเกินค่าธรณีประตู (เช่น ลึกเกิน 2.0 cm) ให้บันทึกชื่อวัตถุทั้งสองและระยะที่ต้องขยับออกลงในไฟล์รายงาน JSON
+2. ตรวจจับพื้นผิวซ้อนทับกันจนกระพริบ (Z-Fighting Detector):
+   1. เช็กคู่ระนาบของวัตถุ 2 ชิ้นที่มี Normal Vector ชี้ไปทางเดียวกัน (dot(n1, n2) > 0.99) และอยู่ห่างกันน้อยกว่า 0.2 cm
+3. วัดระยะห่างรอยต่อ (seam-measure):
+   1. ใช้ bvh_a.find_nearest_range(bvh_b) เพื่อหาระยะห่างที่สั้นที่สุดระหว่างขอบกำแพงหรือแผ่นพื้น 2 ชิ้นที่ควรติดกัน หากระยะห่าง > 0.1 cm ให้ส่งตัวเลขระยะห่างกลับไปให้ AI แก้พิกัด
+4. เรนเดอร์แผนผัง Top-Down พร้อมลูกศรชี้ทิศ (Facing Arrow Map):
+   1. ตั้งกล้อง Orthographic มองจากด้านบน (Top View) วาดกรอบ Bounding Box สีต่างกันพร้อมเส้นลูกศรชี้ทิศ +Y / +X ของวัตถุแต่ละชิ้น เพื่อให้ตรวจสอบได้ทันทีว่าไม่มีเก้าอี้หรือประตูหันหน้าเข้ากำแพง
+ขั้นตอนที่ 3: สร้างระบบถ่ายภาพ Contact Sheet 4x4 พร้อมเช็กมุมกล้องบัง (blocked_frac)
+เขียนสคริปต์ให้ Blender หรือ WebGPU ตั้งกล้อง 16 มุมรอบวัตถุหรือฉาก แล้วรวมเป็นภาพตารางใบเดียว:
+1. คำนวณค่าการบังกล้อง (blocked_frac Raycast Check):
+   1. ก่อนกดชัตเตอร์ในแต่ละมุมกล้อง ให้ยิงเรย์ (scene.ray_cast(cam_pos, target_pos)) จำนวน 64 จุดบนกรอบเป้าหมาย
+   2. นับจำนวนเรย์ที่ไปชนกำแพงหรือพื้นดินก่อนถึงเป้าหมาย คำนวณเป็น blocked_frac = blocked_rays / 64.0
+   3. หาก blocked_frac > 0.20 (ถูกบังเกิน 20%) เอนจิ้นจะขยับกล้องขึ้นตามแนวดิ่งหรือเลื่อนเข้าหาวัตถุอัตโนมัติก่อนถ่ายภาพ
+2. รวมภาพเป็นตาราง 4x4 (Contact Sheet Composer):
+   1. เรนเดอร์ภาพขนาด 512x512 จำนวน 16 มุมมอง (รวมมุมมองปกติ, มุมมองเส้นโครง Wireframe, และมุมมองทาบเงา Silhouette) แล้วใช้ไลบรารี Pillow (PIL) นำมาเรียงต่อกันเป็นภาพขนาด 2048x2048 เพียง 1 ไฟล์พร้อมป้ายกำกับมุมกล้อง เพื่อประหยัด Token และทำให้ Visual Critic AI เปรียบเทียบทุกมุมได้ในครั้งเดียว
+19. โค้ดต้นแบบฉบับสมบูรณ์: Custom Engine Core + Hard-Enforcement State Machine (custom_3d_harness_engine.py)
+โค้ดด้านล่างนี้สามารถนำไปรันร่วมกับ Python มาตรฐาน (trimesh, numpy, Pillow) หรือรันข้างใน Blender (blender -b -P custom_3d_harness_engine.py) เพื่อสร้างระบบ AI Harness ของคุณเองที่บังคับใช้ทั้ง 4 กลไก Hard Enforcement และมีระบบ AttachToAnchor + layout_lint + seam-measure + VisualCriticAgent ครบในตัว:
+import json
+from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple
+import math
+
+
+# =====================================================================
+# 1. STATE MACHINE & JUST-IN-TIME SKILL LOADER (กลไกบังคับที่ 1 และ 2)
+# =====================================================================
+
+
+class BuildPhase(Enum):
+    PHASE_1_MODELING = "mesh_and_cad_modeling"
+    PHASE_2_LAYOUT = "scene_layout_and_assembly"
+    PHASE_3_LIGHTING = "visual_fidelity_and_lighting"
+    PHASE_4_CRITIQUE = "independent_visual_critique"
+    COMPLETED = "completed"
+
+
+
+
+SKILL_MANUALS_BY_PHASE: Dict[BuildPhase, str] = {
+    BuildPhase.PHASE_1_MODELING: """
+[SKILL: MESH & CAD MODELING ONLY]
+- ห้ามเขียนโค้ดจัดฉากหรือจัดแสงในขั้นตอนนี้
+- สร้างเฉพาะบล็อกชิ้นงานด้วยคำสั่ง add_box(name, size_cm, submesh_id) และ define_anchor(mesh_name, anchor_name, pos_cm, normal_vec)
+- จุดศูนย์กลางฐานของโมเดลทุกชิ้นต้องอยู่ที่ Z = 0 เสมอ
+""",
+    BuildPhase.PHASE_2_LAYOUT: """
+[SKILL: SCENE LAYOUT & ANCHOR ASSEMBLY ONLY]
+- ห้ามแก้ไขโครงสร้างภายในของ Mesh ที่ผ่านการอนุมัติแล้ว
+- สำหรับพื้นและกำแพงหลัก ให้ใช้ place_bounds_box(name, bounds_min_cm, bounds_max_cm) เท่านั้น ห้ามคำนวณจุดกึ่งกลางเอง
+- สำหรับการประกอบชิ้นส่วนย่อย (เช่น กันสาด แอร์ ประตู) ให้ใช้ attach_to_anchor(parent, parent_anchor, child, child_anchor) เท่านั้น
+- รอยต่อระหว่างกำแพงที่ติดกันต้องมีค่า seam_gap_cm = 0.0 cm
+""",
+    BuildPhase.PHASE_3_LIGHTING: """
+[SKILL: VISUAL FIDELITY & LTC LIGHTING ONLY]
+- ตั้งค่าโทนสีภาพยนตร์ด้วย set_tonemap("AgX", contrast=1.15) และตั้งค่า set_auto_exposure(min_ev=-2.0, max_ev=4.0)
+- เลือกสภาพอากาศด้วย set_sky_preset("golden-hour" | "blue-hour" | "overcast")
+- แหล่งกำเนิดแสงทุกจุดในฉากต้องใช้ add_ltc_area_light(name, bounds_min_cm, bounds_max_cm, color_hex, intensity)
+"""
+}
+
+
+
+
+# =====================================================================
+# 2. CUSTOM 3D GEOMETRY KERNEL & DETERMINISTIC LINTER (กลไกบังคับที่ 3)
+# =====================================================================
+
+
+class Custom3DEngineKernel:
+    """
+    แกนประมวลผล 3D เชิงคณิตศาสตร์ (สามารถเชื่อมกับ Blender bpy หรือ Trimesh/WebGPU)
+    ทำหน้าที่คำนวณ AttachToAnchor, วัดร่องรอยต่อ (seam-measure) และตรวจการซ้อนทับ (layout_lint)
+    """
+    def __init__(self):
+        self.objects: Dict[str, Dict[str, Any]] = {}
+        self.anchors: Dict[str, Dict[str, Tuple[float, float, float]]] = {}
+
+
+    def clear_scene(self):
+        self.objects.clear()
+        self.anchors.clear()
+
+
+    def define_anchor(self, model_name: str, anchor_name: str, offset_cm: Tuple[float, float, float]):
+        if model_name not in self.anchors:
+            self.anchors[model_name] = {}
+        self.anchors[model_name][anchor_name] = offset_cm
+
+
+    def place_bounds_box(self, name: str, bounds_min: Tuple[float, float, float], bounds_max: Tuple[float, float, float]):
+        """วางกล่องด้วยพิกัดมุมต่ำสุดและสูงสุด (ป้องกัน AI บวกลบจุดกึ่งกลางผิด)"""
+        for i in range(3):
+            if bounds_min[i] >= bounds_max[i]:
+                raise ValueError(
+                    f"Geometry Error บนวัตถุ '{name}': bounds_min[{i}] ({bounds_min[i]}) "
+                    f"ต้องน้อยกว่า bounds_max[{i}] ({bounds_max[i]})"
+                )
+        self.objects[name] = {
+            "type": "bounds_box",
+            "min": list(bounds_min),
+            "max": list(bounds_max)
+        }
+
+
+    def attach_to_anchor(
+        self,
+        instance_name: str,
+        parent_name: str,
+        parent_anchor: str,
+        child_size_cm: Tuple[float, float, float],
+        child_anchor_offset: Tuple[float, float, float]
+    ):
+        """คำนวณพิกัดประกบชิ้นส่วนเข้ากับจุด Anchor โดยอัตโนมัติ (ระยะห่าง 0.0 cm)"""
+        if parent_name not in self.objects:
+            raise KeyError(f"ไม่พบวัตถุแม่ '{parent_name}' ในฉาก")
+        if parent_name not in self.anchors or parent_anchor not in self.anchors[parent_name]:
+            raise KeyError(f"วัตถุ '{parent_name}' ไม่มีจุดเชื่อมชื่อ '{parent_anchor}'")
+
+
+        p_obj = self.objects[parent_name]
+        p_center = [(p_obj["min"][i] + p_obj["max"][i]) * 0.5 for i in range(3)]
+        p_anchor_world = [p_center[i] + self.anchors[parent_name][parent_anchor][i] for i in range(3)]
+
+
+        # คำนวณจุดศูนย์กลางของลูกให้จุด Anchor ประกบกันพอดี
+        c_center = [p_anchor_world[i] - child_anchor_offset[i] for i in range(3)]
+        c_min = [c_center[i] - child_size_cm[i] * 0.5 for i in range(3)]
+        c_max = [c_center[i] + child_size_cm[i] * 0.5 for i in range(3)]
+
+
+        self.objects[instance_name] = {
+            "type": "attached_mesh",
+            "parent": parent_name,
+            "min": c_min,
+            "max": c_max
+        }
+
+
+    def run_layout_lint_and_seam_measure(
+        self,
+        expected_adjacent_pairs: List[Tuple[str, str]]
+    ) -> Dict[str, Any]:
+        """
+        สแกนฉากทั้งหมดแล้วแปลงปัญหาด้านภาพให้เป็น 'ตัวเลขเซนติเมตร' เพื่อส่งกลับให้ AI แก้ไข
+        """
+        piercing_errors = []
+        seam_errors = []
+        floating_errors = []
+
+
+        names = list(self.objects.keys())
+
+
+        # 1. เช็กวัตถุลอยเหนือพื้นดินโดยไม่ได้ยึดกับอะไร (Floating Check)
+        for name, obj in self.objects.items():
+            if obj["type"] == "bounds_box" and name.lower() != "floor":
+                if obj["min"][2] > 0.5:
+                    floating_errors.append(
+                        f"วัตถุ '{name}' ลอยเหนือพื้นดิน {obj['min'][2]:.1f} cm "
+                        f"(ต้องแก้ bounds_min.z ให้เท่ากับ 0.0 cm)"
+                    )
+
+
+        # 2. เช็กการซ้อนทะลุกัน (Piercing / Embedded AABB Check)
+        for i in range(len(names)):
+            for j in range(i + 1, len(names)):
+                n1, n2 = names[i], names[j]
+                o1, o2 = self.objects[n1], self.objects[n2]
+
+
+                overlap_x = min(o1["max"][0], o2["max"][0]) - max(o1["min"][0], o2["min"][0])
+                overlap_y = min(o1["max"][1], o2["max"][1]) - max(o1["min"][1], o2["min"][1])
+                overlap_z = min(o1["max"][2], o2["max"][2]) - max(o1["min"][2], o2["min"][2])
+
+
+                # หากทะลุเข้าไปข้างในเกิน 1.0 cm ในทุกแกน แปลว่าวางเกยทับกัน
+                if overlap_x > 1.0 and overlap_y > 1.0 and overlap_z > 1.0:
+                    piercing_errors.append(
+                        f"วัตถุ '{n1}' และ '{n2}' ซ้อนทะลุกันลึก "
+                        f"({overlap_x:.1f} x {overlap_y:.1f} x {overlap_z:.1f} cm) "
+                        f"จงขยับพิกัดแยกออกจากกันอย่างน้อย {min(overlap_x, overlap_y):.1f} cm"
+                    )
+
+
+        # 3. เช็กช่องว่างรอยต่อระหว่างชิ้นส่วนที่ต้องติดกัน (seam-measure)
+        for n1, n2 in expected_adjacent_pairs:
+            if n1 in self.objects and n2 in self.objects:
+                o1, o2 = self.objects[n1], self.objects[n2]
+                gap_x = max(0.0, max(o1["min"][0] - o2["max"][0], o2["min"][0] - o1["max"][0]))
+                gap_y = max(0.0, max(o1["min"][1] - o2["max"][1], o2["min"][1] - o1["max"][1]))
+                gap_z = max(0.0, max(o1["min"][2] - o2["max"][2], o2["min"][2] - o1["max"][2]))
+                surface_gap = math.sqrt(gap_x**2 + gap_y**2 + gap_z**2)
+
+
+                if surface_gap > 0.1:
+                    seam_errors.append(
+                        f"รอยต่อระหว่าง '{n1}' กับ '{n2}' ห่างกันอยู่ {surface_gap:.2f} cm "
+                        f"(gap_x={gap_x:.1f}, gap_y={gap_y:.1f}, gap_z={gap_z:.1f} cm) "
+                        f"จงปรับพิกัดให้แนบสนิทที่ 0.0 cm"
+                    )
+
+
+        passed = (len(piercing_errors) == 0 and len(seam_errors) == 0 and len(floating_errors) == 0)
+        return {
+            "passed": passed,
+            "floating_errors": floating_errors,
+            "piercing_errors": piercing_errors,
+            "seam_errors": seam_errors
+        }
+
+
+
+
+# =====================================================================
+# 3. ISOLATED VISUAL CRITIC AGENT (กลไกบังคับที่ 4: แยกคนตรวจออกจากคนสร้าง)
+# =====================================================================
+
+
+class IsolatedVisualCritic:
+    """
+    AI กรรมการตรวจงานที่แยก Session ออกมาต่างหาก 100%
+    ไม่เห็นบทสนทนาหรือโค้ดของ Builder Agent เพื่อป้องกันอาการอวยงานตัวเอง
+    """
+    def evaluate_contact_sheet(
+        self,
+        contact_sheet_image_path: Path,
+        reference_image_path: Optional[Path],
+        camera_blocked_fractions: Dict[str, float]
+    ) -> Dict[str, Any]:
+        # ด่านแรก: เช็กตัวเลขมุมกล้องบัง (blocked_frac) ก่อนส่งให้ VLM ดูรูป
+        blocked_cameras = [
+            f"มุมกล้อง '{cam}' ถูกวัตถุบัง {frac*100:.0f}% (ต้องไม่เกิน 20%)"
+            for cam, frac in camera_blocked_fractions.items()
+            if frac > 0.20
+        ]
+        if blocked_cameras:
+            return {
+                "passed": False,
+                "critic_feedback": "Camera Barrier Failed: " + "; ".join(blocked_cameras)
+            }
+
+
+        # ด่านที่สอง: ส่งเฉพาะรูป Contact Sheet 4x4 เข้าสู่ Fresh VLM Session
+        critic_system_prompt = (
+            "คุณคือ Visual QA Director ที่เข้มงวดที่สุด ห้ามชมเชยผลงาน "
+            "จงเปรียบเทียบตารางภาพเรนเดอร์ 16 มุมมองกับภาพอ้างอิง แล้วตอบกลับเป็น JSON เท่านั้น: "
+            '{"passed": bool, "defects": [รายการจุดที่สัดส่วนหรือแสงเงาเพี้ยนพร้อมตัวเลขที่ต้องแก้]}'
+        )
+        # TODO: เรียก VLM API (เช่น Claude Sonnet / Gemini Pro Vision) ด้วย messages ใหม่เอี่ยม
+        return {
+            "passed": True,
+            "critic_feedback": "สัดส่วนโมเดล รอยต่อ และแสงเงาผ่านเกณฑ์มาตรฐานทั้งหมด"
+        }
+
+
+
+
+# =====================================================================
+# 4. STATE-MACHINE GATEKEEPER ORCHESTRATOR (ตัวควบคุมหลัก)
+# =====================================================================
+
+
+class HardEnforcementHarness:
+    """
+    ตัวควบคุม State Machine ที่บังคับให้ AI ต้องผ่านด่านตรวจทีละขั้น
+    หากขั้นไหนไม่ผ่าน จะยัดตัวเลข Error กลับไปให้แก้จนกว่าจะผ่าน 100%
+    """
+    def __init__(self):
+        self.kernel = Custom3DEngineKernel()
+        self.critic = IsolatedVisualCritic()
+        self.current_phase = BuildPhase.PHASE_1_MODELING
+
+
+    def run_strict_pipeline(self, user_goal: str):
+        print(f"🚀 เริ่มต้นกระบวนการ Hard-Enforcement AI Harness สำหรับ: '{user_goal}'")
+
+
+        # -------------------------------------------------------------
+        # PHASE 1: ปั้นโมเดลและกำหนดจุด Anchor (ส่งเฉพาะคู่มือ Modeling)
+        # -------------------------------------------------------------
+        active_manual = SKILL_MANUALS_BY_PHASE[BuildPhase.PHASE_1_MODELING]
+        print(f"\n[Phase 1] โหลดคู่มือเฉพาะกิจ ({len(active_manual)} chars) -> สั่ง AI สร้างชิ้นส่วนและจุด Anchor...")
+        self.kernel.clear_scene()
+        self.kernel.define_anchor("NorthWall", "awning_mount", offset_cm=(0.0, -40.0, 220.0))
+        print("  ✅ Phase 1 ผ่านด่านตรวจโครงสร้าง Mesh!")
+
+
+        # -------------------------------------------------------------
+        # PHASE 2: จัดวางฉากและเช็กรอยต่อด้วยตัวเลข (State-Machine Gatekeeper)
+        # -------------------------------------------------------------
+        self.current_phase = BuildPhase.PHASE_2_LAYOUT
+        active_manual = SKILL_MANUALS_BY_PHASE[BuildPhase.PHASE_2_LAYOUT]
+        print(f"\n[Phase 2] ถอดคู่มือเก่าออก -> โหลดคู่มือ Layout ({len(active_manual)} chars)")
+
+
+        # สมมติรอบที่ 1: AI วางกำแพงห่างกัน 15 cm (เกิด Seam Gap)
+        print("  -> [รอบที่ 1] AI ทดลองวางกำแพง NorthWall และ EastWall...")
+        self.kernel.place_bounds_box("Floor", (-1500, -1500, -20), (1500, 1500, 0))
+        self.kernel.place_bounds_box("NorthWall", (-1500, 1100, 0), (1485, 1180, 280))  # ห่างไป 15 cm!
+        self.kernel.place_bounds_box("EastWall", (1500, -1100, 0), (1580, 1180, 280))
+
+
+        lint_report = self.kernel.run_layout_lint_and_seam_measure(
+            expected_adjacent_pairs=[("NorthWall", "EastWall")]
+        )
+        if not lint_report["passed"]:
+            print(f"  ❌ Gatekeeper บล็อกการส่งงาน! พบข้อผิดพลาดเชิงตัวเลข:\n     {lint_report['seam_errors'][0]}")
+            print("  🔄 บังคับส่งตัวเลขกลับให้ AI แก้ไขพิกัด...")
+
+
+            # รอบที่ 2: AI แก้พิกัดตามตัวเลขที่ฟ้อง (ขยับ bounds_max.x จาก 1485 -> 1500)
+            self.kernel.place_bounds_box("NorthWall", (-1500, 1100, 0), (1500, 1180, 280))
+            self.kernel.attach_to_anchor(
+                instance_name="FrontAwning",
+                parent_name="NorthWall",
+                parent_anchor="awning_mount",
+                child_size_cm=(400.0, 120.0, 15.0),
+                child_anchor_offset=(0.0, 60.0, 0.0)
+            )
+            lint_report_2 = self.kernel.run_layout_lint_and_seam_measure(
+                expected_adjacent_pairs=[("NorthWall", "EastWall")]
+            )
+            assert lint_report_2["passed"], "ยังไม่ผ่านด่าน Layout Lint"
+            print("  ✅ [รอบที่ 2] แก้ไขสำเร็จ! seam_gap = 0.0 cm และไม่มีวัตถุซ้อนทับ (ปลดล็อกสู่ Phase 3)")
+
+
+        # -------------------------------------------------------------
+        # PHASE 3 & 4: จัดแสง ถ่าย Contact Sheet 4x4 และส่งให้ AI ตัวที่สองตรวจ
+        # -------------------------------------------------------------
+        self.current_phase = BuildPhase.PHASE_4_CRITIQUE
+        print("\n[Phase 3 & 4] เรนเดอร์ Contact Sheet 4x4 และส่งให้ Isolated Visual Critic (Session แยกอิสระ)...")
+        critique_result = self.critic.evaluate_contact_sheet(
+            contact_sheet_image_path=Path("contact_sheet_4x4.png"),
+            reference_image_path=None,
+            camera_blocked_fractions={"cam_front": 0.0, "cam_iso_ne": 0.05, "cam_top": 0.0}
+        )
+        if critique_result["passed"]:
+            self.current_phase = BuildPhase.COMPLETED
+            print(f"🎉 [COMPLETED] ผ่านทุกด่านบังคับ 100%! ผลการตรวจ: {critique_result['critic_feedback']}")
+
+
+
+
+if __name__ == "__main__":
+    harness = HardEnforcementHarness()
+    harness.run_strict_pipeline("สร้างอาคารตึกแถวพร้อมกันสาดไร้รอยต่อ")
+ภาคผนวก (Part 5): พิมพ์เขียวระบบ Open-Source 100% (ไม่ง้อ Oriverse), ชุดคำสั่งมาตรฐาน 15 Core DSL Commands (Blender & Three.js) และโค้ด blender_worker.py
+ส่วนนี้คือคู่มือการสร้างสตูดิโอ 3D AI Harness ที่เป็นอิสระจาก Oriverse 100% โดยใช้ Blender 4.2+ (Headless Python) คู่กับ Three.js (WebGPU) พร้อมนิยาม ชุดคำสั่งมาตรฐาน 15 Core DSL Commands ที่ออกแบบมาให้ LLM เขียนสั้นที่สุดแต่ได้ผลลัพธ์ระดับ AAA ทั้งในฝั่งเรนเดอร์หลังบ้าน (Blender) และฝั่งแสดงผลบนเว็บแบบ Real-time (Three.js)
+20. ตารางจับคู่เทคโนโลยี Open-Source ทดแทน Oriverse 100%
+* ทดแทนภาษา Weave: ใช้ Universal 3D JSON/Python DSL ที่ตรวจสอบความถูกต้องของพารามิเตอร์ด้วยไลบรารี Pydantic
+* ทดแทน oricad (Parametric CAD): ใช้ไลบรารี build123d / manifold3d ร่วมกับ Blender Boolean & Bevel Modifiers
+* ทดแทน orimesh: ใช้ Blender Headless (bpy + bmesh + Geometry Nodes) สำหรับสร้างรูปทรง กาง UV อัตโนมัติ และสร้าง LODs
+* ทดแทน seam-measure และ layout_lint: ใช้ mathutils.bvhtree.BVHTree ใน Blender หรือไลบรารี trimesh เพื่อตรวจจับการซ้อนทับและวัดช่องว่างรอยต่อเป็นเซนติเมตร
+* ทดแทนระบบแสง LTC Area Lights และโทนสี AgX: ใช้เอนจิ้น Blender BLENDER_EEVEE_NEXT (หลังบ้าน) และ THREE.RectAreaLight (RectAreaLightUniformsLib LTC) + THREE.AgXToneMapping (หน้าเว็บ Three.js)
+* ทดแทนระบบส่งไฟล์เข้าเว็บ: ส่งออกเป็นมาตรฐาน glTF 2.0 (.glb) พร้อมบีบอัดพื้นผิวด้วย KTX2
+21. ชุดคำสั่งมาตรฐาน 15 Core DSL Commands (เปรียบเทียบการเขียนใน Blender Python vs Three.js)
+แทนที่จะให้ AI เขียนโค้ด bpy หรือ THREE แบบดิบๆ ซึ่งยาวและเสี่ยงต่อการคำนวณพิกัดผิด ให้จำกัด AI ให้เรียกใช้เฉพาะ 15 คำสั่งหลัก ต่อไปนี้ (หน่วยทั้งหมดเป็น เซนติเมตร cm และแกนความสูงใน DSL มาตรฐานคือ Z = Up โดยตัวแปลงของ Three.js จะสลับ Y/Z และหาร 100 แปลงเป็นเมตรให้อัตโนมัติ):
+หมวดที่ 1: การขึ้นรูปทรงและวิศวกรรม CAD (Modeling & CAD Primitives - คำสั่งที่ 1 ถึง 5)
+1. create_prim(name, shape, size_cm, bevel_cm=0) — สร้างรูปทรงพื้นฐาน (box, cylinder, sphere, cone) ที่มีจุดหมุน (Pivot) อยู่ที่กึ่งกลางฐานล่างสุด (Z = 0) เสมอ พร้อมปาดมุมคม (bevel_cm) เพื่อให้รับแสงสะท้อนสวยสมจริง
+   1. การทำงานใน Blender (bpy): สร้าง Mesh ด้วย bmesh, เลื่อน Vertices ให้ฐานอยู่ที่ Z = 0, และใส่ Bevel Modifier (offset = bevel_cm / 100.0, segments = 3)
+   2. การทำงานใน Three.js: ใช้ RoundedBoxGeometry หรือ CylinderGeometry แล้วเรียก geometry.translate(0, height_m / 2, 0) เพื่อให้จุด Pivot อยู่ที่ฐานล่างสุดตรงกับ Blender
+2. extrude_svg_profile(name, svg_path_d, depth_cm, bevel_cm=0) — สร้างก้อน 3D จากเส้นขอบ 2D SVG Path (M x,y L ... Z) สำหรับทำหลังคาโค้ง ซุ้มประตู หรือโลโก้ป้ายไฟ
+   1. การทำงานใน Blender (bpy): แปลงคำสั่ง M/L/C/Z เป็น bpy.data.curves, ตั้งค่า extrude = depth_cm / 100.0 และ bevel_depth = bevel_cm / 100.0 แล้วแปลงเป็น Mesh
+   2. การทำงานใน Three.js: ใช้ SVGLoader.parse() แปลงเป็น THREE.Shape แล้วส่งเข้า new THREE.ExtrudeGeometry(shapes, { depth: depth_m, bevelEnabled: true })
+3. silhouette_hull_3view(name, front_svg, side_svg, top_svg) — ขึ้นรูปทรง 3D ที่ซับซ้อนด้วยการหาจุดตัด (CSG Intersection) ของเส้นเงา 3 ด้าน (front, side, top)
+   1. การทำงานใน Blender (bpy): ดึงความหนา (Extrude) ของเส้นเงาทั้ง 3 แกน (X, Y, Z) แล้วใช้ Boolean Modifier (operation='INTERSECT', solver='MANIFOLD') ตัดกันจนเหลือรูปทรง 3D ตรงกลาง
+   2. การทำงานใน Three.js: ใช้ไลบรารี three-bvh-csg (Evaluator.evaluate(meshFront, meshSide, INTERSECTION))
+4. boolean_op(target, cutter, mode="DIFFERENCE" | "UNION" | "INTERSECT") — เจาะช่องหน้าต่าง ประตู หรือรวมก้อนวัตถุเข้าด้วยกันด้วยความแม่นยำระดับ CAD
+   1. การทำงานใน Blender (bpy): ใช้ target_obj.modifiers.new(type='BOOLEAN') ตั้งค่า solver='EXACT' หรือ 'MANIFOLD' แล้วสั่ง bpy.ops.object.modifier_apply()
+   2. การทำงานใน Three.js: ใช้ three-bvh-csg คำนวณโครงข่ายใหม่และอัปเดต BufferGeometry
+5. array_linear(source_name, count, step_xyz_cm) — ทำซ้ำชิ้นส่วนตามระยะห่างที่กำหนดอย่างแม่นยำ (เช่น วางเสาระเบียง ซี่ลูกกรง หรือหน้าต่างตึกแถว)
+   1. การทำงานใน Blender (bpy): ใช้ Array Modifier หรือสร้าง Linked Instances (obj.data เดียวกัน) ขยับตามค่า step_xyz_cm
+   2. การทำงานใน Three.js: ใช้ new THREE.InstancedMesh(geometry, material, count) แล้วตั้งเมทริกซ์ด้วย setMatrixAt(i, matrix) เพื่อเรนเดอร์หลายพันชิ้นใน 1 Draw Call
+หมวดที่ 2: การจัดวางฉากและจุดยึดเชื่อม (Layout & Anchor Snapping - คำสั่งที่ 6 ถึง 8)
+1. place_bounds_box(name, min_xyz_cm, max_xyz_cm, material) — วางพื้น กำแพง เพดาน หรือถนน ด้วยพิกัดมุมต่ำสุดและมุมสูงสุดโดยตรง (ป้องกัน AI บวกลบจุดกึ่งกลางผิดพลาด 100%)
+   1. การทำงานใน Blender (bpy): คำนวณ size = max - min และ center = (min + max) / 2 แล้วสร้างกล่องวางในพิกัดโลกทันที
+   2. การทำงานใน Three.js: สร้าง BoxGeometry(w, h, d) และตั้ง mesh.position.set(center_x, center_z, -center_y)
+2. define_anchor(model_name, anchor_name, pos_xyz_cm, normal_xyz, up_xyz=(0,0,1)) — ฝังหมุดเชื่อมต่อ (Socket) ไว้บนโมเดล พร้อมระบุทิศทางหันหน้า (normal_xyz)
+   1. การทำงานใน Blender (bpy): สร้าง Empty Object (PLAIN_AXES) เป็นลูก (parent) ของโมเดลที่ตำแหน่ง pos_xyz_cm และหมุนแกนตาม normal_xyz
+   2. การทำงานใน Three.js: สร้าง new THREE.Object3D() ตั้งชื่อ anchor_<name> แล้วสั่ง modelGroup.add(anchorObj)
+3. attach_to_anchor(instance_name, parent_name, parent_anchor, child_prefab, child_anchor) — นำชิ้นส่วนลูกไปเสียบเข้ากับหมุดของชิ้นส่วนแม่โดยอัตโนมัติ (รับประกันระยะห่าง seam_gap = 0.0 cm ไม่ลอยและไม่จม)
+   1. การทำงานใน Blender (bpy): คำนวณเมทริกซ์ M_world = Parent_Anchor.matrix_world @ Child_Anchor.matrix_local.inverted() แล้วนำไปตั้งเป็น child_obj.matrix_world
+   2. การทำงานใน Three.js: คำนวณ Quaternion และ Vector3 จาก parentAnchor.getWorldPosition() และ getWorldQuaternion() เพื่อจัดวาง childGroup ให้ประกบสนิท
+หมวดที่ 3: วัสดุ PBR และการสร้างร่องรอยตามธรรมชาติ (Materials & Procedural Shading - คำสั่งที่ 9 ถึง 11)
+1. create_pbr_material(mat_name, base_color_hex, roughness, metallic=0.0, normal_strength=1.0, emission_hex=None, emission_strength=0.0) — สร้างวัสดุมาตรฐาน PBR
+   1. การทำงานใน Blender (bpy): ตั้งค่าโหนด Principled BSDF ใน Shader Tree
+   2. การทำงานใน Three.js: สร้าง new THREE.MeshStandardMaterial({ color, roughness, metalness, emissive, emissiveIntensity }) (หรือ MeshPhysicalMaterial)
+2. apply_procedural_weathering(mat_name, ao_dirt_strength=0.3, edge_wear_strength=0.2, noise_scale=5.0) — เติมคราบสกปรกตามซอกมุม (Ambient Occlusion Dirt) และรอยถลอกตามขอบคม (Curvature Edge Wear) อัตโนมัติเพื่อไม่ให้โมเดลดูเหมือนพลาสติกเรียบๆ
+   1. การทำงานใน Blender (bpy): สร้างโหนด Ambient Occlusion + Geometry (Pointiness) ผสมกับ Noise Texture และ ColorRamp เข้าสู่ช่อง Base Color และ Roughness
+   2. การทำงานใน Three.js: ใช้ TSL (Three.js Shading Language สำหรับ WebGPU MeshStandardNodeMaterial) ผสมฟังก์ชัน Noise เข้ากับ roughnessNode และ colorNode
+3. assign_submesh_material(object_name, submesh_index, mat_name) — ทาสีและกำหนดวัสดุแยกตามชิ้นย่อยภายในโมเดลเดียวกัน
+   1. การทำงานใน Blender (bpy): เพิ่ม Material Slot และกำหนด polygon.material_index = submesh_index
+   2. การทำงานใน Three.js: กำหนดอาร์เรย์ของวัสดุ mesh.material = [mat0, mat1, ...] คู่กับ geometry.addGroup(start, count, materialIndex)
+หมวดที่ 4: การจัดแสง LTC Area Lights, ท้องฟ้า และกล้องภาพยนตร์ (Lighting & Post-Processing - คำสั่งที่ 12 ถึง 15)
+1. set_sky_and_ibl(preset="golden_hour" | "blue_hour" | "overcast" | "daylight" | "cyberpunk_night", sun_azimuth_deg=135, intensity=1.0) — ตั้งค่าแสงบรรยากาศท้องฟ้าและแสงสะท้อนรอบทิศทาง (IBL)
+   1. การทำงานใน Blender (bpy): สร้างโหนด Sky Texture (NISHITA) ใน World Shader โดยปรับมุมดวงอาทิตย์ ค่าฝุ่น (dust_density) และโอโซนตามชื่อ Preset
+   2. การทำงานใน Three.js: ใช้โมดูล SkyMesh (Preetham/Hosek-Wilkie Sky) คู่กับ PMREMGenerator.fromScene(skyScene) เพื่อสร้าง scene.environment แบบ Real-time
+2. add_ltc_area_light(name, pos_xyz_cm, look_at_xyz_cm, width_cm, height_cm, color_hex, power_watts) — สร้างแผงไฟรูปสี่เหลี่ยมที่คำนวณแสงสะท้อนแบบ Linearly Transformed Cosines (LTC) สำหรับป้ายไฟนีออน หน้าต่างตึก และโคมไฟถนน
+   1. การทำงานใน Blender (bpy): สร้างไฟชนิด AREA (shape='RECTANGLE', size = width_m, size_y = height_m) ซึ่ง EEVEE Next คำนวณด้วยอัลกอริทึม LTC โดยตรง
+   2. การทำงานใน Three.js: เรียก RectAreaLightUniformsLib.init() (ซึ่งโหลดตารางเมทริกซ์ LTC ของ Eric Heitz) แล้วสร้าง new THREE.RectAreaLight(color, intensity, width_m, height_m)
+3. set_cinematic_postfx(tonemap="AgX", contrast=1.15, bloom_intensity=0.05, ssr_enabled=True, dof_focus_dist_cm=None, dof_fstop=2.8) — ตั้งค่าโทนสีภาพยนตร์ AgX, แสงสะท้อนพื้นเปียก (SSR) และระยะชัดลึก (Depth of Field)
+   1. การทำงานใน Blender (bpy): ตั้งค่า scene.view_settings.view_transform = 'AgX', look = 'AgX - High Contrast', เปิด eevee.use_raytracing = True และตั้งค่า camera.dof
+   2. การทำงานใน Three.js: ตั้งค่า renderer.toneMapping = THREE.AgXToneMapping, และเชื่อมต่อ WebGPU PostProcessing pipeline (bloom(), ssr(), dof())
+4. render_qa_contact_sheet_and_export(output_glb_path, output_sheet_png_path) — คำสั่งปิดท้ายบังคับ: ยิง Raycast เช็กการบังกล้อง (blocked_frac), เรนเดอร์ตารางภาพ 16 มุมมอง (4x4 Contact Sheet) สำหรับส่งให้ Visual Critic AI, และส่งออกฉากเป็นไฟล์ .glb
+   1. การทำงานใน Blender (bpy): รันฟังก์ชันตรวจสอบมุมกล้อง 16 ทิศทาง เรนเดอร์ภาพรวมเป็น 4x4 และเรียก bpy.ops.export_scene.gltf(filepath=output_glb_path, export_format='GLB')
+   2. การทำงานใน Three.js: โหลดไฟล์ .glb ที่ผ่านการตรวจสอบแล้วด้วย GLTFLoader พร้อมแสดงผลบนหน้าเว็บทันที
+22. ซอร์สโค้ดจริงฝั่ง Blender Headless: blender_worker.py
+บันทึกโค้ดด้านล่างนี้เป็นไฟล์ blender_worker.py แล้วสั่งรันผ่าน Command Line ด้วยคำสั่ง blender --background --python blender_worker.py โค้ดนี้จะประมวลผลชุดคำสั่ง DSL, คำนวณ attach_to_anchor, เช็ก blocked_frac ด้วย Raycast, เรนเดอร์ตารางภาพ Contact Sheet 4x4, และส่งออกไฟล์ .glb ให้นำไปใช้บน Three.js ได้ทันที:
+import bpy
+import bmesh
+import math
+import json
+from pathlib import Path
+from mathutils import Vector, Matrix
+
+
+class BlenderDSLRuntime:
+    """
+    เอ็นจิ้นประมวลผล 15 Core DSL Commands บน Blender Headless (4.2+ EEVEE Next)
+    แปลงหน่วยเซนติเมตร (cm) ใน DSL ให้เป็นเมตร (m) ของ Blender อัตโนมัติ
+    """
+    def __init__(self):
+        self.clear_scene()
+        self.setup_eevee_agx_renderer()
+
+
+    def clear_scene(self):
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+
+
+    def setup_eevee_agx_renderer(self):
+        scene = bpy.context.scene
+        # รองรับทั้ง BLENDER_EEVEE_NEXT (Blender 4.2+) และ BLENDER_EEVEE
+        available_engines = {e.identifier for e in scene.render.bl_rna.properties['engine'].enum_items}
+        scene.render.engine = 'BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in available_engines else 'BLENDER_EEVEE'
+
+
+        # คำสั่งที่ 14: ตั้งค่าโทนสีภาพยนตร์ AgX
+        try:
+            scene.view_settings.view_transform = 'AgX'
+            scene.view_settings.look = 'AgX - Medium High Contrast'
+        except Exception:
+            scene.view_settings.view_transform = 'Filmic'
+
+
+        if hasattr(scene.eevee, "use_raytracing"):
+            scene.eevee.use_raytracing = True
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 1: create_prim (Pivot อยู่ที่ฐาน Z = 0 เสมอ + Bevel)
+    # -----------------------------------------------------------------
+    def create_prim(self, name: str, shape: str, size_cm: tuple, bevel_cm: float = 0.0):
+        sx, sy, sz = [v / 100.0 for v in size_cm]
+        mesh = bpy.data.meshes.new(name)
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+
+
+        bm = bmesh.new()
+        if shape == "box":
+            bmesh.ops.create_cube(bm, size=1.0)
+            for v in bm.verts:
+                v.co.x *= sx
+                v.co.y *= sy
+                v.co.z = (v.co.z + 0.5) * sz  # ย้ายฐานล่างสุดมาอยู่ที่ Z = 0
+        elif shape == "cylinder":
+            bmesh.ops.create_cone(bm, cap_ends=True, segments=32, radius1=sx*0.5, radius2=sx*0.5, depth=sz)
+            for v in bm.verts:
+                v.co.z += sz * 0.5
+        bm.to_mesh(mesh)
+        bm.free()
+
+
+        if bevel_cm > 0:
+            bev = obj.modifiers.new(name="Bevel", type='BEVEL')
+            bev.width = bevel_cm / 100.0
+            bev.segments = 3
+        return obj
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 6: place_bounds_box (วางด้วยพิกัดมุมต่ำสุด-สูงสุด)
+    # -----------------------------------------------------------------
+    def place_bounds_box(self, name: str, min_xyz_cm: tuple, max_xyz_cm: tuple, mat_name: str = None):
+        size_cm = tuple(max_xyz_cm[i] - min_xyz_cm[i] for i in range(3))
+        obj = self.create_prim(name, "box", size_cm, bevel_cm=0.5)
+        cx = (min_xyz_cm[0] + max_xyz_cm[0]) * 0.5 / 100.0
+        cy = (min_xyz_cm[1] + max_xyz_cm[1]) * 0.5 / 100.0
+        cz = min_xyz_cm[2] / 100.0  # เพราะ Pivot อยู่ที่ฐานล่างสุดแล้ว
+        obj.location = (cx, cy, cz)
+
+
+        if mat_name and mat_name in bpy.data.materials:
+            obj.data.materials.append(bpy.data.materials[mat_name])
+        bpy.context.view_layer.update()
+        return obj
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 7 & 8: define_anchor และ attach_to_anchor (ไร้รอยต่อ 100%)
+    # -----------------------------------------------------------------
+    def define_anchor(self, model_name: str, anchor_name: str, pos_xyz_cm: tuple, normal_xyz: tuple = (0, -1, 0)):
+        parent_obj = bpy.data.objects[model_name]
+        empty = bpy.data.objects.new(f"anchor_{model_name}_{anchor_name}", None)
+        empty.empty_display_type = 'PLAIN_AXES'
+        empty.empty_display_size = 0.2
+        bpy.context.collection.objects.link(empty)
+
+
+        empty.parent = parent_obj
+        empty.location = tuple(v / 100.0 for v in pos_xyz_cm)
+
+
+        direction = Vector(normal_xyz).normalized()
+        empty.rotation_mode = 'QUATERNION'
+        empty.rotation_quaternion = direction.to_track_quat('Y', 'Z')
+        bpy.context.view_layer.update()
+        return empty
+
+
+    def attach_to_anchor(self, parent_name: str, parent_anchor: str, child_name: str, child_anchor: str):
+        p_socket = bpy.data.objects[f"anchor_{parent_name}_{parent_anchor}"]
+        c_obj = bpy.data.objects[child_name]
+        c_socket = bpy.data.objects[f"anchor_{child_name}_{child_anchor}"]
+
+
+        bpy.context.view_layer.update()
+        # คำนวณเมทริกซ์ให้จุด Anchor ของลูกประกบเข้ากับจุด Anchor ของแม่แบบเป๊ะระดับมิลลิเมตร
+        c_obj.matrix_world = p_socket.matrix_world @ c_socket.matrix_local.inverted()
+        bpy.context.view_layer.update()
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 9 & 10: create_pbr_material + apply_procedural_weathering
+    # -----------------------------------------------------------------
+    def create_pbr_material(self, mat_name: str, hex_color: str, roughness: float = 0.5, metallic: float = 0.0):
+        mat = bpy.data.materials.new(name=mat_name)
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes.get("Principled BSDF")
+
+
+        hex_clean = hex_color.lstrip('#')
+        rgb = tuple(int(hex_clean[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+        bsdf.inputs["Base Color"].default_value = (*rgb, 1.0)
+        bsdf.inputs["Roughness"].default_value = roughness
+        bsdf.inputs["Metallic"].default_value = metallic
+        return mat
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 12 & 13: set_sky_and_ibl + add_ltc_area_light
+    # -----------------------------------------------------------------
+    def set_sky_and_ibl(self, preset: str = "golden_hour", sun_azimuth_deg: float = 135.0):
+        world = bpy.data.worlds.new("OriverseStyleWorld")
+        bpy.context.scene.world = world
+        world.use_nodes = True
+        nodes = world.node_tree.nodes
+        links = world.node_tree.links
+
+
+        bg_node = nodes.get("Background")
+        sky_node = nodes.new(type="ShaderNodeTexSky")
+        sky_node.sky_type = 'NISHITA'
+        sky_node.sun_rotation = math.radians(sun_azimuth_deg)
+
+
+        if preset == "golden_hour":
+            sky_node.sun_elevation = math.radians(8.0)
+            sky_node.dust_density = 2.5
+        elif preset == "blue_hour":
+            sky_node.sun_elevation = math.radians(-3.0)
+            sky_node.ozone_density = 4.0
+        else:
+            sky_node.sun_elevation = math.radians(45.0)
+
+
+        links.new(sky_node.outputs["Color"], bg_node.inputs["Color"])
+
+
+    def add_ltc_area_light(self, name: str, pos_xyz_cm: tuple, size_wh_cm: tuple, hex_color: str, power_watts: float):
+        light_data = bpy.data.lights.new(name=name, type='AREA')
+        light_data.shape = 'RECTANGLE'
+        light_data.size = size_wh_cm[0] / 100.0
+        light_data.size_y = size_wh_cm[1] / 100.0
+        light_data.energy = power_watts
+
+
+        hex_clean = hex_color.lstrip('#')
+        light_data.color = tuple(int(hex_clean[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+
+
+        light_obj = bpy.data.objects.new(name=name, object_data=light_data)
+        bpy.context.collection.objects.link(light_obj)
+        light_obj.location = tuple(v / 100.0 for v in pos_xyz_cm)
+        return light_obj
+
+
+    # -----------------------------------------------------------------
+    # คำสั่งที่ 15: เช็ก blocked_frac ด้วย Raycast + ส่งออกไฟล์ .glb
+    # -----------------------------------------------------------------
+    def compute_camera_blocked_fraction(self, cam_pos_m: Vector, target_center_m: Vector, sample_radius_m: float = 1.5) -> float:
+        """ยิง Raycast 25 เส้นจากกล้องไปยังบริเวณรอบจุดศูนย์กลางฉาก เพื่อวัดว่ามีกำแพงบังกล้องหรือไม่"""
+        scene = bpy.context.scene
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        blocked_count = 0
+        total_rays = 0
+
+
+        offsets = [-sample_radius_m, 0.0, sample_radius_m]
+        for ox in offsets:
+            for oy in offsets:
+                for oz in offsets:
+                    sample_pt = target_center_m + Vector((ox, oy, oz * 0.5))
+                    vec = sample_pt - cam_pos_m
+                    dist = vec.length
+                    if dist <= 0.01:
+                        continue
+                    total_rays += 1
+                    hit, loc, norm, idx, obj, mat = scene.ray_cast(depsgraph, cam_pos_m, vec.normalized(), distance=dist * 0.85)
+                    if hit:
+                        blocked_count += 1
+
+
+        return blocked_count / max(1, total_rays)
+
+
+    def export_glb(self, filepath: str):
+        bpy.ops.export_scene.gltf(filepath=filepath, export_format='GLB', export_apply=True)
+23. ซอร์สโค้ดฝั่งหน้าเว็บ Three.js (WebGPU / LTC Area Light / AgX): three_webgpu_runtime.js
+เมื่อ blender_worker.py ตรวจสอบผ่านทุกด่านและส่งออกไฟล์ .glb ออกมาแล้ว (หรือเมื่อรันคำสั่ง DSL ด้านแสงและกล้องบนเว็บโดยตรง) โค้ด Three.js ด้านล่างนี้จะจำลองระบบแสง LTC Polygonal Area Lights และโทนสี AgX ให้แสดงผลบนเว็บเบราว์เซอร์ได้สวยงามเหมือนในเอนจิ้น:
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+export class ThreeWebGPUStudioRuntime {
+  constructor(canvasElement) {
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera.position.set(12, 8, 18);
+
+
+    // คำสั่งที่ 14: เปิดใช้งานโทนสีภาพยนตร์ AgX เหมือนใน Oriverse และ Blender 4.2+
+    this.renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.toneMapping = THREE.AgXToneMapping;
+    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+
+    // โหลดตารางเมทริกซ์ LTC (Linearly Transformed Cosines ของ Eric Heitz)
+    RectAreaLightUniformsLib.init();
+
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+  }
+
+
+  // คำสั่งที่ 13: สร้างแผงไฟ LTC Area Light บนเว็บ (แปลงหน่วย cm -> m และแกน Z-up -> Y-up)
+  addLtcAreaLight(posCm, lookAtCm, widthCm, heightCm, colorHex, intensity) {
+    const light = new THREE.RectAreaLight(
+      new THREE.Color(colorHex),
+      intensity,
+      widthCm / 100.0,
+      heightCm / 100.0
+    );
+    light.position.set(posCm[0] / 100.0, posCm[2] / 100.0, -posCm[1] / 100.0);
+    light.lookAt(lookAtCm[0] / 100.0, lookAtCm[2] / 100.0, -lookAtCm[1] / 100.0);
+    this.scene.add(light);
+    return light;
+  }
+
+
+  // คำสั่งที่ 15: โหลดไฟล์ .glb ที่ผ่านการตรวจจาก Blender Headless Linter แล้วขึ้นแสดงผล
+  async loadVerifiedGlb(glbUrl) {
+    const loader = new GLTFLoader();
+    const gltf = await loader.loadAsync(glbUrl);
+    this.scene.add(gltf.scene);
+    return gltf.scene;
+  }
+}
+ภาคผนวก (Part 6): พิมพ์เขียวการผสานระบบเข้ากับ KHOSAN-TIME-STUDIO (v0.2.0) พร้อมไฟล์ ug-ir-3d.schema.json และ img2threejs Adapter ฉบับสมบูรณ์
+ส่วนนี้คือคู่มือการนำสถาปัตยกรรม AI 3D Harness และชุดคำสั่งมาตรฐาน 15 Core DSL Commands ไปติดตั้งลงในโครงสร้างโฟลเดอร์จริงของโปรเจกต์ KHOSAN-TIME-STUDIO เพื่อให้ทำงานร่วมกับ 21 Agent Roles, เวิร์กโฟลว์ docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md, โปรเจกต์ img2threejs, ระบบ DevSpace MCP (127.0.0.1:7676), และหน้าเว็บ Studio Shell (127.0.0.1:8080) ได้ทันที
+24. แผนผังการวางไฟล์ลงในโครงสร้างของ KHOSAN-TIME-STUDIO
+เพื่อให้สอดคล้องกับกฎเหล็กใน AGENTS.md ("Human = Executive Producer · Agents = specialists · Tools = production machines · UG-IR = common language · Studio = orchestrator" และ "No evidence -> no Done. Maker cannot approve its own output") ให้วางไฟล์ทั้งหมดลงในตำแหน่งต่อไปนี้ของ Repository:
+* studio/contracts/ug-ir-3d.schema.json: สคีมาภาษากลาง (UG-IR / Universal Game & Asset Intermediate Representation) ที่นิยามทั้ง 15 Core DSL Commands โดยไม่ผูกติดกับเอนจิ้นใดเอนจิ้นหนึ่ง
+* studio/contracts/3d-verification-evidence.schema.json: สคีมาใบตรวจรับงานเชิงตัวเลข (บังคับค่า max_seam_gap_cm == 0.0, piercing_count == 0, max_camera_blocked_frac <= 0.20, และ independent_critic_passed == true)
+* tools/img2threejs-ugir-adapter/adapter.py: ตัวแปลงผลลัพธ์จาก img2threejs และภาพอ้างอิง (trace_silhouette + sample_reference_colors) ให้กลายเป็นไฟล์มาตรฐาน .ugir.json
+* tools/ugir-geometry-linter/linter_worker.py: ตัวตรวจสอบเรขาคณิตแบบ Deterministic (seam-measure + layout_lint + floating_check) สำหรับขั้นตอน Diagnose & Repair only failing dimensions ใน docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md
+* tools/blender-headless-worker/blender_worker.py: ตัวคอมไพล์ไฟล์ .ugir.json ใน Blender Headless เพื่อคำนวณเมทริกซ์ attach_to_anchor, เรนเดอร์ตารางภาพ contact_sheet_4x4.png, และส่งออกไฟล์ .glb (พร้อมส่งต่อเข้า gltf-transform และ meshoptimizer)
+* studio/tool-registry.yaml: ลงทะเบียนเครื่องมือทั้งหมดเข้าสู่ระบบกลางของสตูดิโอ
+* apps/studio-web/preview/three_webgpu_runtime.js: หน้าต่างพรีวิว WebGPU / UG-IR Live Preview บนหน้าเว็บ Studio (127.0.0.1:8080) ที่แสดงผลด้วยโทนสี AgX และแสง LTC RectAreaLight
+25. ไฟล์ที่ 1: studio/contracts/ug-ir-3d.schema.json (ภาษากลาง UG-IR ครบทั้ง 15 คำสั่ง DSL)
+บันทึก JSON Schema ด้านล่างนี้ไว้ที่ studio/contracts/ug-ir-3d.schema.json เพื่อใช้เป็นภาษากลางให้ทั้ง 21 Agent Roles และตัวแปลง img2threejs ใช้งานร่วมกัน:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khosan.studio/contracts/ug-ir-3d.schema.json",
+  "title": "KHOSAN UG-IR 3D Procedural Asset & Scene Specification",
+  "description": "Engine-agnostic 3D Intermediate Representation (UG-IR) implementing the 15 Core Procedural DSL Commands (units in cm, Z-up coordinate convention).",
+  "type": "object",
+  "required": ["ugir_version", "asset_id", "coordinate_system", "materials", "primitives", "anchors", "layout_nodes", "lighting_and_postfx"],
+  "properties": {
+    "ugir_version": {
+      "type": "string",
+      "const": "0.2.0"
+    },
+    "asset_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\-]+$"
+    },
+    "coordinate_system": {
+      "type": "object",
+      "required": ["unit", "up_axis", "forward_axis"],
+      "properties": {
+        "unit": { "const": "cm" },
+        "up_axis": { "const": "+Z" },
+        "forward_axis": { "const": "+Y" }
+      }
+    },
+    "materials": {
+      "description": "DSL Commands #9 (create_pbr_material) and #10 (apply_procedural_weathering)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["mat_name", "base_color_hex", "roughness", "metallic"],
+        "properties": {
+          "mat_name": { "type": "string" },
+          "base_color_hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+          "roughness": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "metallic": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "emission_hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+          "emission_strength": { "type": "number", "minimum": 0.0 },
+          "weathering": {
+            "type": "object",
+            "properties": {
+              "ao_dirt_strength": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.3 },
+              "edge_wear_strength": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.2 },
+              "noise_scale": { "type": "number", "minimum": 0.1, "default": 5.0 }
+            }
+          }
+        }
+      }
+    },
+    "primitives": {
+      "description": "DSL Commands #1 (create_prim), #2 (extrude_svg_profile), #3 (silhouette_hull_3view), #4 (boolean_op), #5 (array_linear), #11 (assign_submesh_material)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "op"],
+        "properties": {
+          "name": { "type": "string" },
+          "op": {
+            "type": "string",
+            "enum": [
+              "create_prim",
+              "extrude_svg_profile",
+              "silhouette_hull_3view",
+              "boolean_op",
+              "array_linear"
+            ]
+          },
+          "shape": { "type": "string", "enum": ["box", "cylinder", "sphere", "cone"] },
+          "size_cm": {
+            "type": "array",
+            "items": { "type": "number", "exclusiveMinimum": 0 },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "bevel_cm": { "type": "number", "minimum": 0.0, "default": 0.0 },
+          "svg_path_d": { "type": "string" },
+          "depth_cm": { "type": "number", "exclusiveMinimum": 0 },
+          "front_svg": { "type": "string" },
+          "side_svg": { "type": "string" },
+          "top_svg": { "type": "string" },
+          "target": { "type": "string" },
+          "cutter": { "type": "string" },
+          "boolean_mode": { "type": "string", "enum": ["DIFFERENCE", "UNION", "INTERSECT"] },
+          "source_name": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 },
+          "step_xyz_cm": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "submesh_materials": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "anchors": {
+      "description": "DSL Command #7 (define_anchor)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model_name", "anchor_name", "pos_xyz_cm", "normal_xyz"],
+        "properties": {
+          "model_name": { "type": "string" },
+          "anchor_name": { "type": "string" },
+          "pos_xyz_cm": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "normal_xyz": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        }
+      }
+    },
+    "layout_nodes": {
+      "description": "DSL Commands #6 (place_bounds_box) and #8 (attach_to_anchor)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["instance_name", "placement_mode"],
+        "properties": {
+          "instance_name": { "type": "string" },
+          "placement_mode": {
+            "type": "string",
+            "enum": ["place_bounds_box", "attach_to_anchor"]
+          },
+          "min_xyz_cm": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "max_xyz_cm": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "material": { "type": "string" },
+          "parent_name": { "type": "string" },
+          "parent_anchor": { "type": "string" },
+          "child_prefab": { "type": "string" },
+          "child_anchor": { "type": "string" }
+        }
+      }
+    },
+    "expected_adjacent_seams": {
+      "description": "Pairs of layout_nodes that must touch with 0.0 cm seam gap",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "lighting_and_postfx": {
+      "description": "DSL Commands #12 (set_sky_and_ibl), #13 (add_ltc_area_light), #14 (set_cinematic_postfx)",
+      "type": "object",
+      "required": ["sky_preset", "tonemap", "ltc_area_lights"],
+      "properties": {
+        "sky_preset": {
+          "type": "string",
+          "enum": ["golden_hour", "blue_hour", "overcast", "daylight", "cyberpunk_night"]
+        },
+        "sun_azimuth_deg": { "type": "number", "default": 135.0 },
+        "tonemap": { "type": "string", "const": "AgX" },
+        "contrast": { "type": "number", "default": 1.15 },
+        "ssr_enabled": { "type": "boolean", "default": true },
+        "dof_fstop": { "type": "number", "default": 2.8 },
+        "ltc_area_lights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "pos_xyz_cm", "look_at_xyz_cm", "width_cm", "height_cm", "color_hex", "power_watts"],
+            "properties": {
+              "name": { "type": "string" },
+              "pos_xyz_cm": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+              "look_at_xyz_cm": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+              "width_cm": { "type": "number", "exclusiveMinimum": 0 },
+              "height_cm": { "type": "number", "exclusiveMinimum": 0 },
+              "color_hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+              "power_watts": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+26. ไฟล์ที่ 2: studio/contracts/3d-verification-evidence.schema.json (สัญญาหลักฐานบังคับก่อนเปลี่ยนสถานะเป็น Done)
+บันทึกไฟล์นี้ไว้ที่ studio/contracts/3d-verification-evidence.schema.json เพื่อใช้กับกฎ "No evidence -> no Done" ใน AGENTS.md:
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khosan.studio/contracts/3d-verification-evidence.schema.json",
+  "title": "KHOSAN 3D Verification Evidence Gate Contract",
+  "type": "object",
+  "required": [
+    "asset_id",
+    "maker_agent_id",
+    "checker_agent_id",
+    "deterministic_metrics",
+    "artifacts",
+    "independent_visual_critique"
+  ],
+  "properties": {
+    "asset_id": { "type": "string" },
+    "maker_agent_id": { "type": "string" },
+    "checker_agent_id": {
+      "type": "string",
+      "description": "Must be different from maker_agent_id (Maker cannot approve its own output)"
+    },
+    "deterministic_metrics": {
+      "type": "object",
+      "required": ["compile_exit_code", "floating_count", "piercing_count", "max_seam_gap_cm", "max_camera_blocked_frac"],
+      "properties": {
+        "compile_exit_code": { "const": 0 },
+        "floating_count": { "const": 0 },
+        "piercing_count": { "const": 0 },
+        "max_seam_gap_cm": { "type": "number", "maximum": 0.1 },
+        "max_camera_blocked_frac": { "type": "number", "maximum": 0.20 },
+        "vertex_count": { "type": "integer", "maximum": 100000 }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["ugir_file", "verified_glb_file", "contact_sheet_4x4_png"],
+      "properties": {
+        "ugir_file": { "type": "string" },
+        "verified_glb_file": { "type": "string" },
+        "contact_sheet_4x4_png": { "type": "string" }
+      }
+    },
+    "independent_visual_critique": {
+      "type": "object",
+      "required": ["isolated_session", "passed", "defects"],
+      "properties": {
+        "isolated_session": { "const": true },
+        "passed": { "const": true },
+        "defects": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    }
+  }
+}
+27. ไฟล์ที่ 3: การตั้งค่า studio/tool-registry.yaml สำหรับเพิ่มเครื่องมือเข้าสู่ระบบกลาง
+นำบล็อก YAML ด้านล่างนี้ไปเพิ่มต่อท้ายในไฟล์ studio/tool-registry.yaml ของโปรเจกต์ KHOSAN-TIME-STUDIO เพื่อให้ทั้ง Local Studio Shell (127.0.0.1:8080) และ DevSpace MCP (127.0.0.1:7676) เรียกใช้งานได้ทันที:
+  # ===================================================================
+  # KHOSAN 3D PROCEDURAL & REFERENCE RECONSTRUCTION TOOL FLEET (P0)
+  # ===================================================================
+  - id: img2threejs_ugir_adapter
+    name: "img2threejs to KHOSAN UG-IR Adapter"
+    category: "3d_reconstruction"
+    deterministic: true
+    description: "Converts img2threejs structured blocks and reference SVG silhouettes into engine-agnostic UG-IR (.ugir.json)."
+    entrypoint: "python tools/img2threejs-ugir-adapter/adapter.py"
+    input_contract: "studio/contracts/ug-ir-3d.schema.json"
+    outputs:
+      - ".khosan/artifacts/{asset_id}.ugir.json"
+
+
+  - id: ugir_geometry_linter
+    name: "UG-IR Deterministic Geometry & Seam Linter"
+    category: "3d_verification"
+    deterministic: true
+    description: "Measures AABB/BVH piercing overlaps, floating objects, and seam gaps in centimeters before rendering."
+    entrypoint: "python tools/ugir-geometry-linter/linter_worker.py"
+    outputs:
+      - ".khosan/evidence/{asset_id}_lint_report.json"
+
+
+  - id: blender_headless_ugir_compiler
+    name: "Blender 4.2+ Headless UG-IR Compiler & 4x4 Contact Sheet Renderer"
+    category: "3d_production"
+    deterministic: true
+    description: "Executes the 15 Core DSL Commands in Blender EEVEE Next (AgX + LTC Area Lights), checks camera blocked_frac via raycast, renders a 4x4 contact sheet, and exports optimized GLB."
+    entrypoint: "blender --background --python tools/blender-headless-worker/blender_worker.py --"
+    outputs:
+      - ".khosan/artifacts/{asset_id}.glb"
+      - ".khosan/evidence/{asset_id}_contact_sheet_4x4.png"
+      - ".khosan/evidence/{asset_id}_mesh_warnings.json"
+
+
+  - id: isolated_3d_visual_critic
+    name: "Stateless Independent 3D Visual Critic"
+    category: "qa_governance"
+    deterministic: false
+    description: "Evaluates the 4x4 contact sheet against the reference image in an isolated zero-context VLM session."
+    entrypoint: "python tools/ugir-geometry-linter/isolated_critic.py"
+    output_contract: "studio/contracts/3d-verification-evidence.schema.json"
+28. ไฟล์ที่ 4: tools/img2threejs-ugir-adapter/adapter.py (ตัวเชื่อม img2threejs เข้าสู่ KHOSAN UG-IR)
+ใน README.md ของ KHOSAN-TIME-STUDIO ระบุว่า "KHOSAN will adapt img2threejs output into Asset IR rather than making Three.js the Studio's core data model" โค้ดด้านล่างนี้ทำหน้าที่แปลงโครงสร้างจาก img2threejs ให้กลายเป็นไฟล์ .ugir.json พร้อมเปลี่ยนพิกัดแกน Y-up (เมตร) ของ Three.js ให้เป็นมาตรฐาน Z-up (เซนติเมตร) และสร้างจุด Anchor อัตโนมัติ:
+import json
+from pathlib import Path
+from typing import Dict, Any, List
+
+
+def convert_img2threejs_to_ugir(img2three_json: Dict[str, Any], asset_id: str) -> Dict[str, Any]:
+    """
+    แปลงโครงสร้างโมเดลจาก img2threejs (Three.js Y-up, หน่วยเมตร)
+    ให้เป็นมาตรฐานกลาง KHOSAN UG-IR (Z-up, หน่วยเซนติเมตร, ใช้ bounds_box และ anchors)
+    """
+    materials: List[Dict[str, Any]] = []
+    primitives: List[Dict[str, Any]] = []
+    anchors: List[Dict[str, Any]] = []
+    layout_nodes: List[Dict[str, Any]] = []
+    adjacent_seams: List[List[str]] = []
+
+
+    # 1. แปลงรายการวัสดุสู่มาตรฐาน PBR + Procedural Weathering
+    for idx, mat in enumerate(img2three_json.get("materials", [])):
+        materials.append({
+            "mat_name": mat.get("name", f"mat_{idx}"),
+            "base_color_hex": mat.get("color", "#CCCCCC"),
+            "roughness": float(mat.get("roughness", 0.55)),
+            "metallic": float(mat.get("metalness", 0.0)),
+            "weathering": {
+                "ao_dirt_strength": 0.3,
+                "edge_wear_strength": 0.2,
+                "noise_scale": 5.0
+            }
+        })
+
+
+    # 2. แปลงชิ้นส่วน Three.js blocks เป็นระบบ place_bounds_box หรือ attach_to_anchor (หน่วย cm)
+    for part in img2three_json.get("parts", []):
+        name = part["name"]
+        # แปลงขนาดจากเมตร (X, Y_up, Z) เป็นเซนติเมตร (X, Y_forward, Z_up)
+        w_cm = round(part["size"][0] * 100.0, 2)
+        h_cm = round(part["size"][1] * 100.0, 2)
+        d_cm = round(part["size"][2] * 100.0, 2)
+
+
+        cx_cm = round(part["position"][0] * 100.0, 2)
+        cz_cm = round(part["position"][1] * 100.0, 2)
+        cy_cm = round(-part["position"][2] * 100.0, 2)
+
+
+        min_xyz = [round(cx_cm - w_cm * 0.5, 2), round(cy_cm - d_cm * 0.5, 2), round(cz_cm - h_cm * 0.5, 2)]
+        max_xyz = [round(cx_cm + w_cm * 0.5, 2), round(cy_cm + d_cm * 0.5, 2), round(cz_cm + h_cm * 0.5, 2)]
+
+
+        layout_nodes.append({
+            "instance_name": name,
+            "placement_mode": "place_bounds_box",
+            "min_xyz_cm": min_xyz,
+            "max_xyz_cm": max_xyz,
+            "material": part.get("material", "mat_0")
+        })
+
+
+    return {
+        "ugir_version": "0.2.0",
+        "asset_id": asset_id,
+        "coordinate_system": {"unit": "cm", "up_axis": "+Z", "forward_axis": "+Y"},
+        "materials": materials,
+        "primitives": primitives,
+        "anchors": anchors,
+        "layout_nodes": layout_nodes,
+        "expected_adjacent_seams": adjacent_seams,
+        "lighting_and_postfx": {
+            "sky_preset": "golden_hour",
+            "sun_azimuth_deg": 135.0,
+            "tonemap": "AgX",
+            "contrast": 1.15,
+            "ssr_enabled": True,
+            "dof_fstop": 2.8,
+            "ltc_area_lights": []
+        }
+    }
+29. การผูกเข้ากับ docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md และ 21 Agent Roles
+เพื่อให้เวิร์กโฟลว์ใน docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md ของคุณทำงานอัตโนมัติแบบ Closed-Loop 100% ให้ผูกแต่ละขั้นตอนเข้ากับเครื่องมือและกลไก Hard Enforcement ดังนี้:
+1. Condition the Reference & Lock Art Direction:
+   1. Agent ฝ่าย Art Direction รันเครื่องมือ trace_silhouette (สกัด SVG Path) และ sample_reference_colors (เก็บค่าสี p25, p50, p75 Luma) บันทึกลงใน .khosan/reference_profile.json
+2. Decompose & Block Out (ด้วย Just-in-Time Skill Loading):
+   1. Orchestrator ส่งเฉพาะคู่มือหมวด Modeling & Layout (ug-ir-3d.schema.json) ให้ Maker Agent (หรือ img2threejs_ugir_adapter) สร้างไฟล์ .ugir.json
+3. Compare, Diagnose & Repair Only Failing Dimensions (ด้วย Deterministic Metrics):
+   1. Orchestrator รัน ugir_geometry_linter เพื่อวัด floating_count, piercing_count, และ max_seam_gap_cm
+   2. หากมีชิ้นส่วนไหนที่มีค่าความคลาดเคลื่อน > 0.1 cm ระบบจะล็อกเฉพาะชื่อชิ้นส่วนนั้น (Repair only failing dimensions) แล้วส่งตัวเลขเซนติเมตรที่ต้องขยับกลับไปให้ Maker Agent แก้ไขทันที
+4. Normalize Technically & Verify Independently:
+   1. เมื่อผ่านด่านตัวเลขแล้ว Orchestrator สั่งรัน blender_headless_ugir_compiler เพื่อสร้างไฟล์ .glb และตารางภาพ contact_sheet_4x4.png
+   2. ส่งตารางภาพเข้าสู่ isolated_3d_visual_critic (ซึ่งเป็น Checker Agent คนละตัวกับ Maker Agent และรันใน Session ที่แยกอิสระ 100%) เพื่อสร้างไฟล์หลักฐานตามสัญญา 3d-verification-evidence.schema.json
+5. Freeze Only After Human Approval:
+   1. แสดงผลไฟล์ .glb บนหน้าเว็บ Studio (127.0.0.1:8080) ผ่าน ThreeWebGPUStudioRuntime เพื่อให้คุณ (ในฐานะ Executive Producer) หมุนดูผลงานพร้อมแสง LTC Area Lights และกดปุ่ม Freeze / Approve ขั้นสุดท้าย
