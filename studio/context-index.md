@@ -35,6 +35,9 @@ Community and telemetry agents must not treat chat memory as evidence.
 ### Reference-to-3D / native harness execution
 For 3D assets and reference scenes, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md`, the authored template review at `knowledge/oriverse-research/harness-blueprint/README.md`, then only relevant source sections from the preserved `AI-3D-HARNESS-SOURCE.txt`. The Google Doc includes demonstration code with a **fake independent-critic PASS** and must not be used verbatim as QA. Run native deterministic tests and `tools/harness-3d/cli.mjs` on actual project-scoped artifact/evidence files. Its supported linter is bounded boxes only. The LLM may plan, repair and request checks, but cannot declare acceptance without receipts and human governance.
 
+### Part 7 hard-lock implementation review
+Before following the Google Doc's **6 Hard Locks**, read `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md`. The original Python sample is **not safe as a production gate**. For bounded +Z-up centimeter AABB repair, prefer `tools/ugir-geometry-linter/hard_lock_enforcer.py`, independently run `npm run verify:part7`, and require a trusted server-side tool dispatcher + existing signed evidence gate. The module is not globally wired into DevSpace, so simply showing the AI the schema or agent instructions is **not** proof of hard enforcement.
+
 ### Asset Synthesizer
 Asset pipeline, 2D/generic-3D/character tool docs, `docs/20-CHARACTER-FACTORY.md` for character work, material/animation/wearable constraints.
 
