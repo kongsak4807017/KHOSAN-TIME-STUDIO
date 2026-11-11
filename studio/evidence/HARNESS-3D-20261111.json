@@ -7,8 +7,8 @@
   "source_readback": "exact_character_match",
   "local_node_version": "v22.16.0",
   "tests_command": "node --test scripts/test-3d-harness.mjs",
-  "tests_executed": 14,
-  "tests_passed": 14,
+  "tests_executed": 17,
+  "tests_passed": 17,
   "tests_failed": 0,
   "test_environment": "isolated Linux container fixture; not user's Windows/Blender/GPU runtime",
   "tested_capabilities": [
@@ -22,7 +22,11 @@
     "human approval digest binding",
     "path traversal refusal",
     "stage order refusal",
-    "Y-up meter ↔ Z-up centimeter roundtrip"
+    "Y-up meter ↔ Z-up centimeter roundtrip",
+    "Ed25519 signatures verified for independent reviewer and human approval receipts",
+    "missing/untrusted public keys block approval",
+    "signed metadata tampering blocks approval",
+    "CLI verifier PASS only with provisioned trust keys"
   ],
   "not_claimed": [
     "full original Oriverse engine internals independently verified",
@@ -30,7 +34,8 @@
     "genuine human identity verified",
     "Blender rendering benchmark passed",
     "automatic Studio browser gating integrated",
-    "production-ready full-3D asset pipeline"
+    "production-ready full-3D asset pipeline",
+    "trusted signing services or authenticated human approval frontend deployed on user PC"
   ],
   "status": "source_archived_and_native_evidence_gate_prototype_tested_review_required"
 }
