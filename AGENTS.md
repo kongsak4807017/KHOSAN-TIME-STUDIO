@@ -78,6 +78,10 @@ For 3D production tasks, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md` and the
 - Final artistic acceptance, release and publishing still require the **authenticated human approval** defined by the project governance. The current CLI verifies Ed25519 reviewer and human-approval receipt signatures against independently provisioned public trust keys; only a trusted Studio approval/checker service holding protected private keys can issue genuine receipts. It does not prove the actual VLM/human action occurred unless the issuer performed that work.
 - Do not assume all geometry types are validated: the initial native layout linter supports **only bounded Z-up/cm boxes** and fails closed on unsupported anchors/CSG/rigging. Do not claim full production support from its unit tests.
 
+## Part 7 Differential Patch Policy (research integration)
+
+When a 3D task requires incremental repair, load `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md` and use the bounded `tools/ugir-geometry-linter/hard_lock_enforcer.py` only for supported Z-up/cm AABB scenes. The developer's sample `hard_lock_enforcer.py` and HMAC `verify_evidence_gate.py` must **not** be used verbatim: the latter has a hardcoded default signing secret and can sign self-declared review results. Freeze source revision and verified node coordinates; patch only measured failing axes and rerun geometry tests. **Do not claim that this rule is enforced across Studio/DevSpace until a trusted dispatcher with OS-level permission isolation is integrated and tested.** The existing `tools/harness-3d/gate.mjs` provides distinct signed review/human receipts for asset acceptance, but not the missing native tool authorization layer.
+
 ## Definition of Done
 A work item is Done only when:
 1. acceptance criteria are satisfied,
