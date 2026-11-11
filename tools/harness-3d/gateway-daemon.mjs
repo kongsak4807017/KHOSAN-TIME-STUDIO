@@ -20,7 +20,7 @@ export function startGatewayDaemon({trust,serverPrivateKey,socketPath,maxConnect
   let finished=false,received=Buffer.alloc(0);
   function respond(obj){
    if(finished)return;finished=true;
-   try{connection.end(JSON.stringify(obj)+'\n')}catch{connection.destroy()}
+   try{connection.end(JSON.stringify(signGatewayResponse(obj,serverPrivateKey))+'\n')}catch{connection.destroy()}
   }
   connection.once('close',()=>{active=Math.max(0,active-1)});
   connection.on('error',()=>{ /* response already failed closed */ });
@@ -36,8 +36,8 @@ export function startGatewayDaemon({trust,serverPrivateKey,socketPath,maxConnect
     const projectRoot=trust.projects?.[request?.project_id];
     if(typeof projectRoot!=='string')throw Error('project not pinned in trust registry');
     const result=await executeTrustedCommand({projectRoot,trust,serverPrivateKey,request});
-    connection.end(JSON.stringify(result)+'\n');
-   }catch(e){connection.end(JSON.stringify({ok:false,verdict:'BLOCKED',error:String(e.message||e).slice(0,250)})+'\n')}
+    connection.end(JSON.stringify(signGatewayResponse(result,serverPrivateKey))+'\n');
+   }catch(e){connection.end(JSON.stringify(signGatewayResponse({ok:false,verdict:'BLOCKED',error:String(e.message||e).slice(0,250)},serverPrivateKey))+'\n') }
   });
  });
  server.listen(socketPath);
