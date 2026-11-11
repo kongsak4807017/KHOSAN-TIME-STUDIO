@@ -1,9 +1,9 @@
 # KHOSAN TIME STUDIO Progress
 
 ## Current phase
-**PORTABLE LOCAL 3D RELEASE IS PUBLISH-READY — REMOTE PUBLICATION / READBACK RECEIPT PENDING; STUDIO BROWSER ACCEPTANCE REMAINS OPEN**
+**PORTABLE LOCAL 3D SOURCE RELEASE PUBLISHED AND READ BACK — NO ACTIVE WORK ITEM; STUDIO BROWSER ACCEPTANCE REMAINS OPEN**
 
-## Current work — `TASK-LOCAL3D-PORTABLE-001`
+## Released — `TASK-LOCAL3D-PORTABLE-001`
 
 - Prepared the portable publication candidate separately from the accepted owner-PC r6 runtime. The original runtime, source snapshots and reviewed artifacts remain untouched. This task does not replace episode sources or the Studio browser-acceptance backlog.
 - Added checkout-relative `scripts/local3d.py` setup/doctor/proof/serve/config commands, Windows and Bash wrappers, locked Python dependencies, explicit Blender forwarding, and generated UTF-8 machine/MCP configuration. Machine-specific settings, environments and caches remain local.
@@ -15,7 +15,10 @@
 - Documented explicit `--quality draft` previews at 640×360 / 8 samples with unchanged model geometry; `standard` preserves the original fixture settings and remains the default. New draft/standard jobs receive their own source/artifact identity and review status.
 - Added the bilingual portable runbook, current-root quick starts and historical r6 image gallery. Technical installation/build/renderer results are separate from fresh visual review and human acceptance; no old artistic PASS is copied onto a new artifact set.
 - Canonical portable evidence: `studio/evidence/TASK-LOCAL3D-PORTABLE-001.json`; public reproduction summary: `docs/examples/local3d/portable-proof.json`. Read the historical r6 and prop artifacts through their respective task evidence/handoff records below.
-- **Publication status:** publish-ready local candidate. The actual remote commit and changed-file readback receipt must be recorded after the Git update succeeds. No push, merge or completed GitHub publication is claimed by this entry.
+- **Publication complete:** the main source release was updated and read back at `2026-11-11T18:36:49Z`. Source release commit: [`73f468e3ea0b883bf47271b8f48b2efd93f81069`](https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO/commit/73f468e3ea0b883bf47271b8f48b2efd93f81069); tree `c77249169402b69cb117847cd1a92899af35d79b`. The non-force update used expected base `38ae23cb08829e1867dfac05293e4f3e5683aff2`. All 91 changed blob SHAs and modes matched readback; 147 unrelated base blobs remained unchanged.
+- Historical r6 source commit [`f0be220249df92f81d249058dfeec5d4f425d13e`](https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO/commit/f0be220249df92f81d249058dfeec5d4f425d13e) is an ancestor of the source release. The owner-PC accepted runtime and artifacts remain separate and untouched.
+- Independent overall publication review returned **ACCEPT** bound to this release. Read the [publication receipt](docs/examples/local3d/publication-receipt.json) and [independent publication review](docs/examples/local3d/independent-publication-review.json) for the recorded identities and scope. Publication acceptance does not remove the stated platform, reference-detail or human-art limits.
+- This status/evidence update belongs to the following **metadata-only closure commit**. Its Git identity is separate from source release commit `73f468e3ea0b883bf47271b8f48b2efd93f81069` and from the reproduced implementation digest `59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821`. The source-release readback counts above apply to the source release, not to later metadata changes. The task is **released**; no work item remains active.
 
 ## Historical: 12 November 2026 (Asia/Bangkok) — reference-guided elephant trial
 
@@ -42,7 +45,7 @@
 
 ## Previously shipped Studio baseline on GitHub main
 
-This section describes the pre-existing Studio baseline. Publication of the portable local 3D candidate is tracked separately by `TASK-LOCAL3D-PORTABLE-001` and its actual remote receipt.
+This section describes the pre-existing Studio baseline. The completed portable local 3D source release is tracked separately by `TASK-LOCAL3D-PORTABLE-001` and its publication receipt above.
 
 ### Master / Harness
 - English and Thai master README
@@ -145,9 +148,9 @@ Source, harness and multi-project API/restart smoke tests passed on Windows on 1
 - animation-retargeting tool selection
 - legacy research mirror Issue #1
 
-## Next execution order
+## Future bounded work — no active item
 
-1. Publish the reviewed portable candidate against the current remote base with the task's concurrency guard. After the actual Git update, read back changed file identities and record the commit/readback receipt; then update publication status from that evidence.
+1. Select a new bounded work item when continuing production. Portable source publication and its source-commit readback are complete.
 2. Keep the accepted owner-PC r6 runtime and historical task artifacts separate and untouched. Use `python scripts/local3d.py` from the current checkout for new installations/proofs; see `docs/27-LOCAL3D-PORTABLE-INSTALL.md`.
 3. Read fresh image-review records before calling new artifacts artistically accepted. Any finished-episode pass should separately address finer reference detail, V4 tone and the known shadow-proxy edge; further recipes need their own fixture and review.
 4. Browser smoke Project A ↔ Project B and verify active context visually. Preserve one project root → one reusable DevSpace workspace.

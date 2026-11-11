@@ -1,7 +1,7 @@
 {
   "task_id": "TASK-LOCAL3D-PORTABLE-001",
   "role": "10-qa-playtester",
-  "timestamp": "2026-11-11T18:30:36Z",
+  "timestamp": "2026-11-11T18:36:49Z",
   "checks": [
     {
       "name": "Portable setup and generated configuration",
@@ -45,8 +45,13 @@
     },
     {
       "name": "Curated GitHub publication",
-      "status": "skipped",
-      "evidence": "Publication candidate is prepared from remote main38ae23cb08829e1867dfac05293e4f3e5683aff2. Independent final inventory, leased non-force branch update and readback are pending; their actual receipt will be committed after remote verification."
+      "status": "pass",
+      "evidence": "Published source release 73f468e3ea0b883bf47271b8f48b2efd93f81069 (tree c77249169402b69cb117847cd1a92899af35d79b) to main with force=false and expected base 38ae23cb08829e1867dfac05293e4f3e5683aff2. Actual post-update readback matched all91 changed blob IDs/modes and147 unrelated base blobs. Independent ACCEPT binds this exact commit/tree/inventory. Receipt and exact inventory: docs/examples/local3d/publication-receipt.json and publication-inventory.json. Following metadata-only closure does not modify reviewed runtime/fixtures."
+    },
+    {
+      "name": "Independent publication acceptance",
+      "status": "pass",
+      "evidence": "Independent reviewer returned ACCEPT after matching all91 files to local staged bytes and remote objects, verifying zero extra paths/deletions, preserving historical19-file r6 snapshot and rechecking both implementation digests. Formal unchanged record: docs/examples/local3d/independent-publication-review.json; SHA256ecc04c92ac73c91dbb0b606c112bd47023fe7cee0b7df12b9788162f377505fd."
     }
   ],
   "verdict": "PASS",

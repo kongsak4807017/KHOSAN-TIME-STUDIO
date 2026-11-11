@@ -1,14 +1,22 @@
 # Session Handoff
 
-**Active work item:** `TASK-LOCAL3D-PORTABLE-001`  
+**Active work item:** none  
+**Last released work item:** `TASK-LOCAL3D-PORTABLE-001`  
 **Working root:** this checkout; commands below resolve local paths through `scripts/local3d.py`  
-**Current result:** portable local 3D release is **publish-ready**, with completed fresh Windows standard MCP/standalone LTC proof and Linux MCP draft proof  
+**Current result:** portable local 3D source release **published and read back**, with independent overall publication ACCEPT  
 **Portable implementation SHA-256:** `59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821`  
-**Remote publication/readback:** pending the actual Git update and its recorded receipt; no completed publication is claimed here
+**Source release commit:** [`73f468e3ea0b883bf47271b8f48b2efd93f81069`](https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO/commit/73f468e3ea0b883bf47271b8f48b2efd93f81069)  
+**Publication/readback time:** `2026-11-11T18:36:49Z`
 
-## Portable publication handoff
+## Completed portable publication
 
-The publication candidate is isolated from the owner's accepted r6 installation. The owner-PC runtime, source snapshots and reviewed outputs remain untouched. Existing episodes, sibling projects and the separate Studio browser-acceptance work remain outside this release task.
+The published source was prepared separately from the owner's accepted r6 installation. The owner-PC runtime, source snapshots and reviewed outputs remain untouched. Existing episodes, sibling projects and the separate Studio browser-acceptance work remain outside this release task.
+
+The non-force main update used expected base `38ae23cb08829e1867dfac05293e4f3e5683aff2` and produced source tree `c77249169402b69cb117847cd1a92899af35d79b`. Readback matched all 91 changed blob SHAs/modes and confirmed 147 unrelated base blobs unchanged. Historical r6 source commit [`f0be220249df92f81d249058dfeec5d4f425d13e`](https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO/commit/f0be220249df92f81d249058dfeec5d4f425d13e) is an ancestor of this release.
+
+Independent overall publication review returned **ACCEPT** bound to the release. The [publication receipt](docs/examples/local3d/publication-receipt.json) and [independent publication review](docs/examples/local3d/independent-publication-review.json) contain the readback and review identities/scope. The task is **released**, with no active work item.
+
+This handoff and the accompanying status/evidence updates belong to a subsequent **metadata-only closure commit**. That closure commit is distinct from the source release commit above and does not replace the implementation digest used by the reproduced Blender/MCP and renderer proofs. The 91 changed / 147 preserved blob counts describe the source-release readback, not a later metadata commit.
 
 The release provides checkout-relative Python/PowerShell/Bash setup and run commands, pinned Python dependencies, explicit Blender selection passed to subprocesses, generated UTF-8 local MCP configuration, authored fixtures/reference, and an optional locked Remotion/Three runtime. Standalone rendering no longer requires the owner's private Harness V4 directories. Generated machine settings, virtual environments, dependency/browser caches and job directories remain local; the public gallery labels its r6 images as historical.
 
@@ -30,7 +38,7 @@ The fresh implementation and its new artifacts do not inherit the r6 review. Tec
 | Hosted GitHub workflow | `.github/workflows/local3d-verify.yml` added as manual-only source; not yet run on GitHub |
 | macOS | Untested build/render target; no acceptance claim |
 
-The canonical portable evidence is `studio/evidence/TASK-LOCAL3D-PORTABLE-001.json`; the public reproduction summary is `docs/examples/local3d/portable-proof.json`. They identify exact source/job evidence and review status. The remote commit ID and changed-file readback receipt must be added only after the actual Git update succeeds. A source file describing a workflow is not a hosted CI result.
+The canonical portable evidence is `studio/evidence/TASK-LOCAL3D-PORTABLE-001.json`; the public reproduction summary is `docs/examples/local3d/portable-proof.json`. They identify exact source/job evidence and review status. The source publication and its readback are complete as recorded above. The manual workflow remains unrun on GitHub; publishing its source does not constitute a hosted CI result. Platform and artistic limits remain attached to the published release.
 
 ## Current operational commands
 
@@ -117,7 +125,7 @@ One project root maps to one reusable DevSpace workspace. This task concerns sha
 
 ## Restart and next work
 
-Read AGENTS.md, studio/studio_state.json, progress.md and this handoff. Continue `TASK-LOCAL3D-PORTABLE-001` through the actual non-destructive Git update against the current remote base, then read back changed file identities and record the commit/readback receipt. Only then mark remote publication complete. The source and local proof are publish-ready; this handoff is not a substitute for a GitHub receipt.
+Read AGENTS.md, studio/studio_state.json, progress.md and this handoff. `TASK-LOCAL3D-PORTABLE-001` is released; source publication and readback are complete. Select a new bounded work item before beginning further production. No work item is currently active.
 
 Keep the owner-PC accepted r6 runtime untouched. Consult each task's own evidence for fresh or historical review status. A finished-episode pass should separately refine face/skin detail and V4 tone/shadow presentation before rigging or episode integration. Preserve the existing Studio browser backlog and accepted masters.
 

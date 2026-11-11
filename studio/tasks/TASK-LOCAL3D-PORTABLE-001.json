@@ -2,7 +2,7 @@
   "task_id": "TASK-LOCAL3D-PORTABLE-001",
   "feature_id": null,
   "title": "Publish portable local 3D MCP, elephant workflow and standalone LTC proof",
-  "status": "verify",
+  "status": "released",
   "owner_role": "06-technical-architect",
   "contributors": [
     "08-rendering-engineer",
@@ -90,5 +90,5 @@
     "Standalone proof must distinguish its runtime checks from original private V4 source verification.",
     "Rendering appearance can vary across GPUs and Blender versions."
   ],
-  "notes": "This is shared Studio tooling, not episode production. Current user approval accepts the progress and authorizes GitHub publication; preserve specific r6 appearance limitations. Work in an isolated release copy, validate before pushing, and keep the accepted owner-PC runtime recoverable."
+  "notes": "This is shared Studio tooling, not episode production. Current user approval accepts the progress and authorizes GitHub publication; preserve specific r6 appearance limitations. Work in an isolated release copy, validate before pushing, and keep the accepted owner-PC runtime recoverable. Published source release 73f468e3ea0b883bf47271b8f48b2efd93f81069 with independent ACCEPT and a non-force expected-head lease. All91 changed blob IDs/modes were read back;147 unrelated base blobs remain unchanged. Publication receipt: docs/examples/local3d/publication-receipt.json."
 }

@@ -1,9 +1,9 @@
 {
   "task_id": "TASK-LOCAL3D-PORTABLE-001",
-  "from_role": "06-technical-architect",
-  "to_role": "12-release-ops",
-  "status": "partial",
-  "summary": "Portable local3D source and documentation are ready for final inventory review and authorized GitHub publication. Fresh Windows MCP/Blender and independent standalone LTC runtime passed; Linux MCP draft passed; platform limits are explicit.",
+  "from_role": "12-release-ops",
+  "to_role": "00-studio-orchestrator",
+  "status": "completed",
+  "summary": "Published and read back the independently accepted portable local3D source, setup scripts, standalone LTC workflow, documentation and evidence on GitHub main. Source release 73f468e3ea0b883bf47271b8f48b2efd93f81069 preserves historical r6 in its parent commit and keeps unrelated repository files unchanged.",
   "artifacts": [
     "scripts/local3d.py",
     "SETUP_LOCAL3D.bat",
@@ -14,7 +14,10 @@
     "docs/examples/local3d/portable-proof.json",
     "docs/examples/local3d/portable-windows/README.md",
     "docs/examples/local3d/elephant-r6/README.md",
-    "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json"
+    "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json",
+    "docs/examples/local3d/publication-receipt.json",
+    "docs/examples/local3d/publication-inventory.json",
+    "docs/examples/local3d/independent-publication-review.json"
   ],
   "decisions": [
     "Recreate environments and local config per machine, never copy venv/node_modules/browser or install global MCP config.",
@@ -39,6 +42,10 @@
     {
       "command": "Linux fresh setup + draft proof",
       "result": "PASS;108.1264s cold; Linux browser render blocked by host socket policy"
+    },
+    {
+      "command": "GitHub non-force expected-head update and post-publication readback",
+      "result": "PASS: main=73f468e3ea0b883bf47271b8f48b2efd93f81069;91changed blob IDs/modes matched;147 unrelated base blobs unchanged; independent ACCEPT, historical parent and current source digests verified."
     }
   ],
   "known_risks": [
@@ -51,5 +58,5 @@
     "Owner accepted r6 runtime and historical snapshots remain intact; portable proof used a separate candidate directory. Historical paths and no-push statements describe their original task timestamps, not this publication."
   ],
   "open_questions": [],
-  "next_action": "Finish independent inventory ACCEPT, publish with a non-force expected-head lease, read back changed file hashes, then commit publication receipt and mark the task released."
+  "next_action": "Clone the current repository on another computer and follow docs/27-LOCAL3D-PORTABLE-INSTALL.md. Regenerate local dependencies/config and produce new source-bound job evidence. Preserve the separate Studio browser-acceptance backlog and the original owner-PC r6 runtime."
 }

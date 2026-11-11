@@ -1,0 +1,48 @@
+{
+  "schema": "khosan.git-publication-receipt/1",
+  "task_id": "TASK-LOCAL3D-PORTABLE-001",
+  "status": "PUBLISHED_AND_READBACK_VERIFIED",
+  "timestamp_utc": "2026-11-11T18:36:49Z",
+  "repository": "kongsak4807017/KHOSAN-TIME-STUDIO",
+  "branch": "main",
+  "user_authorization": "Explicit request to publish all workflows to GitHub, ready to use on another computer.",
+  "base_commit": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
+  "historical_r6_commit": "f0be220249df92f81d249058dfeec5d4f425d13e",
+  "source_release_commit": "73f468e3ea0b883bf47271b8f48b2efd93f81069",
+  "source_release_tree": "c77249169402b69cb117847cd1a92899af35d79b",
+  "source_release_url": "https://github.com/kongsak4807017/KHOSAN-TIME-STUDIO/commit/73f468e3ea0b883bf47271b8f48b2efd93f81069",
+  "update": {
+    "force": false,
+    "expected_sha": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
+    "tool_result_success": true
+  },
+  "readback": {
+    "main_head": "73f468e3ea0b883bf47271b8f48b2efd93f81069",
+    "changed_file_count": 91,
+    "blob_ids_and_modes_verified": 91,
+    "unrelated_base_blobs_preserved": 147,
+    "deletions": 0,
+    "generated_config_example_read_back": true,
+    "install_guide_read_back": true
+  },
+  "inventory": {
+    "path": "publication-inventory.json",
+    "sha256": "9dd8631ad72d22ccc9cfeac99b5bd71b8ea32c04cc13cc1eedc89d1aed31ff1b",
+    "scope": "Exact reviewed source-release delta from the original base. Later metadata-only closure is outside this initial inventory."
+  },
+  "independent_publication_review": {
+    "path": "independent-publication-review.json",
+    "sha256": "ecc04c92ac73c91dbb0b606c112bd47023fe7cee0b7df12b9788162f377505fd",
+    "verdict": "ACCEPT",
+    "review_time_preceded_publication": true
+  },
+  "implementation_sha256": "59038921d1a2e6de25dbb9c35bbef58e0778681b2685309c234daa659554e821",
+  "metadata_closure": "This receipt and the final task/state/handoff updates are committed after verified source publication. They do not change the reviewed runtime or fixture bytes. The source-release commit above is intentionally not the subsequent closure-commit ID.",
+  "hosted_ci": "MANUAL_WORKFLOW_PRESENT_NOT_RUN",
+  "owner_original_runtime": "Preserved r6 runtime unchanged; portable candidate validated in its own fresh directory.",
+  "scope_limits": [
+    "Fresh Windows environment on the existing owner PC, not a second physical Windows machine.",
+    "Linux MCP draft passed; Linux browser rendering blocked by host socket policy; macOS untested.",
+    "Static procedural assets and standalone LTC stills; no rig/animation/physics/full-episode or human artistic acceptance."
+  ]
+}

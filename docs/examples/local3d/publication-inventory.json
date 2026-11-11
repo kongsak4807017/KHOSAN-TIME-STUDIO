@@ -1,0 +1,655 @@
+{
+  "base_commit": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
+  "historical_source_commit": "f0be220249df92f81d249058dfeec5d4f425d13e",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "mode": "100644",
+      "sha": "da8c1c5cea5bb8a0682fc67d73a141e765acdc5e",
+      "sha256": "49bcb4c397d0815631e72420872baaba025ed7542763aeeb0bdd1901e4bf9b99",
+      "bytes": 233
+    },
+    {
+      "path": ".github/workflows/local3d-verify.yml",
+      "mode": "100644",
+      "sha": "c0e284c68c355a378adc091d3ecc03444153f7e3",
+      "sha256": "b794e1f616e99576a69a12f513b455bfb53df6bec5e22a6b3f5cf884a2debcc7",
+      "bytes": 1278
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "sha": "84c8d00febacfc0af346d4fe4d87691cbb0c8483",
+      "sha256": "a7cfc0d4e97edcf194abf441e35addccd39f44a9b1fbfa600545f6dcdc92f8f7",
+      "bytes": 861
+    },
+    {
+      "path": "OPEN_LOCAL3D_ELEPHANT.bat",
+      "mode": "100644",
+      "sha": "933e6e84252bee771601d197239d6bc8f0e8b45f",
+      "sha256": "8d01a9bf1a9f945e2b36cf96b79da9d0b3a7e2a3a697c594752f22418aae8803",
+      "bytes": 129
+    },
+    {
+      "path": "OPEN_LOCAL3D_PROOF.bat",
+      "mode": "100644",
+      "sha": "fe1bcc97809972b5a276daab8d4791067aa9546b",
+      "sha256": "de6bfcd03c2db14917998e68243457ac71694d8f9e3cf8b614d8cb308ee8ae3e",
+      "bytes": 126
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "sha": "fc0875068f261cbe7775727632da99247c0878d3",
+      "sha256": "3ad98c8259dbc4f8159dfc79a655582a3d34d8676b4b042bffccd629f11ddc7f",
+      "bytes": 12808
+    },
+    {
+      "path": "README_TH.md",
+      "mode": "100644",
+      "sha": "a9b9881d7c96f0a89f82678fa5d4d54156c5e174",
+      "sha256": "7fb5f2e94599a335242c2a1d3fbc0429765a9b35872baf25fbeca5e1308e633e",
+      "bytes": 13166
+    },
+    {
+      "path": "SETUP_LOCAL3D.bat",
+      "mode": "100644",
+      "sha": "cabac1ccdf55a6a494f5b94ecf0a30e75714626d",
+      "sha256": "664a9fd5861feef2e8d499e0dcd6b15a47af22999632f0dd95050df09a05bfcf",
+      "bytes": 447
+    },
+    {
+      "path": "config/local3d-mcp.example.json",
+      "mode": "100644",
+      "sha": "c41f6b0aa99aee4268162664b2923d5723bd6058",
+      "sha256": "cb4711ee2f71f53aec32281a1841dc36e56305c9b8a4db90fd95f086d1100564",
+      "bytes": 469
+    },
+    {
+      "path": "docs/25-LOCAL-3D-MCP.md",
+      "mode": "100644",
+      "sha": "1a0a3c2a7f35a8e6ce1dc45143b0eeaa94c1639b",
+      "sha256": "fbee5742676b0e015c3860e9ea0663e269b1d680c7b7b7e64dbc6295d19f88fe",
+      "bytes": 13858
+    },
+    {
+      "path": "docs/26-LOCAL-3D-ELEPHANT.md",
+      "mode": "100644",
+      "sha": "0a2c8b2c7393f979f89ada3058bf138705745486",
+      "sha256": "411ef9622c701fc9bcbed8202c28d5b6a39383f6d584071175a676f8e69e2549",
+      "bytes": 18331
+    },
+    {
+      "path": "docs/27-LOCAL3D-PORTABLE-INSTALL.md",
+      "mode": "100644",
+      "sha": "5e8c2e4a5b6e88ea1b17dd452e7353c98c4f0320",
+      "sha256": "84882b37af36fb1403b9e09d7747ab6b4528f34124cdbf9891e64edb34a12b16",
+      "bytes": 52339
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/README.md",
+      "mode": "100644",
+      "sha": "f75f06152f7c45f4ebbe770716581c4cac4e293a",
+      "sha256": "1e56262e98317dd3dfd10426d802af3afaaef3fc9d34478dbfb5ad23649367d7",
+      "bytes": 1399
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/SOURCE-SNAPSHOT.md",
+      "mode": "100644",
+      "sha": "32f50608de5f042070a5ec956bcc6e1f79de24ed",
+      "sha256": "e10e86ce0ac805689e5b9ca4b0ae0e87c2c6ba53552814f262532c8d4bfa22b7",
+      "bytes": 1433
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/evidence.json",
+      "mode": "100644",
+      "sha": "f48c8955813c8f858567689281d3686566565615",
+      "sha256": "60c893c2d5272ffcec5a7cbf9d4d25e5ae3c89942c57499c1e67b0ebf13b7bde",
+      "bytes": 4635
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/frame-045.png",
+      "mode": "100644",
+      "sha": "c98efa5d14354cce43bb598433961b47166963dc",
+      "sha256": "1b1e6bc0db0a632931d09aec8ead219c744d0017c88fc935b58617e66f89494b",
+      "bytes": 196087
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/preview_back.png",
+      "mode": "100644",
+      "sha": "2ea69cd76623b6f6d09e5fc02183c3bdf9cadebf",
+      "sha256": "d6a4417d8914815ef1d64156671bdbdeeeeb0e34bc2ec593f703398d6cd8c65d",
+      "bytes": 846852
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/preview_front.png",
+      "mode": "100644",
+      "sha": "3394dc8bc69a915e2d07241f23fcf3ea8c17ffc9",
+      "sha256": "c22dc741c7f581793888ee73bafea0ffc59545c78b5f2968a1e844b921e711b5",
+      "bytes": 842543
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/preview_hero.png",
+      "mode": "100644",
+      "sha": "820c7223fe4031734c5d711fb7b10890ca9f567f",
+      "sha256": "1c7ad20db9b31e1838fa5e9f09356b1bcb2e8bf7460269badb7a22153a4194b0",
+      "bytes": 881910
+    },
+    {
+      "path": "docs/examples/local3d/elephant-r6/preview_side.png",
+      "mode": "100644",
+      "sha": "1ccfdf49a8d101039479ad76166d637b9c5c3c3d",
+      "sha256": "ebdbf58ca935057a2e8314485eb1421ee97b03c70226fdff6c4845b36c278263",
+      "bytes": 872716
+    },
+    {
+      "path": "docs/examples/local3d/portable-proof.json",
+      "mode": "100644",
+      "sha": "c5feb466b9d3a7ac5cd91b27c4c7e5ef23380703",
+      "sha256": "3930342301b73fce8420322dd8d057f2b59dc22a962d27e29480004e7096954a",
+      "bytes": 38440
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/README.md",
+      "mode": "100644",
+      "sha": "492b9e8bb02297ce5e4b5724b94f7baaf3e8224f",
+      "sha256": "1ca745bff39544601f951fb3e1a5633b5472506f6224aca18cd2e82c72019350",
+      "bytes": 1405
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/frame-045.png",
+      "mode": "100644",
+      "sha": "b2dcec9804f10438a02b2745a9a2f6f35c8a471c",
+      "sha256": "fc77ce37bc82899b75115c627c876c67b8debd240bfc4ae0deb1bee5db616b72",
+      "bytes": 198813
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/independent-review.json",
+      "mode": "100644",
+      "sha": "ac8e62878c35665e556484d85eaea7a7f6df4d81",
+      "sha256": "bc2ca9ff5421b10f13baa757487dd704ee9bf64f7b3a3b02fec09eaa348c3380",
+      "bytes": 3796
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/preview_back.png",
+      "mode": "100644",
+      "sha": "8787e0b65b59350480b60eadcae1feebbc377c1a",
+      "sha256": "34a1707e2db0604d66bddd3637ed9d2a59f0b72182c079db8c51dcf59c3baae5",
+      "bytes": 847770
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/preview_front.png",
+      "mode": "100644",
+      "sha": "52ea8f800ec9c6ca098d7207227c90e24c6380b2",
+      "sha256": "0364d3e39b5c4b23b9c707e017e7434513bb9dbaa6edd7f3ff7c314424d06893",
+      "bytes": 843682
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/preview_hero.png",
+      "mode": "100644",
+      "sha": "57c31d5d352ad93c5b477d5e527339694e272a6d",
+      "sha256": "8ed2f46f60e3401f62c8f159e871f4821662f21cb9adea0e233b37cb35f16f22",
+      "bytes": 881578
+    },
+    {
+      "path": "docs/examples/local3d/portable-windows/preview_side.png",
+      "mode": "100644",
+      "sha": "422b9a24768392f7237176938871c3adc95c262b",
+      "sha256": "a49e926ff8dcd8155f23f863f0e48746b9a6824324659438bf59191e1ec3c276",
+      "bytes": 871769
+    },
+    {
+      "path": "progress.md",
+      "mode": "100644",
+      "sha": "a52fff0c82eccd1c513d0f591f17410b68216758",
+      "sha256": "37964f325d629d46826181ceecefeea22ba33e1372b332754c5b73fa0815d553",
+      "bytes": 12287
+    },
+    {
+      "path": "scripts/local3d-common.ps1",
+      "mode": "100644",
+      "sha": "094544afc918dd629a0cbca4d90386c535c9ee89",
+      "sha256": "951845ba3f6d71010c3975536d496a3c330ed09219581d86be815b39b8b4c676",
+      "bytes": 1418
+    },
+    {
+      "path": "scripts/local3d.py",
+      "mode": "100644",
+      "sha": "20a3e97ae9ed1317225c68f3069237dd2358631b",
+      "sha256": "4f31fc5af8d5e1d0393a568994543a3df076967386656e2928f48f4615b41627",
+      "bytes": 10944
+    },
+    {
+      "path": "scripts/open-local3d-elephant.ps1",
+      "mode": "100644",
+      "sha": "8649e1d9b5702a828e89b36c38918847a2a0357d",
+      "sha256": "6e46d239c093ec12979032d21d66648e83e0343f8b79c1d3658882c3cb56c99c",
+      "bytes": 894
+    },
+    {
+      "path": "scripts/open-local3d-proof.ps1",
+      "mode": "100644",
+      "sha": "e7cad6049d9d5dd20d33d45cff630e2325f1181c",
+      "sha256": "68188716b28d327eb8ae8fbd0cd4e32b9ab51d1e0592776d0d5d0f1c48e02103",
+      "bytes": 867
+    },
+    {
+      "path": "scripts/proof-local3d-elephant.ps1",
+      "mode": "100644",
+      "sha": "4b73c6ee4f8d9964cd79f4f537f44f3d3bb7ee75",
+      "sha256": "926155e615a2f16781e40b874fa3acd162c68b43c504866703f71936a37cff90",
+      "bytes": 493
+    },
+    {
+      "path": "scripts/proof-local3d-elephant.sh",
+      "mode": "100755",
+      "sha": "e0c80d2e2f06e67f3bd160930fdb81b0f162c842",
+      "sha256": "3803f7c65484312e260f6cd5f25be6087f30c7da2c74032a6319924f76311dd5",
+      "bytes": 192
+    },
+    {
+      "path": "scripts/proof-local3d.ps1",
+      "mode": "100644",
+      "sha": "2b7f17d02d0581f65f834ad0d4caffcfd930c769",
+      "sha256": "29a71d93a346deeb46d599e7b022468595b5424be7cb9c40c4ff1e30cf367d00",
+      "bytes": 490
+    },
+    {
+      "path": "scripts/proof-local3d.sh",
+      "mode": "100755",
+      "sha": "9d36ed9d192000f21ff4b7eaf2edc882c587859f",
+      "sha256": "8bca902cf5f2014bf3192cb8de6900101d34215ebeb09f7087e4a58677599ad5",
+      "bytes": 189
+    },
+    {
+      "path": "scripts/run-local3d.ps1",
+      "mode": "100644",
+      "sha": "83e0ab5fea75d10fc613d127c03dc6d2077bf6a3",
+      "sha256": "16b1c0e228b18f08b4ed3a0fb7e758bbd203fcf870357d70849dd399ada06b4a",
+      "bytes": 395
+    },
+    {
+      "path": "scripts/run-local3d.sh",
+      "mode": "100755",
+      "sha": "d581e0c87b9b5a284785dfa30d2d6d43ce3714a7",
+      "sha256": "0bef8b4dcbd505f7eee0033173f2ced0528efe6d7f374bdda1b64c738abf24dc",
+      "bytes": 173
+    },
+    {
+      "path": "scripts/setup-local3d-v4.mjs",
+      "mode": "100644",
+      "sha": "035846bc696b13874c83286b8d699bfc5198d464",
+      "sha256": "9bbf73690b7ad2ae2f2db38910e77977d84204862a0955de3b01cda4716b5ca7",
+      "bytes": 4582
+    },
+    {
+      "path": "scripts/setup-local3d.ps1",
+      "mode": "100644",
+      "sha": "797911641a257b9a8ba8981c93bbf5976a191369",
+      "sha256": "d6492380a11b208d0aceb5d92dd3d0a4ad039c549e7cf42e83586d4693a8a5a2",
+      "bytes": 1340
+    },
+    {
+      "path": "scripts/setup-local3d.sh",
+      "mode": "100755",
+      "sha": "44b215188d15d066283f17f9c5e81726257b05be",
+      "sha256": "8a36391e8978bdc7c198fa7624d379d475f9a671ba64963ce0d18463b0f2d5cd",
+      "bytes": 173
+    },
+    {
+      "path": "scripts/stage-elephant-reference.py",
+      "mode": "100644",
+      "sha": "bcd79aab60df26662b9cc59dbc1723f6af9f3a4c",
+      "sha256": "e223a803f08a56484e4ebc78a8f3b8a745d851ac0a55033df911f0f01d30f93f",
+      "bytes": 1210
+    },
+    {
+      "path": "session-handoff.md",
+      "mode": "100644",
+      "sha": "a5cc4e02710edb957446250cd961d141f2c8ddc8",
+      "sha256": "ea446fd0f51c60c91b0bd73e225609fec1cfd422e22fd67d100e3e881aa0e702",
+      "bytes": 12658
+    },
+    {
+      "path": "studio/evidence/TASK-LOCAL-3D-ELEPHANT-001.json",
+      "mode": "100644",
+      "sha": "d2709bef2350e64275613a041a5523d41d21a5e3",
+      "sha256": "5ad9a2cf0b180a8f3d770640cf35b7165c6f94386172a3cc211a6b57a571e77b",
+      "bytes": 8218
+    },
+    {
+      "path": "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
+      "mode": "100644",
+      "sha": "bdac7aa3238d30b5de117d08d815af16d721eecd",
+      "sha256": "2614a824a784264eba8830768c513266c7d16937d7c2e6fad6ff2b89e8f14f49",
+      "bytes": 7619
+    },
+    {
+      "path": "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json",
+      "mode": "100644",
+      "sha": "434df770dfe46bd4e1f6ba3a19c4623c1a0cb2c0",
+      "sha256": "d3d86b907b62595625286b3cb4db484f747e55f097da80ed884f0ac9eee7e43e",
+      "bytes": 4917
+    },
+    {
+      "path": "studio/handoffs/TASK-LOCAL-3D-ELEPHANT-001.json",
+      "mode": "100644",
+      "sha": "54c342bf0cd990e31b60a36960ff6b737cba6ddf",
+      "sha256": "0c724bc2900585e178813ba03263a788a15838bb83a92aa8a050a7d07073ad55",
+      "bytes": 4848
+    },
+    {
+      "path": "studio/handoffs/TASK-LOCAL-3D-MCP-001.json",
+      "mode": "100644",
+      "sha": "dc089a0138811ea237a6634971bac4fe5647d28f",
+      "sha256": "0b9d9a826ec9bfc1e5498f271d3a88168fba4cbd4b754a1d5fb8599c5c3c6bbd",
+      "bytes": 4905
+    },
+    {
+      "path": "studio/handoffs/TASK-LOCAL3D-PORTABLE-001.json",
+      "mode": "100644",
+      "sha": "1492ece477a8eb66354ae5267653cc6b02dbd656",
+      "sha256": "ded93c3b3542018b905d9be5ea84efdeb1bcbc79862136de8d75f3246bcc405a",
+      "bytes": 3665
+    },
+    {
+      "path": "studio/studio_state.json",
+      "mode": "100644",
+      "sha": "73c7ca500ad6b8968568c98df7e4cbfecd29202c",
+      "sha256": "d858e1b1ae2266d6f721c02f1970b9ce82155a4f4a0543773d3fb533b386cc09",
+      "bytes": 6145
+    },
+    {
+      "path": "studio/tasks/TASK-LOCAL-3D-ELEPHANT-001.json",
+      "mode": "100644",
+      "sha": "c215083b092f71f82dfefaa51c57d43f67c2a66f",
+      "sha256": "2d36899344ce3df052172fd1563ff9aa241d978bbd84bd66187547dad84a702b",
+      "bytes": 4478
+    },
+    {
+      "path": "studio/tasks/TASK-LOCAL-3D-MCP-001.json",
+      "mode": "100644",
+      "sha": "adc2b09983faa8e5ead47672173b2281a1105f68",
+      "sha256": "33af48879308f752d6fc0bed3169bdb48c3f103f936a3a84ee65d437102a85ca",
+      "bytes": 4451
+    },
+    {
+      "path": "studio/tasks/TASK-LOCAL3D-PORTABLE-001.json",
+      "mode": "100644",
+      "sha": "2cc38f219a29867ce2ec1710dbb01cb0867ea133",
+      "sha256": "9d59f5f93c80aab704f03079c5d8bc1ab9cb5eb1cc88e2e8121adb322e9ea941",
+      "bytes": 4962
+    },
+    {
+      "path": "studio/tool-registry.yaml",
+      "mode": "100644",
+      "sha": "9a26a8beb922fd3a9ab960c834dd1c2c94f99a1c",
+      "sha256": "79405f95eae8c3bd9b3d640e259b6d7df8ff260d76d6264ccede784c8b9a2176",
+      "bytes": 6809
+    },
+    {
+      "path": "tools/local_3d_mcp/README_TH.md",
+      "mode": "100644",
+      "sha": "74ea66d4efc5c3b1d974f2772db887f88da9aaf3",
+      "sha256": "12d8080ffcf7eddbd3038aac62ea0a41ab67c4e61a8f616565f405334aa5f32c",
+      "bytes": 28384
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/.gitignore",
+      "mode": "100644",
+      "sha": "d5700888a3a2ebc12622789ebddecb7bf45ddb47",
+      "sha256": "448d3355d084f9242af39bc2428a9d9c59f9c25609158c97a36465df9d072ad8",
+      "bytes": 15
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/README.md",
+      "mode": "100644",
+      "sha": "9090dc985dae741cf82c1aaaf1d2a036dad1145d",
+      "sha256": "35d7bc31376514f2bd0d02a0064898e14d9bcc1211cc96ab9353b4e00b27fe94",
+      "bytes": 6450
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/local3d-provider.d.ts",
+      "mode": "100644",
+      "sha": "88171f144a746d7fff6c1654e67953250072b6e4",
+      "sha256": "fc087a7c9523ff986dda37479177b285d98ca3f53b470042cab7595ba54139f7",
+      "bytes": 2887
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/local3d-provider.mjs",
+      "mode": "100644",
+      "sha": "1937a0fa68abce4edcd8090a28c62b66593941c9",
+      "sha256": "16518a99c39c1f3bb0fbb47ad2925ab366a4bacf381d0190b238dbe14301ce90",
+      "bytes": 18785
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/package-lock.json",
+      "mode": "100644",
+      "sha": "cb69c76f20cfae841f062b353e9e487ebcc56598",
+      "sha256": "aefb40d0dae3f4ae81383695473c2f02c2c57f930137893e9e32a47054d6e456",
+      "bytes": 651
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/package.json",
+      "mode": "100644",
+      "sha": "edea7ea2a18c8a6e92aebe1692df276c16879386",
+      "sha256": "55ec6c99692fe97b56398b3f50a43844a719174bcfbf3536d31b3cee089b12fa",
+      "bytes": 358
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/test/fixtures.mjs",
+      "mode": "100644",
+      "sha": "b0bc6ee43b7e1137e80518e01e1b90922dfe579c",
+      "sha256": "99f512e65e0e348a249fc76801c0b3e912b655656ac16c38aa6071f05f591317",
+      "bytes": 2206
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/test/provider.test.mjs",
+      "mode": "100644",
+      "sha": "c6ee3eeb9aa4f0c9c3eb5f131900a40675294e27",
+      "sha256": "ee43bdf63bdb3d6b85c997507949762afd4af7cd533ada085f79dbf643dbd3de",
+      "bytes": 12964
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/README.md",
+      "mode": "100644",
+      "sha": "41e48d2fa3eb337c3c547e91341079def4e8e993",
+      "sha256": "fe667519359e3032a06384db91311a628c7d575c9e720340d76c6f24677c3c4b",
+      "bytes": 11441
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/entry.tsx",
+      "mode": "100644",
+      "sha": "0984b15aa7d59b3b91a3c3e39c1d04b38ab01ca0",
+      "sha256": "fd1967e4b4128b6ddb16dd6e2b2e7ab39eeedac8167cebd29fe4381b516a5530",
+      "bytes": 10299
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/lighting-ltc.mjs",
+      "mode": "100644",
+      "sha": "904b9f4eda336c494f80f87e7dda88606fce6dbe",
+      "sha256": "0c7041282bacc00348fa1d50945a12b0fad1b2624f4653b8c984eb426febd4e5",
+      "bytes": 7768
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/png.mjs",
+      "mode": "100644",
+      "sha": "31881be414588a600703c42f34bf43f21ff9ffd9",
+      "sha256": "fc6f9a5fbe3795509cf82547be94177bec99a48afc2825004dad9c8f9dbd75fd",
+      "bytes": 5377
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/.gitignore",
+      "mode": "100644",
+      "sha": "c2658d7d1b31848c3b71960543cb0368e56cd4c7",
+      "sha256": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+      "bytes": 14
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/loopback.cjs",
+      "mode": "100644",
+      "sha": "424d88f14a4838e6c211843d0df4a5c6bd76fd3b",
+      "sha256": "ea966759593c728ca3b09ad06a658d9c86d8bc2bb39e48e69cb9b3d91e6bc3ea",
+      "bytes": 1689
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/package-lock.json",
+      "mode": "100644",
+      "sha": "82a2d45285f8bfaaf57e91a05d2f70e7cb85aacc",
+      "sha256": "81af786e5ab58fe104a751af70ef7a0f1f1d044f9ed66875b7a2dbfb16118de4",
+      "bytes": 86404
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/package.json",
+      "mode": "100644",
+      "sha": "ccc0ca7e58a08923db5b8b0d275c126abf434ab6",
+      "sha256": "96954c6e45c41ba75cc73bd093bf345b71b536eb8f7cb415809d7a979be6f542",
+      "bytes": 499
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/runtime.mjs",
+      "mode": "100644",
+      "sha": "91f759893284028cbeffad1350468df2e0528c03",
+      "sha256": "1e5175f15d7f1aa717568a2dbbca2f0024c887480a82baac40f5aba3ac88e9ee",
+      "bytes": 5915
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/portable-runtime/tsconfig.json",
+      "mode": "100644",
+      "sha": "a6acb1c2324029b90994fc5be31244c03b03de46",
+      "sha256": "213e5f776a765a427f2c9e0ab774afd4444ef06ff23a14caa227bf61cfc20d52",
+      "bytes": 213
+    },
+    {
+      "path": "tools/local_3d_mcp/adapter/v4/verify.mjs",
+      "mode": "100644",
+      "sha": "52520f3b505a83d504700c6f37d9d693c78a1947",
+      "sha256": "920859651eaaefd4e30a9188c12c6710d454c2fcd04e2a890bb2c9da1e5a0f92",
+      "bytes": 20892
+    },
+    {
+      "path": "tools/local_3d_mcp/core.py",
+      "mode": "100644",
+      "sha": "a089bc2a42c8859aee3338f55f17639985f4bbe4",
+      "sha256": "a2e66a46330b776f794d98e9df6548742f2d39392398824c0d4fb880851ae96e",
+      "bytes": 29284
+    },
+    {
+      "path": "tools/local_3d_mcp/elephant_recipe.py",
+      "mode": "100644",
+      "sha": "18baded7b88ff6d4325f0b6a4961b7762bdf7872",
+      "sha256": "7044366c7ab4d388ef285583dcb1518d3c2ca1837da3bc33362c3b87a20f4e59",
+      "bytes": 19171
+    },
+    {
+      "path": "tools/local_3d_mcp/fixtures/amphora.weave",
+      "mode": "100644",
+      "sha": "a97368d22c9bcee2b61952a5ff5f814b88a349a6",
+      "sha256": "557e557a809c4570d25e2ad66bf0bd65ee38eb7bb423602b5b14e21691de6e1c",
+      "bytes": 959
+    },
+    {
+      "path": "tools/local_3d_mcp/fixtures/elephant_scene.json",
+      "mode": "100644",
+      "sha": "259128541b74c0f966b97a449aa0976dd18fe321",
+      "sha256": "f30457b4fba8b18a0b06b9de5bb385ba886d09c634f09cf4c228226372599181",
+      "bytes": 1194
+    },
+    {
+      "path": "tools/local_3d_mcp/fixtures/proof_scene.json",
+      "mode": "100644",
+      "sha": "acb7effb464da5b1bef561e7feb915f15aa64e54",
+      "sha256": "1b60c4252072e33473015baafc6ea0cfba6fabfbd4be69613de48288116e3a45",
+      "bytes": 2569
+    },
+    {
+      "path": "tools/local_3d_mcp/lighting.py",
+      "mode": "100644",
+      "sha": "aebcb632c93d0b262bfe06d79e24748882044c51",
+      "sha256": "974936fa13f0e454e4fa93f7c30d7a99943793b0f026d882c45814a44d2ff769",
+      "bytes": 6558
+    },
+    {
+      "path": "tools/local_3d_mcp/references/elephant-reference-contract.md",
+      "mode": "100644",
+      "sha": "dff80b56a5efa29b575be10f0e794d4f5d16627e",
+      "sha256": "a3a18ca9c70599ae169c1839d7f798547bf6082db9d5ff9035070f7e18e44c3f",
+      "bytes": 2098
+    },
+    {
+      "path": "tools/local_3d_mcp/references/ep02_elephant_ref_r7.png",
+      "mode": "100644",
+      "sha": "d097534dd01486c74a96eb994e3a2d4890b8a353",
+      "sha256": "d71d369974ceb275f3baffad6ca88bd88b1ac10d4c76c1b4db403779897f8bac",
+      "bytes": 614151
+    },
+    {
+      "path": "tools/local_3d_mcp/requirements-lock.txt",
+      "mode": "100644",
+      "sha": "31981d7652b2380a9d5c010ede0a45d7a3cf3f3c",
+      "sha256": "6a9b8cd5fdad2c04d6b5286be41c907bce79119b96bf5aab5c36dfa096bdfbef",
+      "bytes": 721
+    },
+    {
+      "path": "tools/local_3d_mcp/requirements.txt",
+      "mode": "100644",
+      "sha": "43935399b24307990e6f98fa8bbdd22865eaf20f",
+      "sha256": "0ec06254f883db42a5c3143acfffef99c627b3f6f5e1cebd2890318ded170952",
+      "bytes": 159
+    },
+    {
+      "path": "tools/local_3d_mcp/schema.py",
+      "mode": "100644",
+      "sha": "d6fc0022ab11140c310828e3126df450a0d7d765",
+      "sha256": "5511cdb23e13277e09f924e2ee276fbc49f86f570325d048933ae04ebdd6fddd",
+      "bytes": 15399
+    },
+    {
+      "path": "tools/local_3d_mcp/server.py",
+      "mode": "100644",
+      "sha": "0cebcc8bb2735339b1634f1ce40c9cbbc1fe8216",
+      "sha256": "c7ea4c2665131f8e30d9e789af7aa17c57925d8dfc96db58556144c378567661",
+      "bytes": 5160
+    },
+    {
+      "path": "tools/local_3d_mcp/smoke_mcp.py",
+      "mode": "100644",
+      "sha": "e83c8b60bca502e0fbb41bfe4031075fc4c10933",
+      "sha256": "ea1962c60fc78a65bc3544845754c76f9ad16ac645fe1082bc4233ee114c5e05",
+      "bytes": 4509
+    },
+    {
+      "path": "tools/local_3d_mcp/tests/test_contract.py",
+      "mode": "100644",
+      "sha": "ae666927a3d539bc6251318f3e7609f7595900c0",
+      "sha256": "561aef740ca1d710f176db10b8083ed53003eb092fbd2ec77f7e53de040838be",
+      "bytes": 15522
+    },
+    {
+      "path": "tools/local_3d_mcp/tests/test_portable_driver.py",
+      "mode": "100644",
+      "sha": "157a5f1e42df04f7432beb149aa31ee001c8b7dc",
+      "sha256": "a37568807ed8f9d50900f3f3c890824c426793bb2132946fd364eef8241f8fb6",
+      "bytes": 11966
+    },
+    {
+      "path": "tools/local_3d_mcp/worker.py",
+      "mode": "100644",
+      "sha": "3fa3207c4d0d79e27c3008f190783004d95215e3",
+      "sha256": "ed258a00885f1fb6269664b8d29eb8fc6a8bedeebc7facbfbb724493d1c86804",
+      "bytes": 28510
+    }
+  ],
+  "excluded": [
+    ".khosan/",
+    ".venv*/",
+    "node_modules/",
+    "__pycache__/",
+    ".remotion/",
+    "*.glb",
+    "*.blend",
+    "machine-specific generated config",
+    "private V4 channel sources"
+  ],
+  "deletions": []
+}

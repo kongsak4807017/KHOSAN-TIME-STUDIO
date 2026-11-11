@@ -3,16 +3,13 @@
   "project": "KHOSAN-TIME-STUDIO",
   "phase": "DEPLOYABLE_STUDIO_V0_2_MULTI_PROJECT",
   "active_feature_id": null,
-  "active_work_item_id": "TASK-LOCAL3D-PORTABLE-001",
-  "active_roles": [
-    "11-independent-reviewer",
-    "12-release-ops"
-  ],
+  "active_work_item_id": null,
+  "active_roles": [],
   "pending_human_gate": null,
   "last_verification": {
     "task_id": "TASK-LOCAL3D-PORTABLE-001",
-    "timestamp": "2026-11-11T18:30:36Z",
-    "verdict": "PASS_PORTABLE_STATIC_MCP_AND_STANDALONE_LTC",
+    "timestamp": "2026-11-11T18:36:49Z",
+    "verdict": "PASS_PUBLISHED_PORTABLE_LOCAL3D_WITH_READBACK",
     "evidence": "studio/evidence/TASK-LOCAL3D-PORTABLE-001.json"
   },
   "known_blockers": [
@@ -25,7 +22,7 @@
     "Legacy research archive remains pending verbatim mirror"
   ],
   "next_milestone": "Local runtime acceptance of v0.2 multi-project shell, then Asset Registry / Asset Lab",
-  "last_updated": "2026-11-11T18:30:36Z",
+  "last_updated": "2026-11-11T18:36:49Z",
   "creative_intelligence": {
     "foundation": "specified",
     "council_roles": 8,
@@ -68,7 +65,7 @@
   "local_3d_mcp": {
     "version": "0.2.0",
     "task_id": "TASK-LOCAL3D-PORTABLE-001",
-    "status": "verified_portable_source_ready_for_publication",
+    "status": "published_verified_portable_static_pipeline",
     "transport": "stdio",
     "tools": 11,
     "recipes": 6,
@@ -78,7 +75,7 @@
     "technical_build": "PASS",
     "export_reimport": "PASS",
     "independent_visual_review": "PASS_SEPARATE_RECORD",
-    "independent_publication_review": "PENDING_INVENTORY",
+    "independent_publication_review": "ACCEPT",
     "standalone_renderer": "PASS_STANDALONE_STATIC_GLB_LTC_STILLS",
     "private_v4_render_integration": "NOT_TESTED_PRIVATE_V4",
     "human_acceptance": "NOT_REVIEWED",
@@ -89,14 +86,17 @@
     "portable_proof": "docs/examples/local3d/portable-proof.json",
     "install_guide": "docs/27-LOCAL3D-PORTABLE-INSTALL.md",
     "machine_configuration": "Generated locally under .khosan; not versioned",
-    "github_publication": "PENDING_LEASED_UPDATE_AND_READBACK",
+    "github_publication": "PUBLISHED_AND_READBACK_VERIFIED",
     "source_baseline": "38ae23cb08829e1867dfac05293e4f3e5683aff2",
     "platforms": {
       "windows": "FRESH_MCP_AND_STANDALONE_RENDER_PASS",
       "linux": "MCP_DRAFT_PASS_BROWSER_BLOCKED_BY_HOST",
       "macos": "NOT_TESTED"
     },
-    "owner_original_runtime": "Historical r6 kept unchanged; new portable build exercised in an isolated candidate folder"
+    "owner_original_runtime": "Historical r6 kept unchanged; new portable build exercised in an isolated candidate folder",
+    "source_release_commit": "73f468e3ea0b883bf47271b8f48b2efd93f81069",
+    "source_release_tree": "c77249169402b69cb117847cd1a92899af35d79b",
+    "publication_receipt": "docs/examples/local3d/publication-receipt.json"
   },
   "local_3d_mcp_history": {
     "elephant_r6": {
@@ -138,7 +138,8 @@
         "evidence": "studio/evidence/TASK-LOCAL-3D-MCP-001.json",
         "source_snapshot": ".khosan/local3d/source_snapshots/v0.1-be73aee29b30.zip"
       },
-      "context": "Historical accepted owner-PC r6 trial; preserved separately, not the portable current-source status"
+      "context": "Historical accepted owner-PC r6 trial; preserved separately, not the portable current-source status",
+      "public_source_commit": "f0be220249df92f81d249058dfeec5d4f425d13e"
     }
   }
 }
