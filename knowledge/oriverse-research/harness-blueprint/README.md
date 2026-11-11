@@ -28,8 +28,8 @@ The source is a long-form Thai architectural proposal and partial code reference
 - The example `HardEnforcementHarness` prints success using fixed demonstration geometry; it is not a general task executor, does not demonstrate a real VLM session, and should not be used as evidence of a successful automated production cycle.
 - Assertions such as **100% geometry fit, zero gaps, AAA visual quality, all-player determinism, fixed CLI availability, 1,184 functions, 94 tools / 102 JSONL commands, build timings and modules** are claims made by this *source document* about a particular Oriverse build. This archive **does not independently validate** those numbers, native files or proprietary runtime internals.
 - The source's AABB overlap check is an approximation and may incorrectly flag nested or intentionally joined components. Reusable geometry validation must define collision intent, permitted intersections, coordinate system and measurement tolerances.
-- A bare `isolated_session: true` or two different agent labels cannot prove that a genuine independent model execution occurred. A trusted runner/auditable receipt and isolated session issuance are still required.
-- A user-specified `approved: true` is not an authenticated human signature. Only the trusted Studio approval UI/backend should issue release-gate receipts.
+- A bare `isolated_session: true` or two different agent labels cannot prove a genuinely independent model execution. The native gate now verifies two separate Ed25519 signatures, but **trusted issuance and protected keys remain prerequisites**; the signature only verifies which key signed the data, not that a real VLM or human performed the review.
+- A user-specified `approved: true` is not an authenticated human signature. A signed approval bound to the exact asset/glb is required by the native gate; a trusted Studio approval UI/backend must issue it.
 - The source illustrates proprietary `oriverse.exe` command lines; KHOSAN must not depend on that executable or assume those CLI flags exist. Prefer the independently developed native engine/Blender adapters and tests.
 - The illustrative Blender and Three.js code does **not prove** those two backends offer visual parity. All adapter behavior needs bounded fixtures and version-pinned tests.
 
@@ -39,9 +39,9 @@ The source is a long-form Thai architectural proposal and partial code reference
 - A deterministic **AABB/seam/floating validator** for an explicit supported subset of Z-up/cm UG-IR layout boxes; unsupported placements fail closed.
 - Checks that a nonempty UG-IR, glTF v2 GLB, and PNG contact sheet exist **inside one project root**, have expected signatures and **SHA-256 digests matching evidence**.
 - Reads the GLB mesh POSITION accessor count and recomputes geometric metrics from UG-IR layout. Refuses inconsistent 'passed' metrics.
-- Enforces distinct maker/reviewer agent and session identifiers, review receipt, exact contact/reference hashes, and human-approval binding to the final GLB hash.
+- Enforces distinct maker/reviewer agent and session identifiers, review receipt, exact contact/reference hashes, and human-approval binding to the final GLB hash. **Ed25519 reviewer and human approval signatures** must verify against two separately provisioned trusted public keys; without both, output is BLOCKED.
 - Explicit Three.js Y-up/meters to canonical Z-up/centimeters converter, with round-trip tests.
-- **14 passing local test cases in an isolated Node.js validation fixture**, including refusal of a fake visual PASS, missing approval, mismatched geometry, tampered files, path traversal and phase skipping.
+- **17 passing local test cases in an isolated Node.js validation fixture**, including refusal of a fake visual PASS, missing approval, mismatched geometry, tampered files, path traversal and phase skipping.
 
 ## What is **not** implemented yet
 
