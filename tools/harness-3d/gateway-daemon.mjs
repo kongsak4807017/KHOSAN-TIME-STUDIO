@@ -4,11 +4,12 @@
  */
 import net from 'node:net';
 import {readFile} from 'node:fs/promises';
-import {executeTrustedCommand,validateTrust} from './trusted-gateway.mjs';
+import {executeTrustedCommand,validateTrust,signGatewayResponse,verifyGatewayResponse} from './trusted-gateway.mjs';
 
 export function startGatewayDaemon({trust,serverPrivateKey,socketPath,maxConnections=16,maxFrameBytes=1024*1024}){
  validateTrust(trust);
  if(typeof serverPrivateKey!=='string'||!serverPrivateKey.includes('PRIVATE KEY'))throw Error('protected signing key missing');
+ const probe=signGatewayResponse({probe:'khosan-gateway'},serverPrivateKey);if(!verifyGatewayResponse(probe,trust.server.public_key_pem))throw Error('server private key does not match pinned trust public key');
  if(typeof socketPath!=='string'||!socketPath||socketPath.length>255)throw Error('invalid socket path');
  if(!Number.isInteger(maxConnections)||maxConnections<1||maxConnections>100||!Number.isInteger(maxFrameBytes)||maxFrameBytes<128||maxFrameBytes>1048576)throw Error('invalid IPC budgets');
  let active=0;
