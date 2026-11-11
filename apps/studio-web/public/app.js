@@ -87,6 +87,18 @@ async function openProject(id){
   const [r,w]=await Promise.all([api("/api/projects/"+encodeURIComponent(id)),api("/api/projects/"+encodeURIComponent(id)+"/workspace")]);
   const d=$("#projectDetail");d.classList.remove("hidden");
   d.innerHTML="<div class='detailHead'><div><span class='eyebrow'>"+(r.project.is_active?"ACTIVE PROJECT":"PROJECT")+"</span><h2>"+esc(r.project.name)+"</h2></div>"+(r.project.is_active?"<span class='activeTag'>ACTIVE</span>":"<button id='activateDetail'>Activate Project</button>")+"</div><p>"+esc(r.project.brief||"No brief")+"</p><div class='meta'><b>Project ID</b> "+esc(r.project.id)+" · <b>Phase</b> "+esc(r.project.phase)+" · <b>Target</b> "+esc(r.project.target)+"</div><h3>Workspace boundary</h3><pre class='console'>"+esc(JSON.stringify(w,null,2))+"</pre><h3>Project manifest</h3><pre class='console'>"+esc(JSON.stringify(r.manifest,null,2))+"</pre><h3>Creative Constitution</h3><p class='muted'>Status: "+esc(r.creative_constitution.status||"draft")+" · human approved: "+String(!!r.creative_constitution.approved_by_human)+"</p>";
+  // Display verified state only; no privileged mutation tools are exposed in the Studio browser.
+  d.insertAdjacentHTML("beforeend", "<h3>Trusted 3D Harness — read-only status</h3><p class='muted'>Requires a separate trusted service account, valid public trust registry and an explicit loopback-only status opt-in. It cannot approve or patch.</p><input id='harnessTaskId' placeholder='TASK-HOUSE-001' aria-label='3D harness task ID'><button id='harnessCheckStatus'>Check verified task state</button><pre id='harnessStatusOutput' class='console'>Not checked</pre>");
+  d.querySelector("#harnessCheckStatus").addEventListener("click", async () => {
+    const taskId=d.querySelector("#harnessTaskId").value.trim();
+    const output=d.querySelector("#harnessStatusOutput");
+    if(!/^TASK-[A-Z0-9-]{1,76}$/.test(taskId)){output.textContent="Invalid task ID";return;}
+    output.textContent="Checking verified state…";
+    try {
+      const result=await api("/api/projects/"+encodeURIComponent(id)+"/harness/"+encodeURIComponent(taskId)+"/status");
+      output.textContent=JSON.stringify(result,null,2);
+    } catch(error) {output.textContent="BLOCKED or unavailable: "+error.message;}
+  });
   $("#activateDetail")?.addEventListener("click",()=>activateProject(id,true));
 }
 
