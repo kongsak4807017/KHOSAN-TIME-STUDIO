@@ -58,7 +58,7 @@ Important source limits: the research reports bytecode/class compilation behavio
 
 - Original 200 ChatGPT message transcripts are **not fully recovered**, despite consolidated coverage.
 - Some source references in the audit are named tool/guide sections, not independently mirrored first-party documents.
-- Original raw SVG/DOT diagram package used as a drafting reference remains separate; the Mermaid diagrams here are a **reconstruction**.
+- The **original generated workflow ZIP** (16 SVG, 16 DOT, README, HTML index) is preserved as [Oriverse_Capability_Audit_SVG_Workflows.zip](workflows/Oriverse_Capability_Audit_SVG_Workflows.zip), SHA-256 `fcf52504a98b4fdcd055eb8afabcd9c9a01a61db94ba6c3483682d385b796ec6`; its GitHub base64 readback matched the staged original exactly. These are **earlier editorial reconstructions**, not first-party Oriverse diagrams. The Mermaid versions are an additional reconstruction.
 - Runtime benchmarks, cross-engine fidelity, licensing/commercial terms and real-system security tests remain independent future verification work.
 
 **No Evidence → No Done.**
