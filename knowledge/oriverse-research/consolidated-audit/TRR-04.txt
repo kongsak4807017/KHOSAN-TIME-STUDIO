@@ -1,0 +1,230 @@
+Oriverse / Weave Technical Research Record — TRR-04
+หมวด 04: Runtime, Tick & Event Scheduling | คำถาม 031–040 | 8 ตุลาคม 2569
+ผมตรวจคู่มือจาก Oriverse โดยตรง ได้แก่ weave_coding หัวข้อ frame_and_scheduling_model, time, movement_laws, weave_language และ multiplayer_guidance
+ข้อค้นพบหลัก: Weave ใช้การจำลองแบบ Tick-based มีการประมวลผล Events ก่อนการนำคำสั่ง Movement ไปใช้ใน Physics Phase และมีระบบพัก/กลับมาทำงานต่อของ Event Handlers แต่รายละเอียดของ Event Queue, Scheduler Internals และ Memory Layout ยังไม่เปิดเผยครบถ้วน
+การวิจัยรอบนี้เป็น Documentation Verification ไม่ใช่การทดลอง Compiler หรือ Runtime แบบแยกกรณี จึงจะระบุ Actual Result เป็น Not Run เมื่อยังไม่มีหลักฐานการทดลองจริง
+ลำดับการทำงานของ Runtime
+เป็นลำดับระดับสูงจากคู่มือ ไม่ใช่การเปิดเผยทุก Internal Scheduler Subphase
+031 — Tick Rate กำหนดอย่างไร และปรับเปลี่ยนได้หรือไม่?
+1. Direct Answer: คู่มือระบุว่า tick มีความหมายเท่ากับ frame สำหรับ Execution Model ของ Weave แต่ไม่พบข้อกำหนดที่ยืนยันว่า Simulation Tick Rate ถูกตรึงไว้ที่ 30, 60 หรือค่าใดโดยเฉพาะ และไม่พบ API สำหรับเปลี่ยน Simulation Tick Rate โดยตรง
+2. Architecture: ลูปเกมประมวลผล Spawn, Events และ Physics ในแต่ละ Tick โดยเวลาใน Simulation อาจแยกจากเวลาที่ผ่านไปจริง
+3. Source Evidence: frame_and_scheduling_model, time, multiplayer_guidance
+4. API Contract: คู่มือกล่าวถึง TimeSecs(), TimeTicks(), RawTimeSecs(), RawTimeTicks() สำหรับการอ้างอิงเวลา แต่ไม่มี SetTickRate ที่ยืนยันได้
+5. Working Example:
+ตัวอย่างนี้นับจำนวนครั้งที่ Update ถูกเรียก แต่ยังไม่สามารถยืนยัน Tick Rate เป็นวินาทีได้หากไม่วัดร่วมกับเวลา Simulation
+6. Execution Trace — Expected: Tick N → Update → Count เพิ่ม 1 → Tick N+1
+7. Limits & Failure Modes: ห้ามใช้ความรู้ทั่วไปของ Game Engines สรุปว่า Weave ทำงานที่ 60 TPS โดยไม่มีหลักฐาน
+8. Verification: Expected: นับ Tick และวัด Simulation Seconds เพื่อหาอัตราที่เกิดจริง; Actual: Not Run
+9. Disclosure Status: Documented สำหรับ Tick/Frame Semantics; Undisclosed สำหรับ Fixed Tick Rate และ Configurability
+10. Research Gaps: Fixed Step Duration, Tick-rate Configuration, Frame-rate Independence และ Catch-up Policy
+032 — ลำดับ Spawn, Events, Physics และ State Update
+1. Direct Answer: คู่มือระบุลำดับระดับสูงชัดเจน ได้แก่ Spawn Phase → Script/Event Dispatch → Physics Step → Contact/Region Evaluation
+2. Architecture: Runtime เรียก OnPreSpawn ของวัตถุที่สร้างใหม่ก่อน OnSpawned จากนั้นประมวลผล Events และนำคำสั่ง Movement/Physics ไปใช้
+3. Source Evidence: frame_and_scheduling_model
+4. API Contract: event OnPreSpawn, event OnSpawned, event Update, GetPosition(), GetRotation() และการเคลื่อนที่แบบ Continuously
+5. Working Example:
+6. Execution Trace — Expected: PRE เกิดก่อน SPAWNED ตาม Lifecycle Contract ขณะที่ตำแหน่งหลัง Physics จะพร้อมให้อ่านใน Tick ถัดไป
+7. Limits & Failure Modes: ไม่รับประกันลำดับ OnSpawned ระหว่างคนละ Object
+8. Verification: Expected: PRE มาก่อน SPAWNED; Actual: มีเอกสารยืนยัน แต่ยังไม่มีผล Log ของตัวอย่างนี้ในรอบปัจจุบัน
+9. Disclosure Status: Documented
+10. Research Gaps: Internal Phase Boundaries, Deferred Spawn Handling และ Event Scheduling ภายใน Tick
+033 — OnPreSpawn, OnSpawned, Update และ forever ต่างกันอย่างไร?
+1. Direct Answer: ทั้งสี่มีความหมายต่างกันดังนี้
+Construct
+	พฤติกรรมตามคู่มือ
+	OnPreSpawn
+	ทำงานก่อน OnSpawned ใน Spawn Phase
+	OnSpawned
+	Handler เริ่มต้นเมื่อ Instance ถูกสร้าง
+	Update
+	Handler สำหรับการอัปเดตตาม Frame
+	forever
+	Loop ที่ทำงานหนึ่งรอบต่อ Frame โดย Yield ไป Frame ถัดไปอัตโนมัติ
+	2. Architecture: OnPreSpawn และ OnSpawned ใช้สำหรับ Lifecycle Initialization ส่วน Update และ forever ใช้สำหรับตรรกะต่อเนื่อง
+3. Source Evidence: frame_and_scheduling_model, time
+4. API Contract: forever { ... } มี Implicit WaitNextFrame() ระหว่างรอบ และ Wait(seconds) ใช้ชะลอรอบภายใน Event Body ได้
+5. Working Example:
+6. Execution Trace — Expected: Spawn → ตั้ง Counter = 0 → Forever Iteration 1 → Yield → Iteration 2 ใน Frame ถัดไป
+7. Limits & Failure Modes: ไม่ควรใช้ while เพื่อรอ Physics Movement เพราะ while ไม่ Yield อัตโนมัติและอาจเกิด SameFrameLoopBudgetExceeded
+8. Verification: Expected: forever ไม่หมุนไม่สิ้นสุดใน Frame เดียว; Actual: Documented, ตัวอย่างไม่ได้รันแยก
+9. Disclosure Status: Documented
+10. Research Gaps: Event Lifetime เมื่อต้อง Destroy Instance, การมี Forever หลายชุดต่อ Instance และการยกเลิก Continuations
+034 — Event Queue และ Event Ordering รับประกันอะไรบ้าง?
+1. Direct Answer: รับประกันว่า OnPreSpawn ทั้งหมดของวัตถุใหม่เสร็จก่อน OnSpawned ใด ๆ เริ่มทำงานใน Spawn Phase เดียวกัน แต่คู่มือระบุชัดเจนว่า ไม่รับประกันลำดับ OnSpawned ระหว่าง Objects
+2. Architecture: ระบบรับ Events จาก Lifecycle, Input, UI และการอัปเดตเกม ขณะที่กลไก Event Queue ภายในไม่ได้เปิดเผย
+3. Source Evidence: frame_and_scheduling_model, multiplayer_guidance
+4. API Contract: Events ที่ปรากฏในคู่มือ ได้แก่ OnSpawned, Update, KeyboardDownByThisPlayer[...] และ UiAction[...]
+5. Working Example:
+หากผูกทั้งสอง Class กับคนละ Object ห้ามถือว่า ALPHA ต้องมาก่อน BETA
+6. Execution Trace: เอกสารยืนยัน Phase Ordering แต่ไม่ได้กำหนด Total Order ของ Events ทั้งหมด
+7. Limits & Failure Modes: การให้ Object A พึ่งพาการ Initializing ของ Object B โดยอาศัยลำดับ Spawn อาจเกิดปัญหา
+8. Verification: Expected: OnPreSpawn เสร็จก่อน OnSpawned; Actual: ไม่มีการทดสอบ Event Ordering Matrix ในรอบนี้
+9. Disclosure Status: Partially Documented; Internal Event Queue Undisclosed
+10. Research Gaps: Queue Representation, Event Priority, FIFO Guarantees, Reentrant Dispatch และการจัดการ Deferred Events
+035 — Wait และ Continuation เก็บสถานะในหน่วยความจำอย่างไร?
+1. Direct Answer: คู่มือระบุว่า Wait() และ forever สามารถพัก Execution Continuation ของแต่ละ Object ไว้ โดยเก็บ Handler Locals และ Call Scratch และใช้ Continuation Budget ส่วนกลางขนาด 262,144 Slots
+แต่ไม่ได้เปิดเผยว่า Slots เป็น Bytecode Frames, Stack Entries หรือ Memory Units แบบใด
+2. Architecture: เมื่อ Handler เรียก Wait() ระบบต้องรักษาสถานะที่จำเป็นเพื่อให้กลับมาประมวลผลต่อได้ภายหลัง
+3. Source Evidence: frame_and_scheduling_model, time
+4. API Contract: Wait(Seconds) และ WaitNextFrame() ใช้ได้เฉพาะ Event Bodies ไม่สามารถเรียกใน Custom Functions ได้ตาม Compiler2
+5. Working Example:
+6. Execution Trace — Expected: พิมพ์ BEFORE → พัก Continuation → Simulation Time ผ่านไป 1 วินาที → กลับมาพิมพ์ AFTER
+7. Limits & Failure Modes: หากสะสม Continuations มากเกิน Budget อาจเกิด continuation slot capacity exceeded และทำให้ Simulation ค้างตามที่คู่มือเตือน
+8. Verification: Expected: AFTER เกิดภายหลัง BEFORE หนึ่ง Simulation Second; Actual: Not Run
+9. Disclosure Status: Continuation Behavior/Budget Documented; Internal Memory Layout Undisclosed
+10. Research Gaps: Continuation Frame Format, Allocation/Release Policy, Cancellation และการจัดการเมื่อ Instance ถูก Destroy ขณะกำลัง Wait
+036 — เมื่อหลาย Events แก้ State เดียวกัน ใช้กฎใดตัดสิน?
+1. Direct Answer: สำหรับ Continuous Movement มีข้อกำหนดชัดเจนว่าในหนึ่ง Frame จะใช้ คำสั่ง Translation ล่าสุดหนึ่งรายการ และ Rotation ล่าสุดหนึ่งรายการ ส่วน TeleportTo* จะยกเลิก Continuous Motion และเป็นตัวกำหนด Final Transform
+แต่ยังไม่มีหลักฐานรับรองกฎ General State Write Ordering สำหรับตัวแปรทุกประเภทในทุก Events
+2. Architecture: Script/Event Dispatch ส่งคำสั่ง Movement ก่อนที่ Physics Step จะนำไปใช้
+3. Source Evidence: movement_laws, frame_and_scheduling_model
+4. API Contract: กลุ่ม Move*Continuously, Rotate*Continuously และ TeleportTo*
+5. Working Example — Conceptual:
+ตามคู่มือ คำสั่ง Continuous Translation รายการหลังจะมีผลสำหรับ Frame นั้น
+6. Execution Trace — Expected: Write Motion A → Overwrite Motion B → Physics Applies B
+7. Limits & Failure Modes: หากหลาย Event เรียก Movement ของ Object เดียวกันโดยไม่ควบคุมลำดับ ผลลัพธ์อาจขึ้นอยู่กับ Dispatch Order ที่ยังไม่รับประกัน
+8. Verification: Expected: Last Continuous Movement Wins; Actual: เป็นกฎที่คู่มือยืนยัน แต่ยังไม่ได้ทดสอบ Movement Conflict แยกในรอบนี้
+9. Disclosure Status: Movement Conflict Rules Documented; General State Conflict Semantics Partially Undisclosed
+10. Research Gaps: Ordinary Field Assignment Ordering, Atomicity, Conflict Resolution และ Event Reentrancy
+037 — Coroutine, Task Scheduler และ Asynchronous Execution
+1. Direct Answer: Weave มีพฤติกรรมคล้าย Cooperative Coroutine ผ่าน Event Bodies ที่ใช้ Wait() และ forever ได้ แต่เอกสารไม่ได้รับรองว่าภายในใช้ Coroutine Scheduler แบบใด หรือมี General-purpose Async/Await และ Thread Pool หรือไม่
+2. Architecture: การทำงานที่กินเวลาหลาย Frames สามารถใช้ Event Continuations หรือเปลี่ยนไปใช้ State Variables และ Update แทน
+3. Source Evidence: time, frame_and_scheduling_model
+4. API Contract:
+โค้ดนี้เป็น Pattern ที่รองรับตามคู่มือ โดย Tick() ต้องเป็นฟังก์ชันที่ผู้เขียนกำหนดไว้จริง
+5. Working Example: การใช้ forever และ Wait(0.25) เป็นรูปแบบสำหรับตรรกะที่ไม่ต้องทำงานทุก Frame
+6. Execution Trace — Expected: Run Tick → Wait 0.25 Simulation Seconds → Resume → Repeat
+7. Limits & Failure Modes: การใช้ Continuations จำนวนมากมี Memory Overhead คู่มือแนะนำให้ใช้ Update และ Class State สำหรับ Swarm/Pickups เพื่อลดการพัก Continuations
+8. Verification: Expected: Handler ทำงานซ้ำตามเวลาจำลอง; Actual: Documented, ไม่ได้รันตัวอย่างในรอบนี้
+9. Disclosure Status: Cooperative Scheduling Behavior Documented; Internal Scheduler/Threads Undisclosed
+10. Research Gaps: Cancellation Tokens, Scheduler Fairness, Async I/O Semantics และการจัดลำดับ Tasks ภายใน Runtime
+038 — Simulation Time ต่างจาก Wall-clock Time อย่างไร?
+1. Direct Answer: คู่มือระบุว่า TimeSecs() และ TimeTicks() เป็นเวลา Simulation ที่หยุดเมื่อ Pause และอาจ Reset เมื่อรีเซ็ต World ส่วน RawTimeSecs() และ RawTimeTicks() อ้างถึงเวลาแบบ Raw ที่ไม่หยุดตาม Pause
+2. Architecture: ระบบแยก Simulated Timeline ออกจาก Raw Timeline เพื่อให้ Gameplay Logic ใช้เวลาแบบที่สอดคล้องกับ State Simulation และ Multiplayer Determinism
+3. Source Evidence: multiplayer_guidance → Determinism caveats
+4. API Contract:
+API
+	พฤติกรรมที่เอกสารระบุ
+	TimeSecs()
+	Simulation Seconds; Pause-aware
+	TimeTicks()
+	Simulation Ticks; Pause-aware
+	RawTimeSecs()
+	Raw Time; ไม่ Freeze เมื่อ Pause
+	RawTimeTicks()
+	Raw Ticks; ไม่ Freeze เมื่อ Pause
+	5. Working Example:
+ตามคู่มือควรจับ Baseline Time เอง ไม่ควรสมมติว่าเวลาเริ่มจากค่าเดียวกันทุกกรณี
+6. Execution Trace — Expected: Simulation ทำงาน → TimeSecs เพิ่ม → Pause → TimeSecs หยุด → Resume → TimeSecs เพิ่มต่อ
+7. Limits & Failure Modes: World Reset อาจ Reset Simulation Clock การใช้ Raw Time ควบคุม Deterministic Gameplay โดยไม่ตรวจพฤติกรรมอาจทำให้ Simulation ไม่สอดคล้องกัน
+8. Verification: Expected: Pause หยุด Simulation Clock แต่ไม่หยุด Raw Clock; Actual: Not Run
+9. Disclosure Status: Documented
+10. Research Gaps: Raw Clock Source, Fixed Delta Time, Drift Correction และการจัดการ Pause ใน Multiplayer Session
+039 — Destroy Object ระหว่าง Event Dispatch ปลอดภัยอย่างไร?
+1. Direct Answer: เอกสารยืนยันว่า Object มี Lifecycle และสามารถถูก Destroy ได้ รวมถึงผู้เล่นที่ Disconnect จะถูกเก็บไว้ชั่วคราวใน Reconnect Window ก่อน OnDestroy แต่ยังไม่พบข้อกำหนดสมบูรณ์เรื่อง Destroy ระหว่างที่ Event Dispatch กำลังประมวลผล Object นั้นอยู่
+จึงยังไม่สามารถรับรองได้ว่า Destroy จะมีผลทันทีหรือถูกเลื่อนไป Safe Point
+2. Architecture: การจัดการ Object Lifetime เกี่ยวข้องกับ Instance Registry, Event Handlers, References และ Continuations แต่โครงสร้างภายในของระบบเหล่านี้ยังไม่เปิดเผย
+3. Source Evidence: multiplayer_guidance, frame_and_scheduling_model
+4. API Contract: เอกสารกล่าวถึง Destroy() และ event OnDestroy โดยใน Multiplayer มี Reconnect Grace Period ประมาณ 90 วินาทีก่อนลบ PlayerObject ที่ขาดการเชื่อมต่อถาวร
+5. Working Example:
+โค้ดนี้แสดง Lifecycle Hooks แต่ยังไม่ใช่การทดสอบ Destroy ระหว่าง Dispatch
+6. Execution Trace: Undisclosed สำหรับลำดับการลบ Object, ยกเลิก Pending Events และทำลาย Continuations ระหว่าง Dispatch
+7. Limits & Failure Modes: หากออกแบบ Game Logic ให้เข้าถึง Object หลัง Destroy โดยไม่มีการตรวจความถูกต้องของ Reference อาจมีความเสี่ยง แต่ยังไม่ควรสรุป Runtime Behavior เฉพาะของ Weave โดยไม่มีผลทดสอบ
+8. Verification: Expected: ต้องสร้าง Object ที่ Destroy ตัวเองหรือถูก Object อื่น Destroy ระหว่าง Event แล้วตรวจ Event Logs, Reference Validity และการทำงานของ Handler หลัง Destroy; Actual: Not Run
+9. Disclosure Status: Object Lifecycle Partially Documented; Mid-dispatch Destruction Safety Undisclosed
+10. Research Gaps: Deferred Deletion Policy, Reference Invalidation, Continuation Cancellation, OnDestroy Ordering และ Reentrant Destroy Behavior
+040 — Frame Execution Trace ตั้งแต่ต้นจนจบ
+1. Direct Answer: สามารถอธิบายลำดับระดับสูงตามคู่มือได้ แต่ยังไม่สามารถสร้าง Instruction-level Trace ของ VM หรือ Internal Scheduler ได้ เพราะไม่มี API ที่ยืนยันว่าเปิดเผยข้อมูลนั้น
+2. Architecture: ในหนึ่ง Tick Runtime ประมวลผล Spawn Phase, Event Dispatch, Physics/Motion แล้วคำนวณ Contacts/Regions
+3. Source Evidence: frame_and_scheduling_model, movement_laws, time
+4. API Contract: API สำคัญที่เกี่ยวข้อง ได้แก่ OnPreSpawn, OnSpawned, Update, GetPosition, MoveInDirectionContinuously, TeleportTo และ Time APIs
+5. Working Example:
+ตัวอย่างนี้เป็นโค้ดสำหรับอธิบายพฤติกรรม Tick ไม่ใช่โปรแกรมสมบูรณ์ที่ผ่าน Compiler ในรอบนี้
+6. Execution Trace — Expected
+เวลาใน Tick
+	Runtime Operation
+	สิ่งที่สังเกตได้
+	เริ่ม Tick N
+	ประมวลผล Spawn Phase
+	OnPreSpawn ก่อน OnSpawned
+	Script Phase
+	เรียก Update
+	ส่งคำสั่ง Movement
+	ระหว่าง Script
+	GetPosition()
+	อ่าน Pre-physics Transform
+	Physics Phase
+	Apply Movement
+	ตำแหน่งถูกเปลี่ยน
+	หลัง Physics
+	Evaluate Contacts/Regions
+	ตรวจการชน/เข้าเขต
+	Tick N+1
+	Script อ่าน Transform อีกครั้ง
+	ได้ตำแหน่งหลัง Physics ของ Tick N
+	7. Limits & Failure Modes: ห้ามใช้ GetPosition() ภายใน Tick เดียวกันแล้วคาดหวังว่าจะได้ Transform หลัง Continuous Movement ของ Tick นั้นทันที
+8. Verification: Expected: ตำแหน่งใหม่อ่านได้ใน Tick ถัดไป; Actual: Documented, ยังไม่ได้เก็บ Runtime Trace ของตัวอย่าง Mover โดยตรง
+9. Disclosure Status: High-level Frame Model Documented; Instruction/Event Queue Trace Undisclosed
+10. Research Gaps: Tick-level Profiler, State Diff Tracing, Internal Dispatch Order, Physics Substeps และ Deterministic Replay Logs
+________________
+
+
+TRR-04 — สรุปผลการวิจัย
+ข้อ
+	หัวข้อ
+	ระดับหลักฐาน
+	031
+	Tick Rate
+	Partially Documented
+	032
+	Phase Ordering
+	Documented
+	033
+	Lifecycle / Forever
+	Documented
+	034
+	Event Queue / Ordering
+	Partially Documented
+	035
+	Continuations / Memory
+	Partially Documented
+	036
+	State Conflict Rules
+	Partially Documented
+	037
+	Coroutine / Scheduler
+	Partially Documented
+	038
+	Simulation / Raw Time
+	Documented
+	039
+	Mid-dispatch Destroy
+	Undisclosed
+	040
+	Frame Execution Trace
+	High-level Documented
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Weave Runtime ใช้ Tick-based Execution, มี Spawn/Event/Physics Phases, มี forever ที่ Yield ระหว่าง Frames, มี Continuations สำหรับ Wait() และมีกฎ Last-call-wins ของ Continuous Movement ภายใน Frame เดียว
+Time APIs ยังแยก Simulation Time ออกจาก Raw Time และ Multiplayer Documentation ระบุการใช้ Deterministic Lockstep พร้อม Prediction/Rollback
+สิ่งที่ยังไม่เปิดเผย
+Tick-rate Configuration, Internal Event Queue, General State Write Conflict Ordering, Scheduler Data Structures, Continuation Memory Layout และ Mid-dispatch Object Destruction Safety
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+จากหลักฐานนี้ ผมเสนอให้ KHOSAN Runtime กำหนด Explicit Tick Contract พร้อมเอกสารที่ระบุทุก Phase และกฎการเปลี่ยนสถานะอย่างเป็นทางการ โดยเฉพาะ:
+* Fixed Simulation Step และ Tick-rate Configuration
+* Deterministic Event Ordering
+* Deferred Object Destruction
+* Continuation Cancellation
+* Simulation Clock และ Raw Clock ที่แยกกัน
+* State Conflict Rules
+* Frame Trace ที่ตรวจสอบซ้ำได้
+ข้อเสนอเหล่านี้เป็น สถาปัตยกรรมที่แนะนำให้ KHOSAN Studio สร้างเอง ไม่ใช่การยืนยันว่า Oriverse มี Implementation เหมือนกันทั้งหมด
+สถานะ TRR-04: Documentation Research Completed / Runtime Behavioral Test Matrix Not Run.
+ไม่มีการแก้ไข Benchmark World ระหว่างการศึกษารอบนี้ และระบบยังแจ้งว่า Oriverse Editor ใช้ Build 05Oct26-23:23 ซึ่งควร Reload ก่อนดำเนินการทดสอบเชิงลึกต่อไป
+
+
+________________
+
+
+________________
+
+
