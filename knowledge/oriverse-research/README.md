@@ -13,9 +13,11 @@
 
 ## New: AI 3D Harness source and executable KHOSAN acceptance slice (11 Nov 2026)
 
-The user-authored Google Doc **AI 3D harness** is preserved as complete **100,175-character extracted text** at [AI-3D-HARNESS-SOURCE.txt](harness-blueprint/AI-3D-HARNESS-SOURCE.txt). Begin with the [source review and critical limitations](harness-blueprint/README.md) **before using it as a production template**. Its sample `IsolatedVisualCritic` contains a real `TODO` but returns `passed: True`; this cannot count as QA evidence.
+The user-authored Google Doc **AI 3D harness** is preserved as complete **114,348-character extracted text** at [AI-3D-HARNESS-SOURCE.txt](harness-blueprint/AI-3D-HARNESS-SOURCE.txt). Begin with the [source review and critical limitations](harness-blueprint/README.md) **before using it as a production template**. Its sample `IsolatedVisualCritic` contains a real `TODO` but returns `passed: True`; this cannot count as QA evidence.
 
-KHOSAN-native follow-up: [executable harness contract](../../docs/27-HARNESS-3D-EXECUTION-CONTRACT.md), [bounded verifier](../../tools/harness-3d/gate.mjs), [3D evidence JSON Schema](../../studio/contracts/3d-verification-evidence.schema.json), and [14 local fixture tests](../../scripts/test-3d-harness.mjs). This is an **initial fail-closed verification component**, not a complete Blender/VLM/Studio GUI production implementation or endorsement of undocumented Oriverse internals.
+KHOSAN-native follow-up: [executable harness contract](../../docs/27-HARNESS-3D-EXECUTION-CONTRACT.md), [bounded verifier](../../tools/harness-3d/gate.mjs), [3D evidence JSON Schema](../../studio/contracts/3d-verification-evidence.schema.json), and [17 local fixture tests](../../scripts/test-3d-harness.mjs). This is an **initial fail-closed verification component**, not a complete Blender/VLM/Studio GUI production implementation or endorsement of undocumented Oriverse internals.
+
+**Part 7 revision:** The source was updated to 114,348 characters after the previous 100,175-character snapshot. The 6 Hard Locks proposal is reviewed in [Security & Code Review](../../docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md), with a bounded [Python Differential Patch Lock](../../tools/ugir-geometry-linter/hard_lock_enforcer.py) and [20 local tests](../../scripts/test_part7_hard_locks.py). This is not yet end-to-end protocol enforcement across all Studio/DevSpace tools.
 
 ## Source and confidence
 
