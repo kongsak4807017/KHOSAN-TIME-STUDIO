@@ -22,7 +22,7 @@ tools:
     entrypoint: "node tools/harness-3d/cli.mjs verify <project-root> <evidence-json>"
     input_contract: studio/contracts/3d-verification-evidence.schema.json
     capability: bounded_z_up_cm_aabb_lint_artifact_digest_and_governance_gate
-    notes: "14 isolated Node tests pass; independent VLM, actual Blender render, authenticated reviewer session, approval backend and full mesh validation remain pending; not a full production release"
+    notes: "17 isolated Node tests pass; gate requires separate Ed25519 reviewer/human public trust anchors; trusted signing services, independent VLM, actual Blender render, authenticated UI and full mesh validation remain pending; not a full production release"
   - id: harness-reference
     name: learn-harness-engineering
     source: https://github.com/kongsak4807017/learn-harness-engineering
