@@ -5,8 +5,14 @@
 - **Title:** AI 3D harness
 - **Source:** https://docs.google.com/document/d/1Cm8CkZoRbtwB5U71IJY5B9R2_sI9zfR7dr77wv9SG5I/edit
 - **Drive modified:** 11 November 2026 (per connected Drive metadata)
-- **Archived full extracted text:** [AI-3D-HARNESS-SOURCE.txt](AI-3D-HARNESS-SOURCE.txt), **100,175 characters** in the connected text extraction. GitHub readback matched the source text exactly.
+- **Archived full extracted text:** [AI-3D-HARNESS-SOURCE.txt](AI-3D-HARNESS-SOURCE.txt), **114,348 characters** in the connected text extraction. GitHub readback matched the source text exactly.
 - **Scope:** Research/blueprint and sample code, **not a validated deployment of the Oriverse engine or a ready-made KHOSAN executor**. Styling and embedded media from the native Google Doc are not preserved by a plain-text archive.
+
+## New Part 7 reviewed — 6 Hard Locks, November 11 update
+
+The linked Google Doc was updated after the prior archive. The current source is **114,348 characters**, including **Part 7**. [Read the security/code review](../../../docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md) before adopting sample functions. The source `DifferentialPatchLockEnforcer` only rejects explicitly frozen names; an unknown name is silently ignored, arbitrary patch fields can be merged, and no trusted baseline digest or post-patch regression check exists. Its HMAC example uses a publicly known fallback secret and trusts maker-supplied reviewer results. **Do not copy those samples as a production authorization gate.**
+
+The repository now includes a standalone **bounded Python differential-patch checker** at [`tools/ugir-geometry-linter/hard_lock_enforcer.py`](../../../tools/ugir-geometry-linter/hard_lock_enforcer.py) with **20 local security-oriented unit tests**, in addition to the existing Ed25519 artifact gate. The Python policy is not yet wired into all DevSpace/Studio execution paths, and does not validate non-AABB geometry.
 
 ## What the document actually specifies
 
