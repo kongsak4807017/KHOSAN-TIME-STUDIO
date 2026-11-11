@@ -76,7 +76,6 @@ export function authorizeCommand(req,trust,now=Date.now()){
  if(!checkedSignature(envelopeBody(req),req.signature_base64,pem))fail('untrusted actor signature');
  return true;
 }
-export function signCommandForTestOnly(req,privateKeyPem){return {...req,signature_base64:signEd25519(null,Buffer.from(envelopeBody(req)),privateKeyPem).toString('base64')};}
 
 async function realProject(root,projectId,trust){
  const full=await realpath(root);
