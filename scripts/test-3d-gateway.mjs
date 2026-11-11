@@ -210,3 +210,43 @@ test('server and maker public keys must not be identical',()=>{
  const trust={schema:'khosan.3d.trust.v1',server:{public_key_pem:keys.maker.pub},projects:{[projectId]:'/tmp/x'},actors:{maker:{maker01:keys.maker.pub}}};
  assert.throws(()=>validateTrust(trust),HardLockError);
 });
+
+test('DevSpace-style local IPC can submit only authorized signed commands',async t=>{
+ const {startGatewayDaemon}=await import('../tools/harness-3d/gateway-daemon.mjs');
+ const {callGateway}=await import('../tools/harness-3d/gateway-client.mjs');
+ const {once}=await import('node:events');
+ const f=await fixture(t),socketPath=path.join(f.root,'trusted-gateway.sock');
+ const server=startGatewayDaemon({trust:f.trust,serverPrivateKey:f.serverPrivateKey,socketPath});
+ t.after(async()=>new Promise(resolve=>server.close(resolve)));
+ await once(server,'listening');
+ const req=f.request('controller','open_task',{asset_id:'house001'},null);
+ const applied=await callGateway(socketPath,req);
+ assert.equal(applied.stage,'specified');
+ const replay=await callGateway(socketPath,req);
+ assert.equal(replay.ok,false);
+ const forged={...f.request('human','approve',{},applied.version),signature_base64:'AA=='};
+ const blocked=await callGateway(socketPath,forged);
+ assert.equal(blocked.ok,false);
+ const phaseSkip=await callGateway(socketPath,f.request('human','approve',{},applied.version));
+ assert.equal(phaseSkip.ok,false);
+});
+
+test('Maker signer CLI can sign permitted DevSpace work but cannot elevate role',async t=>{
+ const {spawnSync}=await import('node:child_process');
+ const f=await fixture(t),a=await f.send('controller','open_task',{asset_id:'house001'},null);
+ const b=await f.send('controller','lock_reference',{path:'references/house.png',sha256:d(f.reference)},a.version);
+ const req=f.request('maker','create_geometry',{ugir:scene(false)},b.version);delete req.signature_base64;
+ await writeFile(path.join(f.root,'maker-key.pem'),keys.maker.priv);
+ await writeFile(path.join(f.root,'unsigned.json'),JSON.stringify(req));
+ const result=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../tools/harness-3d/gateway-sign.mjs'),'sign',path.join(f.root,'maker-key.pem'),path.join(f.root,'unsigned.json'),path.join(f.root,'signed.json')],{encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr);
+ const signed=JSON.parse(await readFile(path.join(f.root,'signed.json'),'utf8'));
+ const built=await f.dispatch(signed);assert.equal(built.stage,'geometry_built');
+ const elevated={...f.request('controller','open_task',{asset_id:'other'},null),actor:{role:'controller',id:ids.controller}};
+ delete elevated.signature_base64;
+ await writeFile(path.join(f.root,'controller-unsigned.json'),JSON.stringify(elevated));
+ const next=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../tools/harness-3d/gateway-sign.mjs'),'sign',path.join(f.root,'maker-key.pem'),path.join(f.root,'controller-unsigned.json'),path.join(f.root,'controller-signed.json')],{encoding:'utf8'});
+ assert.equal(next.status,0);
+ const forged=JSON.parse(await readFile(path.join(f.root,'controller-signed.json'),'utf8'));
+ await assert.rejects(()=>f.dispatch(forged),HardLockError);
+});
