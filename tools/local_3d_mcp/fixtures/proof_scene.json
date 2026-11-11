@@ -1,0 +1,34 @@
+{
+  "schema": "khosan.scene/1.0",
+  "scene_id": "drkho_storybook_prop_proof",
+  "seed": 4917,
+  "units": "m",
+  "up_axis": "Y",
+  "provenance": {
+    "description": "Authored procedural DR.KHO storybook prop vignette",
+    "reference_paths": [],
+    "known_unknowns": ["Art direction remains subject to human review", "This is not image reconstruction or a character rig"]
+  },
+  "materials": [
+    {"id":"terracotta", "base_color":"#B86341", "roughness":0.67, "metallic":0},
+    {"id":"oiled_wood", "base_color":"#69503B", "roughness":0.66, "metallic":0},
+    {"id":"limestone", "base_color":"#C9C1AD", "roughness":0.78, "metallic":0},
+    {"id":"ground", "base_color":"#B6A787", "roughness":0.92, "metallic":0},
+    {"id":"river_stone", "base_color":"#7A817E", "roughness":0.84, "metallic":0}
+  ],
+  "objects": [
+    {"id":"earthen_stage", "recipe":"terrain", "material":"ground", "position":[0,0,0], "rotation":[0,0,0], "scale":[1,1,1], "parameters":{"width":4.65,"depth":3.65,"relief":0.035}},
+    {"id":"carved_column", "recipe":"column", "material":"limestone", "position":[-1.22,0,-0.60], "rotation":[0,10,0], "scale":[1,1,1], "parameters":{"height":1.75,"radius":0.24}},
+    {"id":"joiners_table", "recipe":"table", "material":"oiled_wood", "position":[0.28,0,0.18], "rotation":[0,-8,0], "scale":[1,1,1], "parameters":{"width":1.75,"depth":0.84,"height":0.79}},
+    {"id":"handmade_amphora", "recipe":"amphora", "material":"terracotta", "position":[0.42,0.79,0.13], "rotation":[0,-12,0], "scale":[1,1,1], "parameters":{"height":0.92,"radius":0.285}},
+    {"id":"ground_jar", "recipe":"amphora", "material":"terracotta", "position":[-0.68,0,0.63], "rotation":[0,28,0], "scale":[1,1,1], "parameters":{"height":0.52,"radius":0.18}},
+    {"id":"stone_01", "recipe":"rock", "material":"river_stone", "position":[-1.14,0,0.46], "rotation":[0,20,0], "scale":[1,1,1], "parameters":{"radius":0.18}},
+    {"id":"stone_02", "recipe":"rock", "material":"limestone", "position":[-1.63,0,0.03], "rotation":[0,55,0], "scale":[1,1,1], "parameters":{"radius":0.12}},
+    {"id":"stone_03", "recipe":"rock", "material":"river_stone", "position":[1.30,0,-0.32], "rotation":[0,112,0], "scale":[1,1,1], "parameters":{"radius":0.21}},
+    {"id":"stone_04", "recipe":"rock", "material":"river_stone", "position":[1.48,0,-0.16], "rotation":[0,12,0], "scale":[1,1,1], "parameters":{"radius":0.09}}
+  ],
+  "camera": {"position":[4.5,3.3,5.8],"target":[0,0.62,0],"lens_mm":43},
+  "render": {"width":960,"height":540,"samples":32},
+  "budget": {"max_triangles":150000,"max_objects":150}
+}
+

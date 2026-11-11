@@ -1,0 +1,29 @@
+// KHOSAN Weave v1: strict local subset, not the Oriverse language/runtime.
+scene amphora_study {
+  seed = 49
+  units = "m"
+  up_axis = "Y"
+  material clay { base_color = "#B86341" roughness = 0.72 metallic = 0 }
+  material earth { base_color = "#B6A787" roughness = 0.92 }
+  object ground {
+    recipe = "terrain"
+    material = "earth"
+    parameters { width = 3 depth = 3 relief = 0.025 }
+  }
+  object hero_vessel {
+    recipe = "amphora"
+    material = "clay"
+    position = (0, 0, 0)
+    rotation = (0, 15, 0)
+    parameters { height = 1.15 radius = 0.34 }
+  }
+  camera { position = (3.8, 2.7, 4.7) target = (0, 0.6, 0) lens_mm = 48 }
+  render { width = 960 height = 540 samples = 32 }
+  budget { max_triangles = 150000 max_objects = 150 }
+  provenance {
+    description = "Original procedural prop study, awaiting visual review."
+    reference_paths = []
+    known_unknowns = ["No reference likeness, character animation or physics is claimed."]
+  }
+}
+

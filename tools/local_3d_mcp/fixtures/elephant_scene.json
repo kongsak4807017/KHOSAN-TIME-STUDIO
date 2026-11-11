@@ -1,0 +1,22 @@
+{
+  "schema": "khosan.scene/1.0",
+  "scene_id": "drkho_elephant_reference_sculpt",
+  "seed": 201117,
+  "units": "m",
+  "up_axis": "Y",
+  "provenance": {
+    "description": "Original editable elephant sculpt guided visually by supplied elephant reference; manually authored procedural modeling",
+    "reference_paths": ["tools/local_3d_mcp/references/ep02_elephant_ref_r7.png"],
+    "known_unknowns": ["Hidden anatomy is inferred from a single reference view", "Three-meter model scale is an authoring convention", "No rig, animation, simulation, or automatic image-to-3D conversion"]
+  },
+  "materials": [
+    {"id":"elephant_warm_grey", "base_color":"#777164", "roughness":0.87, "metallic":0}
+  ],
+  "objects": [
+    {"id":"reference_elephant", "recipe":"elephant", "material":"elephant_warm_grey", "position":[0,0,0], "rotation":[0,0,0], "scale":[1,1,1], "parameters":{"height":3.0,"body_length":3.9,"ear_size":1.0,"tusk_length":0.72,"skin_detail":1.0}}
+  ],
+  "camera": {"position":[-8.6,3.0,5.8],"target":[0,1.43,0.12],"lens_mm":49},
+  "lighting": {"preset":"elephant_studio"},
+  "render": {"width":1280,"height":720,"samples":64},
+  "budget": {"max_triangles":1000000,"max_objects":150}
+}

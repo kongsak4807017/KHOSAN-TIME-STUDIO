@@ -1,0 +1,4 @@
+# Pin the official SDK interface actually exercised by this package.
+# Blender's own bundled Python runs worker.py and needs no pip dependencies.
+mcp==1.29.0
+
