@@ -1,5 +1,13 @@
 # Session Handoff
 
+## 2026-11-11 — AI 3D harness archival and verification foundation
+- Active documentation branch for current work: `docs/oriverse-weave-archive-20261111`, draft PR #22 to main; `main` not changed.
+- Read the connected `AI 3D harness` Google Doc and archived its complete extracted text, with source review distinguishing sample claims from verifiable implementation.
+- New executable scripts: `tools/harness-3d/gate.mjs`, `layout-lint.mjs`, `coordinates.mjs`, `cli.mjs`; tests: `scripts/test-3d-harness.mjs` (14/14 isolated Node fixture tests PASS).
+- No actual independent vision provider, signed checker/human approval, complete mesh validation, Blender worker, Studio API wiring or real target Windows GPU acceptance exists yet.
+- On next session: checkout the GitHub branch in a **real repo**, run `npm run verify:3d-harness` and `node scripts/verify-oriverse-archive.mjs`, then wire real adapters and run a reference-to-asset vertical slice; never accept a visual critic stub returning PASS.
+
+
 **Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
 **Branch:** `main`
 **Studio source version:** `0.2.0`
