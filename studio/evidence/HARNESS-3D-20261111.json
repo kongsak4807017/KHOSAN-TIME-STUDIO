@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-3D-HARNESS-REFERENCE-20261111",
+  "source": "https://docs.google.com/document/d/1Cm8CkZoRbtwB5U71IJY5B9R2_sI9zfR7dr77wv9SG5I/edit",
+  "archived_text_chars": 100175,
+  "source_repository_location": "knowledge/oriverse-research/harness-blueprint/AI-3D-HARNESS-SOURCE.txt",
+  "source_readback": "exact_character_match",
+  "local_node_version": "v22.16.0",
+  "tests_command": "node --test scripts/test-3d-harness.mjs",
+  "tests_executed": 14,
+  "tests_passed": 14,
+  "tests_failed": 0,
+  "test_environment": "isolated Linux container fixture; not user's Windows/Blender/GPU runtime",
+  "tested_capabilities": [
+    "Z-up centimeters native layout AABB geometry lint",
+    "UG-IR JSON, glTF v2 GLB and contact-sheet PNG header checks",
+    "artifact SHA-256 integrity",
+    "maker/checker different IDs and sessions",
+    "untrusted critic stub blocked",
+    "reference and rendered sheet digest binding",
+    "source revision and machine metric checks",
+    "human approval digest binding",
+    "path traversal refusal",
+    "stage order refusal",
+    "Y-up meter ↔ Z-up centimeter roundtrip"
+  ],
+  "not_claimed": [
+    "full original Oriverse engine internals independently verified",
+    "real visual critic API executed",
+    "genuine human identity verified",
+    "Blender rendering benchmark passed",
+    "automatic Studio browser gating integrated",
+    "production-ready full-3D asset pipeline"
+  ],
+  "status": "source_archived_and_native_evidence_gate_prototype_tested_review_required"
+}
