@@ -1,0 +1,57 @@
+name: KHOSAN Hard-Lock Verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/harness-3d/**"
+      - "scripts/test-3d-harness.mjs"
+      - "scripts/test-trusted-gateway.mjs"
+      - "scripts/test_part7_hard_locks.py"
+      - "studio/contracts/3d-verification-evidence.schema.json"
+      - "apps/studio-server/server.mjs"
+      - "package.json"
+      - ".github/workflows/harness-hard-locks.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: khosan-hard-locks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hard-locks:
+    name: hard-locks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check server and gateway syntax
+        run: |
+          node --check apps/studio-server/server.mjs
+          node --check tools/harness-3d/trusted-gateway.mjs
+          node --check tools/harness-3d/gateway-daemon.mjs
+          node --check tools/harness-3d/gateway-client.mjs
+      - name: Verify 3D artifact cryptographic gate
+        run: npm run verify:3d-harness
+      - name: Verify trusted command gateway end-to-end
+        run: npm run verify:trusted-gateway
+      - name: Verify Part 7 differential patch lock
+        run: npm run verify:part7
+      - name: Verify Oriverse archive integrity
+        run: node scripts/verify-oriverse-archive.mjs
+      - name: Verify agent harness manifest
+        run: python scripts/harness_check.py
