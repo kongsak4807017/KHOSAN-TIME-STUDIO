@@ -63,5 +63,5 @@
     "Reviewer and human identities in local JSON are metadata and not authenticated session or signature.",
     "DevSpace target repo folder was empty when last inspected, so GitHub is current source of truth; no target Windows runner acceptance in this task."
   ],
-  "notes": "This foundation has 14/14 isolated Node unit tests passing; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration."
+  "notes": "This foundation has 17/17 isolated Node unit tests passing; Ed25519 signed receipt verification is implemented, but trusted issuer services and actual human/VLM execution remain unverified; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration."
 }
