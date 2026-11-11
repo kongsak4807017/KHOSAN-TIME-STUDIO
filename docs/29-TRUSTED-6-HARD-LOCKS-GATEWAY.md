@@ -103,3 +103,17 @@ node tools/harness-3d/gateway-client.mjs "\\.\pipe\khosan-harness3d" "C:\KHOSAN\
 The IPC accepts at most one signed JSON request per connection, a 1 MiB frame, 30-second timeout and limited concurrent connections. A Maker signature never authorizes Controller, Renderer, Independent Reviewer or Human actions; separate issuer keys, credentials and actual work are mandatory.
 
 **Windows deployment prerequisite:** Create a dedicated gateway service account, enforce real NTFS ACLs so Maker cannot directly modify protected `.khosan/harness3d` task state/accepted evidence or read protected private keys, provision external independent reviewer and human approval issuers, and verify the running identities. `icacls` can be used to inspect and enforce rights by a local administrator; this repository does not blindly modify the user's file permissions or install a background service. Without these operating-system controls, the protocol module is *not* a complete sandbox.
+## 7. Studio GUI: verified, read-only task state
+
+The project detail panel includes a **Trusted 3D Harness** status lookup. It is OFF unless explicitly enabled, and never exposes a mutation, patch, signing or human-approval button. Status verification reads the server-signed task snapshot using only the protected **public** trust registry.
+
+```powershell
+$env:KHOSAN_HOST = '127.0.0.1'
+$env:KHOSAN_3D_TRUST_FILE = 'C:\KHOSAN\trust\public-registry.json'
+$env:KHOSAN_ALLOW_LOCAL_HARNESS_STATUS = '1'
+node apps/studio-server/server.mjs
+```
+
+From **Projects → Open project → Trusted 3D Harness**, enter the task ID and select **Check verified task state**. It reports current phase/version/allowed roles or `BLOCKED`; it never assumes that the Maker's submitted text is a verified result.
+
+**Do not forward the Studio port to the internet**. Configured loopback binding does not protect endpoints from authenticated users on a remote proxy or local malware; real exposure requires a dedicated auth layer. Do not place the service private key in the Studio web process, JavaScript bundle, `.env` committed to Git, or a DevSpace prompt.
