@@ -33,5 +33,7 @@ jobs:
         run: python scripts/harness_check.py
       - name: Verify fail-closed 3D harness gate
         run: npm run verify:3d-harness
+      - name: Verify Part 7 differential patch lock
+        run: npm run verify:part7
       - name: Check Python adapter syntax
         run: python -m py_compile tools/adapters/rigging/common.py tools/adapters/rigging/doctor.py tools/adapters/rigging/rig.py tools/adapters/rigging/validate.py tools/devspace-connectivity/doctor.py
