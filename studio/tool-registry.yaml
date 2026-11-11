@@ -33,6 +33,17 @@ tools:
     verification: "python -m unittest discover -s scripts -p test_part7_hard_locks.py"
     capability: source_revision_bound_atomic_coordinate_patch_and_phase_tool_mask
     limitations: "standalone checker only; NOT yet enforced by trusted Studio/DevSpace dispatcher; no native anchors, CSG, skinned meshes, browser UI or authenticated permission boundary"
+  - id: khosan-trusted-3d-command-gateway
+    name: KHOSAN 3D Signed Protocol Gateway + Local IPC
+    status: evaluate
+    priority: p0
+    deterministic: true
+    owner: 00-studio-orchestrator
+    entrypoint: "node tools/harness-3d/gateway-daemon.mjs serve <trust-file> <service-key-file> <named-pipe>"
+    verification: "npm run verify:gateway"
+    capability: scoped_ed25519_tool_authorization_durable_fsm_atomic_geometry_patch_independent_receipts
+    restrictions: "must run as separately permissioned Windows service account; never expose private service or reviewer keys to Maker; no remote HTTP mutator"
+    notes: "29/29 GitHub Actions signed gateway + IPC tests PASS; real trusted OS ACL/service, actual independent VLM and production renderer remain deployment gates"
   - id: harness-reference
     name: learn-harness-engineering
     source: https://github.com/kongsak4807017/learn-harness-engineering
