@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, readdir, stat, appendFile } from "node:fs/p
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import {readTrustedStatus} from "../../tools/harness-3d/trusted-gateway.mjs";
 
 const STUDIO_VERSION = "0.2.0";
 const PROJECT_SCHEMA_VERSION = 1;
@@ -266,6 +267,25 @@ async function api(req, res, url) {
     }); return true;
   }
 
+  // Read-only signed harness status. No privileged mutation API is exposed via Studio HTTP.
+  const harnessMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/harness\/([^/]+)\/status$/);
+  if (req.method === 'GET' && harnessMatch) {
+    if (!['127.0.0.1','::1'].includes(HOST) || process.env.KHOSAN_ALLOW_LOCAL_HARNESS_STATUS !== '1') {
+      send(res,403,{error:'local signed harness status endpoint disabled'}); return true;
+    }
+    const id=routeId(harnessMatch[1]);
+    let taskId; try {taskId=decodeURIComponent(harnessMatch[2]);} catch {taskId=null;}
+    if (!id || !/^TASK-[A-Z0-9-]{1,76}$/.test(taskId||'')) {send(res,400,{error:'invalid project or task ID'});return true;}
+    const dir=projectDir(id), project=await jsonFile(path.join(dir,'project.json'));
+    if (!project) {send(res,404,{error:'project not found'});return true;}
+    if (!process.env.KHOSAN_3D_TRUST_FILE) {send(res,503,{error:'trusted harness has not been configured'});return true;}
+    try {
+      const registry=JSON.parse(await readFile(path.resolve(process.env.KHOSAN_3D_TRUST_FILE),'utf8'));
+      const state=await readTrustedStatus({projectRoot:dir,trust:registry,projectId:id,taskId});
+      send(res,200,state);
+    } catch (_) {send(res,409,{error:'trusted harness state unavailable or failed signature verification'});}
+    return true;
+  }
   const pm = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
   if (req.method === "GET" && pm) {
     const id=routeId(pm[1]); if(!id){send(res,400,{error:"invalid project id"});return true;} const dir=projectDir(id); const project=await jsonFile(path.join(dir,"project.json"));
