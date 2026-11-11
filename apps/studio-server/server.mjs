@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, readdir, stat, appendFile } from "node:fs/p
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import {createHardLockGateway} from "./hard-lock-gateway.mjs";
 import {readTrustedStatus} from "../../tools/harness-3d/trusted-gateway.mjs";
 
 const STUDIO_VERSION = "0.2.0";
@@ -66,6 +67,28 @@ function projectDir(id) {
   return dir;
 }
 function now() { return new Date().toISOString(); }
+
+const harnessGateway = createHardLockGateway({
+  enabled: ["127.0.0.1", "::1", "localhost"].includes(HOST),
+  projectRootForId: projectDir,
+  tokens: {
+    maker: process.env.KHOSAN_HARNESS_MAKER_TOKEN,
+    renderer: process.env.KHOSAN_HARNESS_RENDERER_TOKEN,
+    reviewer: process.env.KHOSAN_HARNESS_REVIEWER_TOKEN,
+    human: process.env.KHOSAN_HARNESS_HUMAN_TOKEN
+  },
+  principals: {
+    maker: process.env.KHOSAN_HARNESS_MAKER_ID,
+    renderer: process.env.KHOSAN_HARNESS_RENDERER_ID,
+    reviewer: process.env.KHOSAN_HARNESS_REVIEWER_ID,
+    human: process.env.KHOSAN_HARNESS_HUMAN_ID
+  },
+  publicKeyFiles: {
+    renderer: process.env.KHOSAN_3D_RENDERER_PUBLIC_KEY_FILE,
+    reviewer: process.env.KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE,
+    human: process.env.KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE
+  }
+});
 
 async function listJsonFiles(directory) {
   try {
@@ -204,6 +227,7 @@ function routeIntent(text = "") {
 }
 
 async function api(req, res, url) {
+  if (url.pathname.startsWith("/api/harness/") && await harnessGateway.handle(req, res, url)) return true;
   if (req.method === "GET" && url.pathname === "/api/health") {
     send(res, 200, {ok:true, service:"khosan-studio", version:STUDIO_VERSION, time:now(), host:HOST, port:PORT, creative_intelligence:true, project_persistence:true, multi_project:true}); return true;
   }
