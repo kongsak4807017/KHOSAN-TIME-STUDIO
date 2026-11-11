@@ -39,6 +39,12 @@
 
 **Trust limitation:** This Python component is **not** a sandbox, a signature service or a protected orchestrator by itself. A maker granted direct filesystem write access can bypass it. Its caller must be a trusted tool gateway controlling file-system permissions, source-revision optimistic locks and admissible tool names. The code does not yet support `attach_to_anchor`, CSG, skinned meshes or arbitrary collision shapes.
 
+## Subsequent fix — verified signed command gateway (Nov 2026)
+
+A further KHOSAN-native implementation, [`docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md`](29-TRUSTED-6-HARD-LOCKS-GATEWAY.md), closes the **source-level** missing tool-dispatch boundary for its bounded AABB subset. It implements signed Controller/Maker/Checker/Renderer/Reviewer/Human command envelopes, server-signed task-state snapshots, source hashes, immutable versioned source, dynamic tool masking enforced in the dispatcher, atomic per-axis measured repair, replay/version checks, task lock, local named-pipe/Unix IPC, and signed evidence approval through the existing `verify3DAcceptance` gate. A workflow on PRs to `main` passes **29/29 gateway tests**, 17/17 artifact-gate tests and 20/20 Python Part 7 tests (run 43003471960 and descendants on the docs branch).
+
+**Not fixed by code alone:** Makers with direct Windows filesystem write access can still bypass the service; an actual protected OS service account and ACLs are required. Trusted renderer camera measurement, fresh independent VLM/critic service, real human signers and required branch-protection rules also require deployment/verification. Do not relabel this as fully production-secure 100% compliance.
+
 ## Required production architecture (not implemented by the sample)
 
 ```text
