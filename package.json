@@ -14,6 +14,8 @@
     "doctor:rigging": "python tools/adapters/rigging/doctor.py --json",
     "verify:workspace": "node scripts/smoke-multi-project.mjs",
     "doctor:image-blaster": "node tools/adapters/image-blaster/doctor.mjs",
-    "image-blaster": "node tools/adapters/image-blaster/run.mjs"
+    "image-blaster": "node tools/adapters/image-blaster/run.mjs",
+    "verify:3d-harness": "node --test scripts/test-3d-harness.mjs",
+    "harness:3d-verify": "node tools/harness-3d/cli.mjs"
   }
 }
