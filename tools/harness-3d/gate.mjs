@@ -8,7 +8,7 @@
 import { createReadStream } from 'node:fs';
 import { lstat, readFile, realpath, open } from 'node:fs/promises';
 import {lintUGIR} from './layout-lint.mjs';
-import { createHash } from 'node:crypto';
+import { createHash, verify as verifySignature } from 'node:crypto';
 import path from 'node:path';
 
 export const STAGES = Object.freeze([
@@ -43,6 +43,18 @@ export function validateTechnical(metrics, budgets = {}) {
   return errors;
 }
 
+/** Stable signed payloads; only a trusted independent reviewer / human approval service may hold issuer private keys. */
+export function reviewerReceiptPayload(e) {
+  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,agent_id:e.reviewer?.agent_id,session_id:e.reviewer?.session_id,run_id:e.reviewer?.run_id,isolated_session:e.reviewer?.isolated_session,verdict:e.reviewer?.verdict,defects:e.reviewer?.defects,contact_sha256:e.reviewer?.reviewed_contact_sha256,reference_sha256:e.reference_mode==='reference'?e.reviewer?.reviewed_reference_sha256:null});
+}
+export function humanApprovalPayload(e) {
+  return JSON.stringify({schema:e.schema,project_id:e.project_id,task_id:e.task_id,asset_id:e.asset_id,source_revision:e.source_revision,approval_reference:e.human_approval?.approval_reference,approved_by:e.human_approval?.approved_by,approved:e.human_approval?.approved,glb_sha256:e.human_approval?.approved_glb_sha256,review_run_id:e.reviewer?.run_id});
+}
+function verifyEd25519(payload, signature, publicKey) {
+  if(!isText(publicKey)||!isText(signature)||!/^[A-Za-z0-9+/]+={0,2}$/.test(signature))return false;
+  try{return verifySignature(null,Buffer.from(payload,'utf8'),publicKey,Buffer.from(signature,'base64'))}catch{return false}
+}
+
 export function validateEvidenceShape(evidence) {
   const errors = [];
   if (!isObject(evidence)) return ['evidence object required'];
@@ -58,7 +70,7 @@ export function validateEvidenceShape(evidence) {
     }
     if (maker.agent_id === reviewer.agent_id) fail(errors, 'maker and reviewer agent must differ');
     if (maker.session_id === reviewer.session_id) fail(errors, 'maker and reviewer session must differ');
-    if (reviewer.isolated_session !== true || !isText(reviewer.run_id)) fail(errors, 'independent reviewer receipt missing');
+    if (reviewer.isolated_session !== true || !isText(reviewer.run_id) || !isText(reviewer.signature_base64)) fail(errors, 'independent reviewer signed receipt missing');
     if (reviewer.verdict !== 'ACCEPT' || !Array.isArray(reviewer.defects) || reviewer.defects.length !== 0) fail(errors, 'independent reviewer did not accept defect-free output');
   }
   errors.push(...validateTechnical(evidence.technical, evidence.budgets));
@@ -76,7 +88,7 @@ export function validateEvidenceShape(evidence) {
   if (reviewer && artifacts?.contact_sheet_png && reviewer.reviewed_contact_sha256 !== artifacts.contact_sheet_png.sha256) fail(errors, 'reviewer did not inspect current contact sheet hash');
   if (evidence.reference_mode === 'reference' && reviewer?.reviewed_reference_sha256 !== artifacts?.reference?.sha256) fail(errors,'reviewer did not inspect current reference hash');
   const human = evidence.human_approval;
-  if (!isObject(human) || human.approved !== true || !isText(human.approval_reference) || !isText(human.approved_by) || human.asset_id !== evidence.asset_id || human.approved_glb_sha256 !== artifacts?.glb?.sha256) fail(errors, 'human approval missing or not bound to asset/glb');
+  if (!isObject(human) || human.approved !== true || !isText(human.approval_reference) || !isText(human.approved_by) || !isText(human.signature_base64) || human.asset_id !== evidence.asset_id || human.approved_glb_sha256 !== artifacts?.glb?.sha256) fail(errors, 'human approval missing or not bound to asset/glb');
   return errors;
 }
 
@@ -156,8 +168,10 @@ async function checkFormat(role, file, size, assetId) {
   return null;
 }
 
-export async function verify3DAcceptance(projectRoot, evidence) {
+export async function verify3DAcceptance(projectRoot, evidence, trust = {}) {
   const errors=validateEvidenceShape(evidence),checked=[];
+  if (!verifyEd25519(reviewerReceiptPayload(evidence),evidence?.reviewer?.signature_base64,trust.reviewer_public_key_pem)) errors.push('reviewer receipt signature missing, wrong, or untrusted');
+  if (!verifyEd25519(humanApprovalPayload(evidence),evidence?.human_approval?.signature_base64,trust.human_public_key_pem)) errors.push('human approval signature missing, wrong, or untrusted');
   let root;
   try {root=await realpath(projectRoot)} catch {errors.push('project root unavailable')}
   if (root && isObject(evidence?.artifacts)) {
