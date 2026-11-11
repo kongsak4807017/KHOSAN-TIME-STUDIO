@@ -11,6 +11,12 @@
 - [MCP / Weave pipeline interpretation](supplemental/MCP-Pipeline-Interpretive-Notes.txt) is archived as **prior design commentary**, not verified proprietary implementation evidence.
 - [16 reconstructed workflow diagrams](workflows/WORKFLOWS-16.md) restate the research patterns. They are NOT recovered first-party Oriverse SVGs or measurements.
 
+## New: AI 3D Harness source and executable KHOSAN acceptance slice (11 Nov 2026)
+
+The user-authored Google Doc **AI 3D harness** is preserved as complete **100,175-character extracted text** at [AI-3D-HARNESS-SOURCE.txt](harness-blueprint/AI-3D-HARNESS-SOURCE.txt). Begin with the [source review and critical limitations](harness-blueprint/README.md) **before using it as a production template**. Its sample `IsolatedVisualCritic` contains a real `TODO` but returns `passed: True`; this cannot count as QA evidence.
+
+KHOSAN-native follow-up: [executable harness contract](../../docs/27-HARNESS-3D-EXECUTION-CONTRACT.md), [bounded verifier](../../tools/harness-3d/gate.mjs), [3D evidence JSON Schema](../../studio/contracts/3d-verification-evidence.schema.json), and [14 local fixture tests](../../scripts/test-3d-harness.mjs). This is an **initial fail-closed verification component**, not a complete Blender/VLM/Studio GUI production implementation or endorsement of undocumented Oriverse internals.
+
 ## Source and confidence
 
 Primary consolidated source: [Oriverse Capability Audit (Google Doc)](https://docs.google.com/document/d/137S6eGaPtZhMYkTQh-kE0ZtctXTRmcj9459sHL-TwcQ). The research report itself describes interactions with Oriverse documentation, tool contracts, and selected runtime experiments on 8–9 October 2026. Uploading that report **does not rerun those experiments** or prove undocumented internals.
