@@ -41,12 +41,16 @@ ai_3d_harness_blueprint:
   source_title: "AI 3D harness"
   source_url: https://docs.google.com/document/d/1Cm8CkZoRbtwB5U71IJY5B9R2_sI9zfR7dr77wv9SG5I/edit
   source_modified: "2026-11-11"
-  extracted_text_characters: 100175
-  github_blob_sha1: 6f471fc20be3398bd03f1f8a42b8ac9e48ccd2ef
+  extracted_text_characters: 114348
+  github_blob_sha1: 8aa3da9a316291cc5632c8f5d12de4d45f36763d
   archive_text: knowledge/oriverse-research/harness-blueprint/AI-3D-HARNESS-SOURCE.txt
   source_review: knowledge/oriverse-research/harness-blueprint/README.md
   derived_contract: docs/27-HARNESS-3D-EXECUTION-CONTRACT.md
   native_evidence_gate: tools/harness-3d/gate.mjs
+  part7_review: docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md
+  differential_patch_policy: tools/ugir-geometry-linter/hard_lock_enforcer.py
+  differential_patch_tests: scripts/test_part7_hard_locks.py
+  source_latest_part7: '6 Hard Locks, Cryptographic Gatekeeper, Differential Patch Lock (source reviewed, not adopted verbatim)'
   verification_tests: scripts/test-3d-harness.mjs
   status: "full_source_text_archived_native_bounded_gate_tested_full_production_harness_not_complete"
   restrictions: "source includes illustrative Oriverse proprietary runtime claims and mock Visual Critic PASS; do not adopt unverified behavior or treat this document as executable production proof"
