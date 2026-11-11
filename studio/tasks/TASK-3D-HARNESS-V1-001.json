@@ -1,0 +1,67 @@
+{
+  "task_id": "TASK-3D-HARNESS-V1-001",
+  "feature_id": "3D-HARNESS-V1",
+  "title": "Adopt reviewed AI 3D harness blueprint as executable KHOSAN-native gates",
+  "status": "verify",
+  "owner_role": "06-technical-architect",
+  "contributors": [
+    "00-studio-orchestrator",
+    "04-asset-synthesizer",
+    "08-rendering-engineer",
+    "10-qa-playtester",
+    "11-independent-reviewer"
+  ],
+  "objective": "Preserve user-provided AI 3D harness research, prevent fake visual QA acceptance, provide a deterministic evidence gate and define next integration work for genuine Blender/VLM/Studio execution.",
+  "context_files": [
+    "knowledge/oriverse-research/harness-blueprint/README.md",
+    "docs/27-HARNESS-3D-EXECUTION-CONTRACT.md",
+    "studio/contracts/3d-verification-evidence.schema.json",
+    "tools/harness-3d/gate.mjs",
+    "studio/evidence/HARNESS-3D-20261111.json"
+  ],
+  "allowed_paths": [
+    "knowledge/oriverse-research/harness-blueprint/**",
+    "tools/harness-3d/**",
+    "studio/contracts/3d-verification-evidence.schema.json",
+    "docs/27-HARNESS-3D-EXECUTION-CONTRACT.md",
+    "scripts/test-3d-harness.mjs",
+    "studio/evidence/**"
+  ],
+  "forbidden_paths": [
+    "projects/*/builds/**",
+    "secrets/**",
+    "**/.env",
+    "protected branches",
+    "external Oriverse editor/runtime"
+  ],
+  "acceptance_criteria": [
+    "Archive original Google Doc text and confirm exact connected-source readback.",
+    "Document inherited research claims and identify fake independent critic PASS stub as BLOCKED.",
+    "Implement a bounded native verifier for real filesystem artifact hashes, structural checks, separate maker/reviewer session labels and final human approval binding.",
+    "Run local test fixtures including negative cases and record exact results.",
+    "Next task: integrate trusted Blender worker/actual 16-view renderer, isolated signed visual reviewer and authenticated human approval; do not claim complete until independently tested."
+  ],
+  "verification": [
+    "node --test scripts/test-3d-harness.mjs",
+    "node --check tools/harness-3d/gate.mjs",
+    "node tools/harness-3d/cli.mjs verify <project-root> <evidence-file> (real project acceptance pending)",
+    "Human review of this draft PR and source provenance"
+  ],
+  "human_gates": [
+    "HG-02 for breaking IR changes",
+    "HG-04 for deployment or external publishing"
+  ],
+  "dependencies": [
+    "Project-scoped Studio import and asset manifest",
+    "Blender headless / WebGPU renderer integration",
+    "External authenticated critique and human approval channels"
+  ],
+  "risks": [
+    "The supplied research doc reports proprietary engine internals without independent verification.",
+    "Its Python IsolatedVisualCritic returns passed=True from a TODO and is not real QA.",
+    "AABB linter supports only bounded box primitives and could produce false positives for intentional overlaps.",
+    "Reviewer and human identities in local JSON are metadata and not authenticated session or signature.",
+    "DevSpace target repo folder was empty when last inspected, so GitHub is current source of truth; no target Windows runner acceptance in this task."
+  ],
+  "notes": "This foundation has 14/14 isolated Node unit tests passing; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration."
+}
