@@ -19,7 +19,13 @@
     "tools/harness-3d/gate.mjs",
     "studio/evidence/HARNESS-3D-20261111.json",
     "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md",
-    "tools/ugir-geometry-linter/hard_lock_enforcer.py"
+    "tools/ugir-geometry-linter/hard_lock_enforcer.py",
+    "docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md",
+    "tools/harness-3d/trusted-gateway.mjs",
+    "tools/harness-3d/repair-protocol.mjs",
+    "tools/harness-3d/gateway-daemon.mjs",
+    "scripts/test-3d-gateway.mjs",
+    "studio/evidence/HARNESS-GATEWAY-20261111.json"
   ],
   "allowed_paths": [
     "knowledge/oriverse-research/harness-blueprint/**",
@@ -30,7 +36,15 @@
     "studio/evidence/**",
     "tools/ugir-geometry-linter/hard_lock_enforcer.py",
     "scripts/test_part7_hard_locks.py",
-    "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md"
+    "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md",
+    "tools/harness-3d/repair-protocol.mjs",
+    "tools/harness-3d/trusted-gateway.mjs",
+    "tools/harness-3d/gateway-cli.mjs",
+    "tools/harness-3d/gateway-daemon.mjs",
+    "tools/harness-3d/gateway-client.mjs",
+    "tools/harness-3d/gateway-sign.mjs",
+    "scripts/test-3d-gateway.mjs",
+    "docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md"
   ],
   "forbidden_paths": [
     "projects/*/builds/**",
@@ -46,14 +60,20 @@
     "Run local test fixtures including negative cases and record exact results.",
     "Next task: integrate trusted Blender worker/actual 16-view renderer, isolated signed visual reviewer and authenticated human approval; do not claim complete until independently tested.",
     "Archive the latest 114,348-character Google Doc text including Part 7; inspect all six claimed hard locks and identify unsafe Python defaults.",
-    "Provide deterministic source revision-bound atomic coordinate repair policy and negative tests for unknown/frozen nodes, stale hashes, invalid axes, NaN and geometry regressions."
+    "Provide deterministic source revision-bound atomic coordinate repair policy and negative tests for unknown/frozen nodes, stale hashes, invalid axes, NaN and geometry regressions.",
+    "Signed per-role command envelope, short expiration, nonce replay protection, immutable source versions and server-signed state are checked by a trusted dispatcher for this supported AABB subset.",
+    "DevSpace Maker can submit a signed command to a local named-pipe gateway; no arbitrary shell or HTTP mutator is exported.",
+    "GitHub pull-request CI executes 29 gateway, 17 evidence and 20 Python differential tests with green receipts."
   ],
   "verification": [
     "node --test scripts/test-3d-harness.mjs",
     "node --check tools/harness-3d/gate.mjs",
     "node tools/harness-3d/cli.mjs verify <project-root> <evidence-file> (real project acceptance pending)",
     "Human review of this draft PR and source provenance",
-    "python -m unittest discover -s scripts -p test_part7_hard_locks.py (20 isolated local tests PASS; target PC CI pending)"
+    "python -m unittest discover -s scripts -p test_part7_hard_locks.py (20 isolated local tests PASS; target PC CI pending)",
+    "node --test scripts/test-3d-gateway.mjs (29/29 PASS on GitHub Actions run 43003471960)",
+    "node --check tools/harness-3d/gateway-daemon.mjs && node --check apps/studio-server/server.mjs (PASS GitHub CI)",
+    "Manual separate-account Windows service/ACL and isolated critic+real human signer acceptance still required"
   ],
   "human_gates": [
     "HG-02 for breaking IR changes",
@@ -71,7 +91,10 @@
     "Reviewer and human identities in local JSON are metadata and not authenticated session or signature.",
     "DevSpace target repo folder was empty when last inspected, so GitHub is current source of truth; no target Windows runner acceptance in this task.",
     "Part 7 supplied HMAC gate uses a known default signing secret and does not authenticate actual independent critic execution.",
-    "Part 7 Python strict tool mask alone does not enforce server authorization; untrusted makers with direct file write access can bypass its policy."
+    "Part 7 Python strict tool mask alone does not enforce server authorization; untrusted makers with direct file write access can bypass its policy.",
+    "No private trust issuers or OS ACLs were deployed on the target PC; the DevSpace intended workspace remains an empty directory.",
+    "Branch rulesets query returned no GitHub rulesets and branch-protection read was not accessible to the integration; enforce required checks via repository administrator.",
+    "Real visual critic, Blender renderer, raycast camera measurements and authenticated user approval are not implemented in this gateway code."
   ],
-  "notes": "This foundation has 17/17 isolated Node unit tests passing; Ed25519 signed receipt verification is implemented, but trusted issuer services and actual human/VLM execution remain unverified; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration. Part 7 review completed in draft branch; bounded Python differential repair tests 20/20 PASS in local isolated Python environment, not end-to-end DevSpace/Studio enforcement."
+  "notes": "This foundation has 17/17 isolated Node unit tests passing; Ed25519 signed receipt verification is implemented, but trusted issuer services and actual human/VLM execution remain unverified; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration. Part 7 review completed in draft branch; bounded Python differential repair tests 20/20 PASS in local isolated Python environment, not end-to-end DevSpace/Studio enforcement. Signed FSM gateway and local IPC implementation passes 29/29 on GitHub CI and 17+20 existing tests; no claim of full target Windows production isolation or real VLM/human acceptance."
 }
