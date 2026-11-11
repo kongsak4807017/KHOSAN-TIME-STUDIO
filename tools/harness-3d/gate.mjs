@@ -68,19 +68,21 @@ export function validateEvidenceShape(evidence) {
   }
   const maker = evidence.maker, reviewer = evidence.reviewer, renderer = evidence.renderer;
   if (!isObject(maker) || !isObject(reviewer) || !isObject(renderer)) fail(errors, 'maker, renderer and reviewer required');
-  if (isObject(renderer)) {
-    for (const k of ['renderer_id','run_id','source_revision','rendered_glb_sha256','contact_sheet_sha256','signature_base64']) if (!isText(renderer[k])) fail(errors, `renderer.${k} missing`);
-    if (renderer.source_revision !== evidence.source_revision) fail(errors, 'renderer source revision mismatch');
-    if (!Number.isSafeInteger(renderer.views_rendered) || renderer.views_rendered !== 16 || !Array.isArray(renderer.camera_ids) || renderer.camera_ids.length !== 16 || new Set(renderer.camera_ids).size !== 16 || renderer.camera_ids.some(x => !isText(x))) fail(errors, 'renderer must attest 16 unique camera views');
-  }
-  else {
-    for (const k of ['agent_id','session_id']) {
-      if (!isText(maker[k]) || !isText(reviewer[k])) fail(errors, `${k} missing for maker/reviewer`);
-    }
+  if (isObject(maker) && isObject(reviewer)) {
+    for (const k of ['agent_id','session_id']) if (!isText(maker[k]) || !isText(reviewer[k])) fail(errors, `${k} missing for maker/reviewer`);
     if (maker.agent_id === reviewer.agent_id) fail(errors, 'maker and reviewer agent must differ');
     if (maker.session_id === reviewer.session_id) fail(errors, 'maker and reviewer session must differ');
     if (reviewer.isolated_session !== true || !isText(reviewer.run_id) || !isText(reviewer.signature_base64)) fail(errors, 'independent reviewer signed receipt missing');
     if (reviewer.verdict !== 'ACCEPT' || !Array.isArray(reviewer.defects) || reviewer.defects.length !== 0) fail(errors, 'independent reviewer did not accept defect-free output');
+  }
+  if (isObject(renderer)) {
+    for (const k of ['renderer_id','run_id','source_revision','rendered_glb_sha256','contact_sheet_sha256','signature_base64']) if (!isText(renderer[k])) fail(errors, `renderer.${k} missing`);
+    if (renderer.source_revision !== evidence.source_revision) fail(errors, 'renderer source revision mismatch');
+    if (isObject(maker) && renderer.renderer_id === maker.agent_id) fail(errors, 'renderer must be a separate principal from maker');
+    if (isObject(reviewer) && renderer.renderer_id === reviewer.agent_id) fail(errors, 'renderer must be a separate principal from reviewer');
+    if (!Number.isSafeInteger(renderer.views_rendered) || renderer.views_rendered !== 16 || !Array.isArray(renderer.camera_ids) || renderer.camera_ids.length !== 16 || new Set(renderer.camera_ids).size !== 16 || renderer.camera_ids.some(x => !isText(x))) fail(errors, 'renderer must attest 16 unique camera views');
+    if (evidence.reference_mode === 'reference' && !SHA256.test(renderer.reference_sha256 || '')) fail(errors, 'renderer reference hash missing');
+    if (evidence.reference_mode === 'original' && renderer.reference_sha256 !== null) fail(errors, 'renderer reference hash must be null in original mode');
   }
   errors.push(...validateTechnical(evidence.technical, evidence.budgets));
   if (evidence.technical?.source_revision !== evidence.source_revision) fail(errors, 'technical receipt must bind source revision');
@@ -204,8 +206,9 @@ export async function verify3DAcceptance(projectRoot, evidence, trust = {}) {
         if(role==='ugir_json')for(const field of ['floating_count','piercing_count','max_seam_gap_cm']){
           if(Math.abs((evidence.technical?.[field]??NaN)-structural[field])>1e-6 || !Number.isFinite(evidence.technical?.[field])) throw Error('technical.'+field+' differs from independently recomputed UG-IR bounds lint');
         }
-        if(role==='glb' && evidence.technical?.vertex_count!==structural.vertex_count) throw Error('technical.vertex_count differs from GLB POSITION accessor count');\n        if(role==='ugir_json' && digest !== evidence.source_revision) throw Error('source_revision must equal the exact UG-IR artifact SHA-256');
+        if(role==='glb' && evidence.technical?.vertex_count!==structural.vertex_count) throw Error('technical.vertex_count differs from GLB POSITION accessor count');
         const digest=await sha256File(info.file);
+        if(role==='ugir_json' && digest.toLowerCase()!==evidence.source_revision.toLowerCase()) throw Error('source_revision must equal the exact UG-IR artifact SHA-256');
         if(digest.toLowerCase()!==a.sha256.toLowerCase()) throw Error('SHA-256 mismatch');
         checked.push({role,path:a.path,bytes:info.size,sha256:digest});
       }catch(error){errors.push(`${role}: ${error.message}`)}
