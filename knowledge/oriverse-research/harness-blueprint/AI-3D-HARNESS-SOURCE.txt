@@ -1649,3 +1649,298 @@ def convert_img2threejs_to_ugir(img2three_json: Dict[str, Any], asset_id: str) -
    2. ส่งตารางภาพเข้าสู่ isolated_3d_visual_critic (ซึ่งเป็น Checker Agent คนละตัวกับ Maker Agent และรันใน Session ที่แยกอิสระ 100%) เพื่อสร้างไฟล์หลักฐานตามสัญญา 3d-verification-evidence.schema.json
 5. Freeze Only After Human Approval:
    1. แสดงผลไฟล์ .glb บนหน้าเว็บ Studio (127.0.0.1:8080) ผ่าน ThreeWebGPUStudioRuntime เพื่อให้คุณ (ในฐานะ Executive Producer) หมุนดูผลงานพร้อมแสง LTC Area Lights และกดปุ่ม Freeze / Approve ขั้นสุดท้าย
+ภาคผนวก (Part 7): สถาปัตยกรรม 6 Hard Locks (การบังคับ AI ระดับโปรโตคอล 100%) พร้อมซอร์สโค้ด Cryptographic Gatekeeper และ Differential Patch Lock
+ส่วนนี้คือหัวใจสำคัญของการป้องกันไม่ให้โมเดล AI (LLM) แหกกฎ ข้ามขั้นตอน มั่วพิกัด หรือปลอมแปลงผลตรวจรับงาน โดยเปลี่ยนจากการสั่งด้วยคำพูดใน Prompt (Soft Enforcement) ไปเป็นการล็อกด้วยโค้ดและโปรโตคอล (Hard Architectural Locks) ทั้ง 6 ชั้น สำหรับใช้งานในโปรเจกต์ KHOSAN-TIME-STUDIO
+30. สรุปกลไกล็อกตายตัว 6 ชั้น (The 6 Hard Architectural Locks)
+1. Constrained Decoding & Strict Schema Lock (ล็อกระดับการพ่น Token):
+   1. บังคับใช้ response_schema หรือ strict: true ใน Tool Calling ของ LLM API คู่กับไฟล์ ug-ir-3d.schema.json
+   2. ผลลัพธ์: AI ไม่สามารถพ่นคำสั่งนอกเหนือจาก 15 Core DSL Commands หรือใส่พารามิเตอร์ผิดชนิดข้อมูลได้เลยตั้งแต่ระดับ Token Sampling
+2. Dynamic Tool Masking (ซ่อนปุ่มเครื่องมือตามสถานะ State Machine):
+   1. ตัว Orchestrator จะส่งรายชื่อ Tools ให้ AI เห็นเฉพาะเครื่องมือของเฟสปัจจุบันเท่านั้น และไม่มีปุ่ม finish_task ให้ AI กดเอง
+   2. ผลลัพธ์: AI ไม่สามารถกระโดดข้ามเฟสหรือกดจบงานเองได้ การเปลี่ยนสถานะเป็น Done จะเกิดขึ้นจากโค้ด Python หลังจากผ่านด่านตรวจครบทุกข้อแล้วเท่านั้น
+3. API-Level Coordinate Prevention (ตัดช่องกรอกพิกัดลอยตัว):
+   1. ใน Schema ของการประกอบฉาก (layout_nodes) ไม่มีฟิลด์ให้กรอกพิกัด position (x, y, z) แบบลอยๆ แต่บังคับให้เลือกได้เฉพาะ place_bounds_box (ระบุ min_xyz_cm, max_xyz_cm) หรือ attach_to_anchor (ระบุชื่อหมุดแม่และหมุดลูก)
+   2. ผลลัพธ์: ป้องกันปัญหาชิ้นส่วนลอยกลางอากาศและปัญหาการคำนวณจุดศูนย์กลางผิดพลาดตั้งแต่ระดับโครงสร้างคำสั่ง
+4. Differential Patch Lock (ล็อกโหนดที่ผ่านแล้ว บังคับแก้เฉพาะจุดที่พัง):
+   1. เมื่อรัน ugir_geometry_linter แล้วพบข้อผิดพลาด ระบบจะตั้งค่า frozen: true ให้กับทุกโหนดที่ผ่านเกณฑ์แล้ว และเปิดให้ AI เรียกได้เฉพาะคำสั่ง patch_failing_nodes เพื่อแก้ไขเฉพาะโหนดที่มีรายชื่ออยู่ใน failing_node_ids เท่านั้น
+   2. ผลลัพธ์: ป้องกันปัญหา Regression (แก้จุดหนึ่งแต่ทำให้อีกจุดที่ถูกอยู่แล้วพัง) ตรงตามกฎ Repair only failing dimensions ใน docs/21-REFERENCE-RECONSTRUCTION-WORKFLOW.md
+5. Cryptographic Evidence & Git Pre-Commit Gatekeeper (ล็อกหลักฐานด้วย SHA-256 และ HMAC):
+   1. แยกสิทธิ์การเขียนไฟล์ โดย AI เขียนได้เฉพาะใน .khosan/staging/ ส่วนไฟล์ใบตรวจรับงานใน .khosan/evidence/ จะถูกสร้างและลงลายเซ็นดิจิทัล (HMAC-SHA256) โดยเอนจิ้นตรวจสอบเท่านั้น พร้อมมี Git Pre-Commit Hook บล็อกการ Commit หาก Hash ของไฟล์ .ugir.json และ .glb ไม่ตรงกับใบตรวจรับงาน
+   2. ผลลัพธ์: ป้องกันไม่ให้ Coding Agent แอบเขียนไฟล์ evidence.json ปลอมขึ้นมาเองเพื่อหลอกระบบว่างานผ่านแล้ว
+6. Zero-Trust Stateless Critic Isolation (ตัดขาดคนสร้างออกจากคนตรวจ 100%):
+   1. ตัว Orchestrator เป็นผู้ส่งภาพ reference.png และ contact_sheet_4x4.png เข้าไปใน Session ใหม่ที่ว่างเปล่าของ Visual Critic AI โดยตรง โดยไม่แนบคำอธิบายหรือข้อแก้ตัวใดๆ จาก Maker Agent
+31. ซอร์สโค้ดระบบล็อกการแก้ไขเฉพาะจุดและซ่อนปุ่มเครื่องมือ: tools/ugir-geometry-linter/hard_lock_enforcer.py
+บันทึกโค้ดนี้ไว้ที่ tools/ugir-geometry-linter/hard_lock_enforcer.py เพื่อทำหน้าที่เป็นตัวกรองคำสั่งของ AI ทั้งในส่วน Dynamic Tool Masking และ Differential Patch Lock:
+import copy
+import json
+from typing import Dict, Any, List, Set
+
+
+class DifferentialPatchLockEnforcer:
+    """
+    กลไกล็อกที่ 2, 3 และ 4:
+    - ซ่อนเครื่องมือตามสถานะ (Dynamic Tool Masking)
+    - แช่แข็งโหนดที่ผ่านการตรวจแล้ว (Node Freezing)
+    - บังคับให้ AI แก้ไขได้เฉพาะโหนดที่ Linter ฟ้องว่าพัง (Repair Only Failing Dimensions)
+    """
+    def __init__(self, ugir_state: Dict[str, Any]):
+        self.ugir_state = copy.deepcopy(ugir_state)
+        self.frozen_nodes: Set[str] = set()
+        self.failing_nodes: Set[str] = set()
+
+
+    def lock_passing_nodes(self, lint_report: Dict[str, Any]) -> Dict[str, List[str]]:
+        """
+        อ่านผลจาก Linter แล้วแยกโหนดที่พังออกจากโหนดที่ผ่านแล้ว
+        โหนดที่ผ่านแล้วจะถูกใส่ลงใน self.frozen_nodes ห้าม AI แก้ไขเด็ดขาด
+        """
+        self.failing_nodes.clear()
+        for err in lint_report.get("errors", []):
+            for node_id in err.get("involved_nodes", []):
+                self.failing_nodes.add(node_id)
+
+
+        all_nodes = {node["instance_name"] for node in self.ugir_state.get("layout_nodes", [])}
+        self.frozen_nodes = all_nodes - self.failing_nodes
+
+
+        return {
+            "frozen_nodes_locked": sorted(list(self.frozen_nodes)),
+            "editable_failing_nodes": sorted(list(self.failing_nodes))
+        }
+
+
+    def get_allowed_tool_schema_for_repair(self) -> Dict[str, Any]:
+        """
+        สร้าง JSON Schema เฉพาะกิจสำหรับรอบการซ่อมงาน (Repair Loop)
+        โดยล็อก enum ของ instance_name ให้เลือกได้เฉพาะโหนดที่พังเท่านั้น!
+        """
+        if not self.failing_nodes:
+            raise ValueError("No failing nodes to repair.")
+
+
+        return {
+            "type": "function",
+            "function": {
+                "name": "patch_failing_layout_nodes",
+                "description": (
+                    "Modify ONLY the failing layout nodes reported by the geometry linter. "
+                    "Passing nodes are frozen by the harness and cannot be modified."
+                ),
+                "strict": True,
+                "parameters": {
+                    "type": "object",
+                    "required": ["patches"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "patches": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["instance_name", "placement_mode"],
+                                "additionalProperties": False,
+                                "properties": {
+                                    "instance_name": {
+                                        "type": "string",
+                                        "enum": sorted(list(self.failing_nodes))
+                                    },
+                                    "placement_mode": {
+                                        "type": "string",
+                                        "enum": ["place_bounds_box", "attach_to_anchor"]
+                                    },
+                                    "min_xyz_cm": {
+                                        "type": "array",
+                                        "items": {"type": "number"},
+                                        "minItems": 3,
+                                        "maxItems": 3
+                                    },
+                                    "max_xyz_cm": {
+                                        "type": "array",
+                                        "items": {"type": "number"},
+                                        "minItems": 3,
+                                        "maxItems": 3
+                                    },
+                                    "parent_name": {"type": "string"},
+                                    "parent_anchor": {"type": "string"},
+                                    "child_prefab": {"type": "string"},
+                                    "child_anchor": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+    def apply_verified_patch(self, ai_patch_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        นำ Patch ที่ AI ส่งมาไปอัปเดตเฉพาะโหนดที่ได้รับอนุญาต
+        หาก AI พยายามส่งชื่อโหนดที่ถูกแช่แข็ง (Frozen) ระบบจะบล็อกและโยน PermissionError ทันที
+        """
+        patches_by_name = {}
+        for patch in ai_patch_payload.get("patches", []):
+            target_name = patch["instance_name"]
+            if target_name in self.frozen_nodes:
+                raise PermissionError(
+                    f"[HARD LOCK VIOLATION] Node '{target_name}' is FROZEN because it already passed verification. "
+                    f"You may only modify failing nodes: {sorted(list(self.failing_nodes))}"
+                )
+            patches_by_name[target_name] = patch
+
+
+        updated_nodes = []
+        for node in self.ugir_state.get("layout_nodes", []):
+            name = node["instance_name"]
+            if name in patches_by_name:
+                merged = copy.deepcopy(node)
+                merged.update(patches_by_name[name])
+                updated_nodes.append(merged)
+            else:
+                updated_nodes.append(node)
+
+
+        self.ugir_state["layout_nodes"] = updated_nodes
+        return self.ugir_state
+32. ซอร์สโค้ดระบบลงลายเซ็นดิจิทัลและ Git Pre-Commit Gatekeeper: scripts/verify_evidence_gate.py
+บันทึกโค้ดนี้ไว้ที่ scripts/verify_evidence_gate.py และผูกเข้ากับ .git/hooks/pre-commit รวมถึงตัวเปลี่ยนสถานะงานของ KHOSAN-TIME-STUDIO เพื่อป้องกันไม่ให้ AI แอบเขียนไฟล์หลักฐานปลอมหรือแก้ไขโมเดลหลังจากตรวจผ่านแล้ว:
+import os
+import sys
+import json
+import hmac
+import hashlib
+from pathlib import Path
+from typing import Dict, Any
+
+
+def compute_file_sha256(filepath: Path) -> str:
+    """คำนวณรหัส SHA-256 ของไฟล์จริงในดิสก์"""
+    h = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def compute_evidence_hmac(evidence_payload: Dict[str, Any], secret_key: str) -> str:
+    """คำนวณลายเซ็น HMAC-SHA256 ของใบตรวจรับงานโดยตัดฟิลด์ signature ออกก่อนคำนวณ"""
+    payload_copy = {k: v for k, v in evidence_payload.items() if k != "harness_hmac_signature"}
+    canonical_bytes = json.dumps(payload_copy, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hmac.new(secret_key.encode("utf-8"), canonical_bytes, hashlib.sha256).hexdigest()
+
+
+def stamp_verified_evidence(
+    asset_id: str,
+    maker_agent_id: str,
+    checker_agent_id: str,
+    ugir_path: Path,
+    glb_path: Path,
+    contact_sheet_path: Path,
+    metrics: Dict[str, Any],
+    critic_result: Dict[str, Any],
+    output_evidence_path: Path
+) -> None:
+    """
+    ฟังก์ชันนี้ถูกเรียกโดย Orchestrator เท่านั้น (ห้าม AI เรียกเอง)
+    ทำหน้าที่ผูกค่า SHA-256 ของไฟล์ทั้งหมดและประทับตรา HMAC ลงในใบตรวจรับงาน
+    """
+    secret_key = os.environ.get("KHOSAN_HARNESS_SECRET", "khosan-local-dev-secret-key")
+
+
+    if maker_agent_id == checker_agent_id:
+        raise ValueError("[GOVERNANCE LOCK] Maker agent cannot be the same as Checker agent!")
+
+
+    evidence = {
+        "asset_id": asset_id,
+        "maker_agent_id": maker_agent_id,
+        "checker_agent_id": checker_agent_id,
+        "deterministic_metrics": metrics,
+        "artifacts": {
+            "ugir_file": str(ugir_path),
+            "ugir_sha256": compute_file_sha256(ugir_path),
+            "verified_glb_file": str(glb_path),
+            "glb_sha256": compute_file_sha256(glb_path),
+            "contact_sheet_4x4_png": str(contact_sheet_path),
+            "contact_sheet_sha256": compute_file_sha256(contact_sheet_path)
+        },
+        "independent_visual_critique": critic_result
+    }
+    evidence["harness_hmac_signature"] = compute_evidence_hmac(evidence, secret_key)
+
+
+    output_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    output_evidence_path.write_text(json.dumps(evidence, indent=2), encoding="utf-8")
+
+
+def verify_evidence_before_commit_or_done(evidence_path: Path) -> bool:
+    """
+    ด่านตรวจขั้นสุดท้ายก่อนอนุญาตให้ Commit หรือเปลี่ยนสถานะงานใน studio_state.json เป็น Done
+    """
+    secret_key = os.environ.get("KHOSAN_HARNESS_SECRET", "khosan-local-dev-secret-key")
+
+
+    if not evidence_path.exists():
+        print(f"[GATEKEEPER BLOCKED] Missing evidence file: {evidence_path}")
+        return False
+
+
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+
+
+    # 1. ตรวจลายเซ็น HMAC ว่าไม่ได้ถูก AI เขียนปลอมขึ้นมาเอง
+    expected_sig = compute_evidence_hmac(evidence, secret_key)
+    if not hmac.compare_digest(evidence.get("harness_hmac_signature", ""), expected_sig):
+        print("[GATEKEEPER BLOCKED] Invalid HMAC signature! Evidence file was forged or tampered with.")
+        return False
+
+
+    # 2. ตรวจกฎ Maker != Checker
+    if evidence.get("maker_agent_id") == evidence.get("checker_agent_id"):
+        print("[GATEKEEPER BLOCKED] Maker agent and Checker agent must be distinct.")
+        return False
+
+
+    # 3. ตรวจค่าตัวเลข Deterministic Metrics ทุกตัว
+    m = evidence.get("deterministic_metrics", {})
+    if (
+        m.get("compile_exit_code") != 0
+        or m.get("floating_count", 1) != 0
+        or m.get("piercing_count", 1) != 0
+        or m.get("max_seam_gap_cm", 999.0) > 0.1
+        or m.get("max_camera_blocked_frac", 1.0) > 0.20
+    ):
+        print(f"[GATEKEEPER BLOCKED] Deterministic metrics failed thresholds: {m}")
+        return False
+
+
+    # 4. ตรวจว่าไฟล์จริงในดิสก์ตรงกับ SHA-256 ตอนที่ตรวจผ่านหรือไม่ (ป้องกันการแอบแก้ไฟล์ทีหลัง)
+    art = evidence.get("artifacts", {})
+    for file_key, hash_key in [
+        ("ugir_file", "ugir_sha256"),
+        ("verified_glb_file", "glb_sha256"),
+        ("contact_sheet_4x4_png", "contact_sheet_sha256")
+    ]:
+        fpath = Path(art.get(file_key, ""))
+        if not fpath.exists() or compute_file_sha256(fpath) != art.get(hash_key):
+            print(f"[GATEKEEPER BLOCKED] File missing or modified after verification: {fpath}")
+            return False
+
+
+    # 5. ตรวจผลจาก Visual Critic ที่แยก Session อิสระ
+    crit = evidence.get("independent_visual_critique", {})
+    if not crit.get("isolated_session") or not crit.get("passed") or len(crit.get("defects", [])) > 0:
+        print(f"[GATEKEEPER BLOCKED] Independent Visual Critic did not pass: {crit}")
+        return False
+
+
+    print(f"[GATEKEEPER PASSED] Asset '{evidence.get('asset_id')}' verified 100% with cryptographic proof.")
+    return True
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python scripts/verify_evidence_gate.py <path_to_evidence.json>")
+        sys.exit(1)
+    ok = verify_evidence_before_commit_or_done(Path(sys.argv[1]))
+    sys.exit(0 if ok else 1)
