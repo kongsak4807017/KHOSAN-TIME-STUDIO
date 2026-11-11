@@ -1,5 +1,13 @@
 # KHOSAN TIME STUDIO Progress
 
+## Part 7 Python 6 Hard Locks review — 11 November 2026
+- Read the latest `AI 3D harness` Google Doc revision (114,348 extracted characters; Part 7 adds 14,171 characters), archived exact text and verified GitHub readback.
+- Code-audited both supplied Python samples: dynamic tool masking is not server enforcement; original Differential Patch Lock silently ignores unknown IDs, accepts arbitrary patch fields and lacks revision/regression validation; source HMAC Gatekeeper has a hardcoded default secret, self-declared reviewer and numeric NaN risk.
+- Added bounded Python `tools/ugir-geometry-linter/hard_lock_enforcer.py` with source-bound immutable snapshots, per-axis repair restrictions, frozen-node consistency and no-new-defect/regression checks. **20/20 local unittest cases passed** (isolated Python environment).
+- Added source review `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md`, `studio/evidence/HARNESS-PART7-20261111.json`, registry/context/AGENTS policies and manual CI test step.
+- **Not complete:** No trusted Studio/DevSpace dispatcher automatically intercepts all writes/tool invocations; no authenticated independent critic or human signing service, target Windows GPU run or protected required GitHub check. Work item remains `verify` and PR #22 remains draft.
+
+
 ## Research integration — 11 November 2026 (3D harness)
 - Preserved the complete 100,175-character extracted text of the user Google Doc `AI 3D harness` as supplemental reference research.
 - Found an actual QA defect in illustrative Python: `IsolatedVisualCritic` has TODO then returns `passed: True`; this must never be adopted as a passing independent critique.
