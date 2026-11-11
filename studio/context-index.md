@@ -38,6 +38,10 @@ Asset pipeline, 2D/generic-3D/character tool docs, `docs/20-CHARACTER-FACTORY.md
 ### Technical Architect
 UG-IR, architecture, relevant research/specification and target constraints.
 
+### Historical Oriverse / Weave research (load only when relevant)
+Read `knowledge/oriverse-research/README.md`, then the specific `consolidated-audit/TRR-XX.txt` plus `CONSOLIDATED-AUDIT-MANIFEST.json`. This is the complete **consolidated user audit** covering 200 research questions, **not** all 200 original chat transcripts and not KHOSAN-authoritative implementation. Preserve the question-level Documented/Observed/Inferred/Undisclosed status and provenance. Do not use external Oriverse tools or make Oriverse a dependency; implement a KHOSAN-native equivalent only after technical validation and approval.
+
+
 ### Gameplay Programmer
 Active design/system contract + nearest source/tests.
 
