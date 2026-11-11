@@ -1,0 +1,259 @@
+Oriverse / Weave Technical Research Record — TRR-13
+หมวด 13: AI Prompt-to-Game Pipeline | คำถาม 121–130 | 9 ตุลาคม 2569
+ผมตรวจสอบคู่มือ Oriverse ผ่านตัวเชื่อมต่อโดยตรง ได้แก่ weave_coding → weave_language, weave2_migration, weave_compile_errors, new_scene, ui_patterns และ asset_vocabulary พร้อมตรวจสอบสัญญาการทำงานของเครื่องมือ Stage, Patch, Compile, Asset Search, Inspection และ Playtest
+ข้อค้นพบสำคัญ: Oriverse มีชุดเครื่องมือที่รองรับวงจร Prompt → Weave World → Compilation → Simulation → Playtest → Iterative Editing → Delivery ได้จริง แต่ข้อมูลที่เปิดเผยยังไม่เพียงพอให้ยืนยันว่าสถาปัตยกรรม AI ภายในประกอบด้วย Planner, Structured IR, Task Graph, Agent Swarm หรือระบบประเมิน Prompt Fidelity แบบอัตโนมัติชนิดใด
+สำหรับหมวดนี้ต้องแยกสองเรื่องอย่างเคร่งครัด:
+* ความสามารถที่สังเกตได้: AI Agent สามารถใช้เครื่องมือของ Oriverse เพื่อสร้าง ตรวจ แก้ และทดสอบเกม
+* สถาปัตยกรรม AI ภายใน: วิธีแปลง Prompt เป็นแผน การเลือก Asset การจัดลำดับงาน และนโยบายการตัดสินใจของ AI ยังไม่เปิดเผยอย่างครบถ้วน
+Pipeline ที่ยืนยันได้จากเครื่องมือ
+ขั้นที่ 02 เป็นการตัดสินใจของ AI ที่ไม่เปิดเผยกลไกภายใน ส่วนเครื่องมือในขั้นอื่นมีสัญญาการใช้งานที่ตรวจสอบได้
+121 — Prompt ถูกแปลงเป็นข้อกำหนดเกมผ่านขั้นตอนใด?
+1. Direct Answer: Oriverse รองรับการสร้างเกมจากคำอธิบายภาษาธรรมชาติผ่าน AI Agent ที่จัดทำ Weave Source และส่งเข้า Editor แต่ยังไม่พบเอกสารเปิดเผยขั้นตอนภายในที่แปลง Prompt ไปเป็นข้อกำหนดอย่างเป็นทางการ เช่น Requirement Parser หรือ Spec Generator
+2. Architecture: ขั้นตอนที่ตรวจสอบได้คือผู้ใช้ระบุความต้องการ จากนั้น Agent จัดทำ World Description ที่มี Scene Declarations และ Class Logic ก่อนส่งให้ Compiler ตรวจสอบ การมีขั้นตีความความต้องการเป็นสิ่งจำเป็นในเชิงหน้าที่ แต่ไม่ได้พิสูจน์ว่ามี Internal Planning Service แยกต่างหาก
+3. Source Evidence: weave_coding → weave_language, new_scene; เครื่องมือ stage_new_world, patch_and_run_pending_world
+4. API Contract:
+ในระดับ Tool Contract รับ Complete Weave World Source และคืนผล Compilation/Simulation ไม่มีช่องรับ Formal Game Specification แยกต่างหากที่พบในเครื่องมือนี้
+5. Working Example: ตัวอย่างข้อกำหนดจาก Prompt เช่น “สร้างสนาม 3D ให้ผู้เล่นวิ่งและเก็บเหรียญ” สามารถแยกเป็น Scene, Player, Coins, Rules และ HUD แล้วเขียน Weave ตามคู่มือได้ แต่ยังไม่มีผล Compile ของตัวอย่างดังกล่าวในรอบนี้
+6. Execution Trace — Expected: Prompt → Interpretation → Weave Source → Compile → Simulation Feedback โดยไม่มี Internal Prompt-to-Spec Trace ที่ตรวจสอบได้
+7. Limits & Failure Modes: Prompt ที่คลุมเครืออาจทำให้ AI เลือก Gameplay Rules ไม่ตรงเจตนา และ Compilation PASS ไม่ยืนยันว่าเกมตอบโจทย์ทั้งหมด
+8. Verification: Expected: World Source ครอบคลุม Requirements และ Compile ผ่าน; Actual: ยืนยัน Tool Contract ได้ แต่ไม่ได้รัน Prompt-to-Game Case ใหม่
+9. Disclosure Status: Authoring Workflow Documented; Internal Prompt Transformation Undisclosed
+10. Research Gaps: Requirement Extraction, Ambiguity Resolution, Constraint Tracking, Intermediate Specifications และ Prompt-to-Code Traceability
+122 — มี Structured Specification หรือ IR ก่อน Weave หรือไม่?
+1. Direct Answer: ยังไม่พบหลักฐานยืนยันว่า Oriverse ใช้ Structured Specification หรือ Intermediate Representation ก่อนสร้าง Weave Source
+คำว่า IR ในคำถามนี้ต้องแยกจาก Compiler IR ด้วย เพราะแม้ AI จะสร้าง Game Specification ภายใน ก็ไม่ได้หมายความว่า Compiler ใช้โครงสร้างเดียวกัน
+2. Architecture: Public Tool Boundary ที่ตรวจสอบได้คือ Complete Weave Source ซึ่งส่งให้ Compiler และ Simulation ไม่ได้เปิดเผย Schema สำหรับ Game Design IR
+3. Source Evidence: stage_new_world, patch_and_run_pending_world; weave_coding → weave_language
+4. API Contract: ไม่มี Public GameSpec หรือ DesignIR Contract ที่พบในคู่มือ/เครื่องมือที่ตรวจสอบ
+5. Working Example: ไม่มีตัวอย่าง Structured IR ของ Oriverse ที่ยืนยันได้ จึงไม่สร้าง JSON Schema แล้วกล่าวอ้างว่าเป็นรูปแบบของระบบ
+6. Execution Trace: Undisclosed สำหรับ Prompt → Structured Spec → Weave ส่วน Weave → Compiler Validation มีเครื่องมือรองรับ
+7. Limits & Failure Modes: หากไม่มี Traceability ระหว่าง Requirements และ Source จะตรวจสอบความครบถ้วนของคำสั่งได้ยาก แต่ไม่สามารถสรุปว่า Oriverse ไม่มีระบบดังกล่าวเพียงเพราะไม่เปิดเผย
+8. Verification: Expected: หากมี IR ควรตรวจ Schema, Version และ Generated Source Mapping ได้; Actual: Not Verified
+9. Disclosure Status: Internal Specification/IR Undisclosed
+10. Research Gaps: GameSpec Schema, Requirement IDs, Scene Graph IR, Planner Output และ Compiler IR Relationship
+123 — AI เลือกสร้าง Asset ใหม่หรือใช้ Library อย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือสำหรับค้นหา Asset Library และเครื่องมือสำหรับสร้าง Procedural Assets ใหม่อย่างชัดเจน แต่ยังไม่มีเอกสารเปิดเผย Decision Policy ของ AI ว่าตัดสินใจเลือก Library หรือ Generate ด้วย Algorithm ใด
+2. Architecture: ทางเลือกที่ตรวจสอบได้ประกอบด้วย Asset Discovery, Candidate Inspection, Source Import, Procedural Generation, Preview และ Review
+3. Source Evidence: asset_vocabulary, mesh_dsl, texture_dsl; เครื่องมือ find_assets, mesh_library_search, material_library_search, inspect_model, inspect_mesh, preview_mesh, rate_asset
+4. API Contract:
+Tool
+	Input หลัก
+	Output / Constraint
+	find_assets
+	ความต้องการ Model/Material สูงสุด 12 รายการ
+	Candidates พร้อมหลักฐานความเหมาะสม
+	mesh_library_search
+	Query, Look, Bounds, Vertex Budget
+	Reusable Mesh Candidates
+	material_library_search
+	Surface/Style Query
+	Material Candidates
+	inspect_model
+	Exact Model URL
+	Dimensions, LOD, Submesh, Animation
+	use_mesh_asset
+	Asset ID + Snapshot
+	Import Mesh ที่แก้ไขได้
+	preview_mesh
+	Local Name / Source
+	Geometry Inspection
+	rate_asset
+	Verdict + Preview Evidence
+	บันทึกผล Review
+	5. Working Example: กรณีสร้างหมู่บ้าน AI สามารถค้นหาบ้านและต้นไม้จาก Library แล้วใช้ #mesh สร้างป้ายหรืออาคารเฉพาะทางที่ไม่มี Candidate เหมาะสม แต่ยังไม่ใช่หลักฐานว่านี่คือ Algorithm เลือก Asset ของ Oriverse
+6. Execution Trace — Expected: Asset Need → Search → Inspect → Select Existing Asset หรือ Author New Asset → Preview → Integrate into Weave
+7. Limits & Failure Modes: ไม่ควรเลือก Marketplace Model จากชื่อเพียงอย่างเดียว ต้องตรวจขนาด Style, Vertex Budget และ Rig Compatibility และการค้นพบ Candidate ไม่ถือว่า Import หรือใช้งานสำเร็จ
+8. Verification: Expected: เลือก Asset ที่ผ่าน Constraints และมี Source/Identity ตรวจสอบได้; Actual: คู่มือและ Tool Contracts ยืนยันความสามารถ แต่ไม่ได้ค้น Candidate สำหรับงานใหม่ในรอบนี้
+9. Disclosure Status: Asset Tooling Documented; AI Selection Policy Undisclosed
+10. Research Gaps: Asset Ranking Weights, Semantic Matching, Cost Function, Provenance Policy และ Automated Style Consistency Scoring
+124 — AI แยกงาน Scene, Gameplay, UI และ Audio อย่างไร?
+1. Direct Answer: ภาษา Weave แยกประเภทงานระดับ Source ได้ชัดเจนผ่าน Top-level Directives และ Scene Declarations แต่ยังไม่พบข้อมูลว่า AI ใช้ Subagents หรือ Planning Pipeline แยกสี่งานนี้เป็นการภายในหรือไม่
+2. Architecture: Scene ใช้ object, display, physics, #terrain ส่วน Gameplay ใช้ #class และ Events; UI ใช้ #html/Canvas และ Audio ใช้ #sound รวมถึง Sound/Effect APIs
+3. Source Evidence: weave_coding → weave_language, new_scene, ui_patterns
+4. API Contract:
+งาน
+	Weave Artifact
+	Scene
+	object, saved, #terrain, #mesh
+	Gameplay
+	#class, event, func
+	UI
+	#html, screenCanvas, worldCanvas
+	Audio
+	#sound และ Sound Asset References
+	Visual Effects
+	#particles, #shader, #texture
+	5. Working Example:
+เป็นเพียง Source Fragments สำหรับแสดงการแยกความรับผิดชอบ ไม่ใช่ World สมบูรณ์ที่ Compile ผ่าน
+6. Execution Trace — Expected: Author Scene/Assets → Bind Gameplay Classes → Attach UI Controllers → Integrate Audio → Compile/Simulate
+7. Limits & Failure Modes: Class/Canvas Binding ที่อ้างถึงชื่อผิดจะทำให้ Validation ล้มเหลว และการแก้ Scene อาจกระทบ Gameplay References
+8. Verification: Expected: ทุก Subsystem Compile และ Bind กันได้; Actual: Not Run สำหรับ Integration Fixture ใหม่
+9. Disclosure Status: Source Organization Documented; AI Task Partitioning Undisclosed
+10. Research Gaps: Task Ownership, Parallel Authoring, Artifact Dependencies, Integration Contracts และ Cross-subsystem Tests
+125 — มี Planning, Dependency Ordering และ Task Decomposition อย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือรองรับการสร้างเกมเป็นลำดับและแก้ไขเฉพาะส่วน แต่ไม่พบเอกสารระบุ Internal AI Planner, Dependency DAG หรือ Algorithm สำหรับ Task Decomposition อย่างเป็นทางการ
+2. Architecture: สัญญาของเครื่องมือรองรับการสร้าง Skeleton ก่อน แล้วค่อยเพิ่ม Subsystems ผ่าน Patches โดยตรวจ Compilation และ Simulation หลังแต่ละรอบ สำหรับ World ขนาดใหญ่ แนวทางนี้ช่วยลดขอบเขตความผิดพลาด
+3. Source Evidence: Tool Contracts ของ stage_new_world, patch_and_run_pending_world, pending_world_read_sections; weave_compile_errors
+4. API Contract:
+หนึ่ง Patch Batch รับได้สูงสุด 16 Elements โดยแต่ละ Element ใช้ Diff Hunks และมีการตรวจ Revision ได้
+5. Working Example: ลำดับงานที่เสนอ ได้แก่สร้างพื้น/Player ให้ Compile ผ่านก่อน เพิ่ม Game Rules ต่อด้วย UI และ Assets แล้วจึงทำ Acceptance Tests แต่ยังไม่มีหลักฐานว่า Oriverse AI ใช้ลำดับนี้เป็น Algorithm ภายในทุกครั้ง
+6. Execution Trace — Expected: Skeleton → Compile → Gameplay Patch → Compile → UI Patch → Compile → Playtest → Delivery
+7. Limits & Failure Modes: Source Patch ที่อาศัย Context เก่าหรือมี Target ซ้ำอาจถูกปฏิเสธ ส่วน Subsystem ที่ยังไม่พร้อมอาจทำให้ Error กระจายไปยัง Class อื่น
+8. Verification: Expected: Patch ที่สำเร็จไม่ทำลาย Subsystems ที่ไม่ได้แก้; Actual: มี Tool Contract รองรับ แต่ยังไม่ได้ทดสอบ Planning Graph ที่สร้างโดย AI
+9. Disclosure Status: Incremental Authoring Workflow Documented; AI Planning Algorithm Undisclosed
+10. Research Gaps: Planner State, Task DAG, Dependency Detection, Parallel Task Scheduling และ Rollback of Failed Plans
+126 — ตรวจว่าคำสั่งผู้ใช้ครบถ้วนหรือขัดแย้งกันอย่างไร?
+1. Direct Answer: เครื่องมือ Oriverse มีการตรวจ Syntax, Types, References, Resource Constraints และบางประเภทของ Structural Consistency แต่ไม่พบ Public Contract ของระบบตรวจ Semantic Completeness ที่ยืนยันได้ว่าครอบคลุมทุก Requirement จาก Prompt
+2. Architecture: การตรวจทำได้สองระดับ คือ Compiler/Validator ตรวจว่า World สร้างและทำงานได้หรือไม่ และ Acceptance Tests ตรวจว่า Behavior ตรงกับความต้องการหรือไม่
+3. Source Evidence: weave_compile_errors, ui_patterns; Tool Contracts ของ patch_and_run_pending_world, ui_inspect และ playtest
+4. API Contract: Compiler รายงาน Diagnostics เช่น W2C0107, W2C0210, W2C0614 ส่วน UI Inspector ตรวจ Bounds, Visibility และ Bindings ขณะที่ Playtest รับชุด Input Actions เพื่อตรวจผลเกม
+5. Working Example: Prompt “ประตูต้องเปิดได้ แต่ห้ามผู้เล่นทะลุประตูเมื่อปิด” ต้องตรวจทั้ง Event ที่เปลี่ยนสถานะประตูและ Collision Behavior โดย Compiler PASS อย่างเดียวไม่เพียงพอ
+6. Execution Trace — Expected: Parse Requirements → Translate to Acceptance Conditions → Compile → Simulate Inputs → Compare Expected vs Actual
+ขั้น Parse Requirements และ Compare ที่กล่าวถึงเป็น แนวทางออกแบบการทดสอบ ไม่ใช่ Internal AI Pipeline ที่ตรวจพบ
+7. Limits & Failure Modes: ความขัดแย้งทางธุรกิจ เช่น “ประตูต้องล็อกตลอดเวลา” พร้อม “ทุกคนเปิดได้โดยไม่ใช้กุญแจ” อาจไม่ก่อให้เกิด Compiler Error เพราะเป็นข้อขัดแย้งด้านความหมาย
+8. Verification: Expected: ตรวจพบข้อกำหนดขัดแย้งและขอให้แก้ความกำกวมก่อนสร้างเกม; Actual: Not Verified ว่า Oriverse มี Automatic Semantic Conflict Checker
+9. Disclosure Status: Compiler/Runtime Validation Documented; Prompt Semantic Completeness Undisclosed
+10. Research Gaps: Requirement Coverage, Contradiction Detection, Acceptance Mapping, User Intent Clarification และ Evidence-based Completion Gates
+127 — AI ใช้ Compiler Feedback เพื่อแก้ Code อย่างไร?
+1. Direct Answer: Oriverse รองรับวงจร Compile → Read Diagnostics → Patch → Recompile จริง โดยมีคู่มือ Error ที่เชื่อม Error Codes กับวิธีแก้ไข แต่ไม่ได้เปิดเผยว่า AI ใช้ Ranking Policy หรือ Error Repair Model แบบใด
+2. Architecture: stage_new_world และ patch_and_run_pending_world ทำ Compilation/Simulation หลัง Authoring จากนั้นผู้เรียกสามารถนำข้อความผิดพลาดมาแก้เฉพาะ Source Hunk
+3. Source Evidence: weave_compile_errors, weave2_migration; Tool Contract patch_and_run_pending_world
+4. API Contract: Diagnostics มี Error Codes และ Source Context ส่วน Patch ใช้ Diff พร้อม Target เฉพาะ เช่น @@ #class player
+5. Working Example — จากคู่มือ Error:
+โค้ดที่ผิด:
+แก้เป็น:
+เป็นตัวอย่างกฎไวยากรณ์ที่มีเอกสารยืนยัน ไม่ใช่การ Compile ทดลองใหม่
+6. Execution Trace — Expected: Compiler Reports Missing Parentheses → Read Error → Modify Function Declaration → Recompile → Diagnostic Resolved
+7. Limits & Failure Modes: คู่มือเตือนให้แก้ Error แรกของแต่ละ Class ก่อน เพราะ Parse Failure อาจก่อให้เกิด Cascading Errors อีกทั้งห้ามสร้าง Empty Stub ที่ใช้ชื่อ Built-in Function ที่ถูกเลิกใช้เพื่อหลอกให้ Compiler ผ่าน
+8. Verification: Expected: แก้ Source แล้ว Error เดิมหายไป และ Gameplay Behavior ไม่เปลี่ยนโดยไม่ตั้งใจ; Actual: ยืนยันแนวทางจากคู่มือ แต่ไม่ได้สร้าง Compiler Repair Experiment ในรอบนี้
+9. Disclosure Status: Compiler Repair Workflow Documented; AI Repair Strategy Undisclosed
+10. Research Gaps: Repair Attempt Budgets, Diagnostic Ranking, Root-cause Classification, Automatic Regression Tests และ Repair Success Rate
+128 — วัดความตรงกับ Prompt หรือ Acceptance Criteria อย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือทดสอบ Compilation, Simulation, UI, Geometry และ Gameplay แต่ไม่พบค่ามาตรฐาน Prompt Fidelity Score หรือ Automatic Acceptance Coverage Metric ที่รับรองจากเอกสาร
+2. Architecture: ควรผูก Requirement แต่ละข้อกับหลักฐานที่ตรวจสอบได้ เช่น Object Existence, Geometry Dimensions, Event Logs, State Transitions, UI Layout และ Player Interaction Results
+3. Source Evidence: ui_patterns → Verify; เครื่องมือ playtest, ui_inspect, inspect_mesh, preview_mesh, sample_ground
+4. API Contract: playtest รองรับ Scripted Actions เช่น tap, hold, click_ui, drag, leave และ rejoin ส่วน ui_inspect รองรับการตรวจ Layout และส่ง Synthetic Input
+5. Working Example: สำหรับ Prompt “ซื้อชา 10 เหรียญ” Acceptance Criteria ได้แก่ Coins ลด 10, Inventory เพิ่ม Tea 1 และเมื่อกระเป๋าเต็มต้องไม่ถูกหักเงิน ซึ่งสามารถออกแบบ Tests ได้จาก API ที่รองรับ
+6. Execution Trace — Expected: Requirement → Test Input → Runtime Observation → Expected/Actual Comparison → Acceptance Decision
+7. Limits & Failure Modes: การมี Object ที่ชื่อถูกต้องไม่ได้ยืนยันว่าเกมเล่นสนุก ใช้งานสะดวก หรือ Visual Fidelity ตรง Reference และ Text-only Playtest ไม่สามารถรับรองคุณภาพภาพ
+8. Verification: Expected: แต่ละ Requirement มี Test Case และ Evidence; Actual: Not Verified ว่าระบบมี Automatic Prompt Fidelity Evaluator ภายใน
+9. Disclosure Status: Verification Tooling Documented; Prompt Fidelity Algorithm Undisclosed
+10. Research Gaps: Requirement-to-test Generation, Weighted Acceptance, Visual Similarity Scoring, Human Approval Gates และ Test Coverage Reporting
+129 — รองรับ Iterative Edits โดยรักษาส่วนเดิมอย่างไร?
+1. Direct Answer: รองรับผ่านการแก้ไขแบบ Patch ต่อ Source ที่มีอยู่ พร้อม Revision Checking, Context Matching และ Validation โดยไม่ต้องสร้าง World ใหม่ทั้งหมด
+2. Architecture: สามารถตรวจ Live World แบบ Read-only, คัดลอกเป็น Pending Draft, อ่านเฉพาะ Sections, แก้ Patch และ Compile/Simulate อีกครั้งก่อนเสนอการเปลี่ยนแปลง
+3. Source Evidence: Tool Contracts ของ sync_pending_world_from_current, pending_world_search_context, pending_world_read_sections, patch_and_run_pending_world และ submit_pending_world
+4. API Contract:
+Operation
+	Contract ที่สำคัญ
+	Inspect Live
+	sync_pending_world_from_current({source:"live", preview:true})
+	Read Sections
+	pending_world_read_sections(...)
+	Search
+	pending_world_search_context(...)
+	Patch
+	patch_and_run_pending_world({patches:[...]})
+	Revision Safety
+	expected_revision
+	Delivery
+	submit_pending_world(...)
+	5. Working Example: หากผู้ใช้ต้องการเพิ่มปุ่มซื้อสินค้าใน HUD เดิม การแก้ไขควรแตะเฉพาะ Controller Action และ HTML View ที่เกี่ยวข้อง ไม่เขียนทับ Terrain, Mesh หรือ Player Logic ที่ไม่เกี่ยวข้อง
+6. Execution Trace — Expected: Read Live Source → Identify Exact Target → Apply Minimal Patch → Recompile → Playtest Changed Behavior → Check Unchanged Sections → Submit
+7. Limits & Failure Modes: การใช้ stage_new_world กับเกมเดิมโดยไม่ตั้งใจอาจแทนที่ Pending Draft ส่วนการ Synchronize โดยไม่ตรวจ Draft อาจทำให้ Unsubmitted Changes สูญหาย เครื่องมือมี Discard Guards และ Snapshot Checks เพื่อช่วยลดความเสี่ยง
+8. Verification: ผมตรวจ Live KHOSAN–Oriverse World แบบ Read-only ในรอบนี้ พบ Source ขนาด 181 บรรทัด ประกอบด้วย BenchmarkTerrain, VillageHouse, ShopCounter, SharedDoor, Player Inventory และ HUD แต่ไม่ได้แก้ไขหรือทดลอง Patch เพื่อยืนยัน Behavior Preservation เพิ่มเติม
+9. Disclosure Status: Patch/Revision Workflow Documented; Live Source Inspection Experimentally Verified; Preservation Regression Not Run
+10. Research Gaps: Semantic Diff, Automated Regression Selection, Formal Behavior Preservation, Concurrent Edit Conflict Resolution และ Patch Provenance
+130 — End-to-end Trace จาก Prompt จนเป็นเกมที่เล่นได้
+1. Direct Answer: สามารถจัดทำ End-to-end Trace ที่มีหลักฐานรองรับในระดับเครื่องมือได้ โดยใช้ KHOSAN–Oriverse Benchmark Village เป็นตัวอย่าง แต่ต้องแยกให้ชัดว่า Source ปัจจุบันมีอยู่จริงกับกระบวนการสร้างครั้งแรกจาก Prompt ที่ไม่ได้ถูกบันทึกครบทุกขั้น
+2. Architecture: Prompt → Weave Authoring → Source Compile → World Simulation → UI/Gameplay Tests → Submission/Share
+3. Source Evidence: Live World Source ที่ตรวจในรอบนี้ และเครื่องมือ stage_new_world, patch_and_run_pending_world, playtest, ui_inspect, submit_pending_world
+4. API Contract: Stage รับ Full Weave Source; Patch รับ Exact Diff; Playtest รับ Input Actions; Submission ต้องผ่าน Validation และเสนอการ Load ให้ Editor
+5. Working Example — Source ที่มีอยู่จริงใน Benchmark:
+World ที่ตรวจพบมี Shop Logic เพิ่ม Tea เข้ากระเป๋าและหัก Coins เมื่อตรวจเงิน ระยะทาง และความจุ Inventory แล้ว รวมถึงมี Owned HUD สำหรับแต่ละ Player
+6. Execution Trace — สิ่งที่แยกได้จากหลักฐาน
+ขั้น
+	ข้อมูลที่มี
+	สถานะ
+	Prompt รับเข้าระบบ
+	ไม่มี Original Prompt Trace ครบถ้วนจากระบบ
+	Not Verified
+	Requirements / IR
+	ไม่พบ Output ของ Internal Planner
+	Undisclosed
+	Weave Source
+	Benchmark Village 181 Lines
+	Inspected
+	Scene Assembly
+	Terrain, Houses, Shop, Door, HUD
+	Source Verified
+	Compilation
+	มีผลการทดสอบในงานก่อนหน้า แต่ไม่ได้ Compile ใหม่ในรอบนี้
+	Historical Evidence
+	Gameplay
+	เคยมีผล Multi-seat Simulation จากการวิจัยก่อนหน้า
+	Historical Evidence
+	Current UI Acceptance
+	ไม่ได้รันในรอบนี้
+	Not Run
+	Current Visual Capture
+	ไม่ได้รันในรอบนี้
+	Not Run
+	Publish / Delivery
+	ไม่ได้ Submit หรือ Publish ในรอบนี้
+	Not Run
+	7. Limits & Failure Modes: Source Inspection ไม่เท่ากับ Runtime Acceptance และ Historical Playtest ไม่สามารถใช้รับรอง Source Revision ปัจจุบันได้โดยไม่มีการตรวจยืนยันอีกครั้ง
+8. Verification: Expected: Prompt Requirements ทุกข้อมีหลักฐาน Compile, Simulation, Gameplay และ Visual Acceptance; Actual: ตรวจ Source ปัจจุบันได้จริง แต่ ยังไม่มี Complete End-to-end Trace ที่ผ่านทุกขั้นในรอบนี้
+9. Disclosure Status: Tool Workflow Documented; Current Source Experimentally Inspected; Full Prompt-to-Game Trace Not Verified
+10. Research Gaps: Original Prompt Provenance, Structured Requirement Trace, Task Execution History, Asset Decisions, Per-iteration Compiler Results, Playtest Receipts และ Final Acceptance Evidence
+________________
+
+
+TRR-13 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	121
+	Prompt → Game Requirements
+	Observable Workflow Documented; Internals Undisclosed
+	122
+	Structured Spec / IR
+	Undisclosed
+	123
+	Asset Selection
+	Tools Documented; AI Policy Undisclosed
+	124
+	Task Separation
+	Source Organization Documented; Agent Decomposition Undisclosed
+	125
+	Planning / Dependency Ordering
+	Workflow Documented; Planner Undisclosed
+	126
+	Completeness / Contradictions
+	Compiler Validation Documented; Semantic Checker Undisclosed
+	127
+	Compiler Feedback Loop
+	Documented
+	128
+	Prompt Fidelity Evaluation
+	Tooling Documented; Scoring Undisclosed
+	129
+	Iterative Preservation
+	Documented; Live Read-only Inspection Verified
+	130
+	End-to-end Trace
+	Partially Observed / Not Fully Verified
+	ข้อเท็จจริงที่ยืนยันได้
+Oriverse มีเครื่องมือสร้างและแก้ไข Weave Worlds ผ่าน AI Agent, ตรวจ Compilation/Simulation, ค้นและตรวจ Assets, ทดสอบ Gameplay/UI และส่ง World ไปยัง Editor ได้
+ระบบรองรับการทำงานกับ World เดิมผ่าน Minimal Patches, Revision Checks และ Validation ซึ่งเป็นพื้นฐานสำคัญของการพัฒนาเกมด้วย AI แบบ Iterative
+แต่ ยังไม่มีหลักฐานเพียงพอที่จะระบุว่าสถาปัตยกรรม AI ภายในใช้ Planner/IR/Multi-agent System แบบใด
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN AI Game Studio
+จากผลวิจัย ผมเสนอให้ KHOSAN สร้าง Pipeline ที่เปิดเผยและตรวจสอบย้อนหลังได้:
+KHOSAN AI Game Studio — Proposed Architecture
+ควรกำหนดให้ทุก Feature มี Requirement ID, Source Artifacts, Dependency Links, Compiler Results, Test Evidence และ Owner Acceptance อย่างชัดเจน โดยไม่ใช้ Compiler PASS แทนการรับรอง Gameplay หรือ Visual Quality
+สถานะ TRR-13: Documentation Research Completed / Existing Benchmark Source Inspected Read-only / Full Prompt-to-Game End-to-end Verification Pending.
+ไม่มีการแก้ไขหรือ Publish World ในรอบนี้ Editor ยังรายงาน Build 05Oct26-23:23 ซึ่งควร Reload ก่อนทำการทดสอบใหม่เพื่อให้ผลตรวจสอบตรงกับ Build ปัจจุบัน
+หมวดถัดไปคือ 14 — AI Agent Tooling, Editor Control & Verification (ข้อ 131–140) ซึ่งจะศึกษาการควบคุม Editor, การจัดการ Draft, Tool Execution, Error Recovery, Agent Safety และ Evidence-based Acceptance อย่างเป็นระบบ
+________________
+
+
