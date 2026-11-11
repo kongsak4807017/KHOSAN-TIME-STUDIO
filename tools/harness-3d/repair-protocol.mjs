@@ -32,9 +32,9 @@ const overlap=(a,b,k)=>Math.min(a.max[k],b.max[k])-Math.max(a.min[k],b.min[k]);
 const separation=(a,b,k)=>Math.max(0,a.min[k]-b.max[k],b.min[k]-a.max[k]);
 
 export function geometryDiagnostics(state){
-  if(!isObject(state)||!isObject(state.coordinate_system)||state.coordinate_system.unit!=='cm'||state.coordinate_system.up_axis!=='+Z'||(state.coordinate_system.forward_axis??'+Y')!=='+Y')err('unsupported coordinate contract');
+  if(!isObject(state)||!isObject(state.coordinate_system)||state.coordinate_system.unit!=='cm'||state.coordinate_system.up_axis!=='+Z'||(state.coordinate_system.forward_axis!==undefined&&state.coordinate_system.forward_axis!=='+Y'))err('unsupported coordinate contract');
   if(!allowed(state.coordinate_system,['unit','up_axis','forward_axis']))err('unsupported coordinate field');
-  if((state.primitives?.length??0)>0||(state.anchors?.length??0)>0)err('unsupported primitives/anchors');
+  for(const key of ['primitives','anchors'])if(state[key]!==undefined&&(!Array.isArray(state[key])||state[key].length>0))err('unsupported primitives/anchors');
   if(!Array.isArray(state.layout_nodes)||state.layout_nodes.length<1||state.layout_nodes.length>500)err('expected 1..500 AABB layout nodes');
   const nodes=new Map();
   for(const n of state.layout_nodes){
