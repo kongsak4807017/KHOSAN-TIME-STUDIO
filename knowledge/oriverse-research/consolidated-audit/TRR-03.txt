@@ -1,0 +1,205 @@
+Oriverse / Weave Technical Research Record — TRR-03
+หมวด 03: Compiler, Bytecode & Virtual Machine | ข้อ 021–030 | 8 ตุลาคม 2569
+ผมเชื่อมต่อ Oriverse และอ่านคู่มือจากระบบโดยตรงแล้ว ได้แก่ weave_coding → weave_language, weave2_migration, frame_and_scheduling_model, updating_old_worlds และ weave_compile_errors
+ข้อค้นพบสำคัญที่สุดคือ Oriverse เปิดเผยว่า Weave2 Compile Class Logic เป็น Bytecode และประมวลผลผ่าน Event-driven Simulation แต่เอกสารที่ตรวจสอบยังไม่เปิดเผย Lexer Implementation, AST Schema, Bytecode Instruction Set หรือรายละเอียดภายในของ Virtual Machine
+ดังนั้นรายงานนี้แยกชัดเจนระหว่าง Documented, Inferred และ Undisclosed โดยไม่มีการสมมติว่า Compiler ภายในใช้เทคนิคใดโดยเฉพาะ
+Research Questions
+10
+ข้อที่ตอบด้วยเอกสารได้บางส่วน
+7
+ประเด็นเชิงลึกที่ยังไม่เปิดเผย
+3
+ตัวเลขเป็นการจัดกลุ่มภาพรวมของคำถาม ไม่ใช่คะแนนความครบถ้วนหรือการรับรองจาก Oriverse
+ภาพรวม Compiler Pipeline ที่มีหลักฐานรองรับ
+ผังนี้แสดงขั้นตอนเชิงหน้าที่ตามเอกสาร ไม่ยืนยันว่าลำดับ Internal Compiler Passes เป็นเช่นนี้ทุกประการ
+021 — Compiler Pipeline ตั้งแต่ Source จนเป็น Executable
+1. Direct Answer: Weave2 รับ World Description ซึ่งประกอบด้วย Scene Declarations, Class Logic และ Asset Directives แล้วตรวจความถูกต้องก่อนเข้าสู่การจำลองเกม คู่มือยืนยันว่า #class ถูก Compile เป็น Bytecode แต่ไม่ได้เปิดเผย Pipeline ภายในครบทุก Pass
+2. Architecture: สามารถระบุองค์ประกอบที่มีหลักฐานได้ว่าเกี่ยวข้องกับ Source Validation, Type Checking, Bytecode Creation, World Initialization และ Simulation Execution อย่างไรก็ตาม คำว่า Executable ในที่นี้ไม่จำเป็นต้องหมายถึง Native Binary แบบ .exe
+3. Source Evidence: weave_coding → weave_language; weave_compile_errors → Cross-class; weave2_migration → AddWeave2Program
+4. API Contract: จุดเข้าสู่ระบบเขียนเกมใช้ World Description ที่มี #class Name ... #end ส่วน AddWeave2Program ปรากฏในเอกสาร Migration ในฐานะกลไกติดตั้งโปรแกรม ไม่ใช่ API ที่ยืนยันว่าเปิดให้ผู้พัฒนาเรียกเองโดยตรง
+5. Working Example:
+6. Execution Trace — Expected: อ่าน Source → ตรวจ Syntax/Types → Compile Class → สร้าง CounterBox → เรียก OnSpawned → เปลี่ยน Count เป็น 1 → พิมพ์ Log
+7. Limits & Failure Modes: Syntax ผิด, Type ไม่ตรง, Unknown Function และ API ที่เลิกใช้ ทำให้ Compile ล้มเหลวได้
+8. Verification: Expected: โปรแกรมแสดง COUNT=1; Actual: ตัวอย่างนี้ยังไม่ได้ Compile แยกในรอบปัจจุบัน ส่วนคู่มือยืนยันรูปแบบ Class และ Event ที่ใช้
+9. Disclosure Status: Partially Documented; Internal Pipeline Undisclosed
+10. Research Gaps: Exact Pass Order, Compiler IR, Linkage, Bytecode Serialization และ Executable Packaging
+022 — Lexer และ Parser ใช้หลักการหรือโครงสร้างใด?
+1. Direct Answer: ไม่พบข้อมูลว่า Oriverse ใช้ Lexer Generator, Recursive-descent Parser, Pratt Parser, LR Parser หรือวิธีอื่น จึงไม่สามารถระบุ Algorithm ภายในได้
+2. Architecture: คู่มือยืนยันเฉพาะพฤติกรรม Syntax เช่น การขึ้นบรรทัดใหม่ถือเป็นจุดสิ้นสุด Statement ในบางบริบท และการใช้ ; คั่น Statements หลายรายการในบรรทัดเดียว
+3. Source Evidence: weave_language; weave_compile_errors → Syntax
+4. API Contract: กฎที่มีหลักฐาน เช่น ฟังก์ชันไม่มี Parameters ต้องเขียน func Name() และ Expressions ที่ขึ้นบรรทัดใหม่ต้องรักษากฎ Continuation
+5. Working Example:
+6. Execution Trace — Expected: Lexer/Parser รับ Tokens และตรวจโครงสร้างคำสั่ง แต่รูปแบบ Tokens และ Parse Tree ภายในไม่ได้เปิดเผย
+7. Limits & Failure Modes: คู่มือระบุ W2C0107 สำหรับ Expression ที่ถูกแยกเป็น Statement ไม่ถูกต้อง เช่นขึ้นบรรทัดใหม่ก่อนเครื่องหมายลบ
+8. Verification: Expected: รูปแบบที่ถูกต้องผ่าน Syntax Check; Actual: อ้างอิง Compiler Diagnostics ที่บันทึกไว้ในคู่มือ ยังไม่ได้ตรวจ Parser Trace จริง
+9. Disclosure Status: Syntax Behavior Documented; Lexer/Parser Implementation Undisclosed
+10. Research Gaps: Token Specification, Lexer State, Parser Algorithm, Error Recovery Strategy และ Formal Grammar
+023 — มี AST และ Intermediate Representation รูปแบบใด?
+1. Direct Answer: ไม่พบเอกสารที่ยืนยันรูปแบบ Abstract Syntax Tree หรือ Intermediate Representation ของ Weave2
+2. Architecture: Compiler จำเป็นต้องตีความโครงสร้าง Source เพื่อให้ตรวจชนิดข้อมูลและสร้างผลลัพธ์ที่นำไปประมวลผลได้ แต่ไม่สามารถสรุปได้ว่าภายในใช้ AST แบบใด หรือมี IR แยกต่างหากหรือไม่
+3. Source Evidence: weave_language ยืนยัน Bytecode Output และ weave_compile_errors แสดง Semantic Diagnostics แต่ทั้งสองไม่ได้เปิดเผย AST/IR
+4. API Contract: ไม่มี AST Dump API, IR Dump API หรือ Schema ที่ยืนยันได้จากเอกสารที่ตรวจสอบ
+5. Working Example: ไม่มี Working Example สำหรับ AST/IR เพราะยังไม่พบช่องทางให้เรียกผลลัพธ์ภายในนี้
+6. Execution Trace: Not Disclosed สำหรับ Transformation Passes จาก Parse Structure ไป Bytecode
+7. Limits & Failure Modes: ไม่สามารถตรวจ Compiler Optimization หรือ Transformation Fidelity ด้วย AST/IR ที่ไม่มีการเปิดเผย
+8. Verification: Expected: หากมี IR Inspector ต้องคืนโครงสร้างที่ตรวจสอบได้; Actual: ไม่พบ API ดังกล่าวในการตรวจเอกสารครั้งนี้
+9. Disclosure Status: Undisclosed
+10. Research Gaps: AST Node Kinds, Typed IR, Control-flow Graph, Source Span Preservation และ Serialization Format
+024 — Semantic Analysis และ Symbol Resolution ทำงานอย่างไร?
+1. Direct Answer: Weave2 มีการตรวจชนิดข้อมูลและการอ้างอิงสมาชิก Class จากหลักฐาน Compiler Diagnostics ส่วน Algorithm ของ Symbol Table และ Name Resolution ยังไม่เปิดเผย
+2. Architecture: Compiler ต้องรู้จัก Class และชนิดของ Receiver ก่อนอนุญาตให้เข้าถึง Fields หรือเรียก Methods เฉพาะ Class
+3. Source Evidence: weave_compile_errors → Cross-class (Weave2 / Compiler2)
+4. API Contract: รูปแบบที่รองรับ:
+Typed Cast ทำให้ Compiler รู้จัก Class ที่ต้องใช้ตรวจสมาชิก
+5. Working Example: ใน Benchmark ก่อนหน้านี้ การเขียน hud.Owner = Self เกิด Assignment Type Mismatch และแก้โดยใช้ Self as player จนผ่าน Compile
+6. Execution Trace: Resolve Symbol → Determine Receiver Type → Lookup Member → Check Arguments/Assignment → Accept หรือ Diagnostic
+ลำดับดังกล่าวเป็นการสรุปเชิงหน้าที่ ไม่ใช่ลำดับ Internal Pass ที่ได้รับการเปิดเผย
+7. Limits & Failure Modes: W2C0614 อาจเกิดเมื่อเรียกสมาชิกผ่าน Object Reference ที่ Compiler ไม่ทราบ Class หรือเกิดจาก API ที่ไม่อยู่ในรายการรองรับ
+8. Verification: Expected: Cast ให้ตรง Class แล้ว Compile ผ่าน; Actual: มีหลักฐานการแก้ปัญหานี้จาก Benchmark ก่อนหน้า
+9. Disclosure Status: Documented + Previously Experimentally Verified สำหรับพฤติกรรม Type Resolution; Internal Symbol Table Undisclosed
+10. Research Gaps: Scope Graph, Symbol Table Schema, Overload Resolution, Forward References และ Class Dependency Analysis
+025 — Bytecode Instruction Set และ Encoding
+1. Direct Answer: คู่มือยืนยันว่า #class ถูก Compile เป็น Bytecode แต่ยังไม่พบ Opcode Table, Instruction Encoding, Operand Layout หรือ Binary Format Specification
+2. Architecture: สิ่งที่ทราบคือ Bytecode เป็นผลลัพธ์ที่เชื่อม Class Logic กับการประมวลผลภายใน Oriverse ส่วนรูปแบบ Execution Instructions ยังไม่เปิดเผย
+3. Source Evidence: weave_language; weave2_migration
+4. API Contract: ไม่มี Public Bytecode Serialization Contract ที่ตรวจพบ ทั้งยังไม่มีหลักฐานว่าผู้พัฒนาสามารถโหลด Bytecode ที่สร้างเองโดยตรง
+5. Working Example: Not Available — ไม่ควรสร้างตัวอย่าง Opcode หรือ Hex Dump สมมติขึ้นมาแล้วอ้างว่าเป็นของ Weave
+6. Execution Trace: Source Class → Bytecode Generation ตามคำอธิบายของคู่มือ ส่วนการ Encoding Instructions เป็น Undisclosed
+7. Limits & Failure Modes: ไม่สามารถตรวจสอบ ABI Compatibility หรือ Binary Versioning ได้โดยไม่มีเอกสารรูปแบบ Bytecode
+8. Verification: Expected: Bytecode Dump ควรแสดง Instructions หรือ Binary Representation; Actual: ไม่พบช่องทางดังกล่าวจากเครื่องมือที่ตรวจสอบ
+9. Disclosure Status: การมี Bytecode Documented; Instruction Set และ Encoding Undisclosed
+10. Research Gaps: Opcode Registry, Register/Stack Model, Constant Pool, Jump Encoding, Debug Metadata และ Bytecode Verifier
+026 — Runtime ใช้ Virtual Machine หรือ Execution Model แบบใด?
+1. Direct Answer: คู่มือให้ข้อมูล Execution Model ค่อนข้างละเอียด โดยยืนยันว่าเกมทำงานเป็น Ticks และมีลำดับหลักคือ Spawn Phase, Script/Event Dispatch และ Physics/Motion Application
+แต่ยังไม่ระบุว่า Bytecode ถูกประมวลผลโดย Stack VM, Register VM, Interpreter แบบใด หรือผ่าน JIT Compilation หรือไม่
+2. Architecture: Runtime มีหน้าที่จัดการ Object State, Events, Continuations, Physics และ Deterministic Simulation
+3. Source Evidence: frame_and_scheduling_model
+4. API Contract: Runtime Hooks ที่มีเอกสารรองรับ ได้แก่ event OnPreSpawn, event OnSpawned, event Update และ Events ของ Input/UI
+5. Working Example:
+6. Execution Trace
+7. Limits & Failure Modes: Wait() และ forever ใช้ Continuation Budget ที่คู่มือระบุว่ามีขนาดรวม 262,144 Slots การใช้ Suspended Executions จำนวนมากอาจทำให้ Budget หมด
+8. Verification: Expected: State เปลี่ยนตาม Events/Ticks; Actual: คู่มือยืนยัน Execution Order แต่ยังไม่มีผล Trace ของ VM Instructions ภายใน
+9. Disclosure Status: Runtime Execution Model Documented; VM Architecture Undisclosed
+10. Research Gaps: Interpreter Dispatch, Scheduler Internal Queues, Memory Model, Continuation Representation และ VM Profiling
+027 — มี Optimization Passes อะไรบ้าง?
+1. Direct Answer: ยังไม่พบรายการ Compiler Optimization Passes ของ Weave2 เช่น Constant Folding, Dead-code Elimination, Inlining หรือ Register Allocation
+2. Architecture: เอกสารกล่าวถึงข้อแนะนำเพื่อเพิ่มประสิทธิภาพ Runtime และ Asset Pipelines แต่สิ่งเหล่านี้ไม่ใช่หลักฐานว่ามี Compiler Optimization Pass ประเภทเดียวกัน
+3. Source Evidence: frame_and_scheduling_model, weave_language
+4. API Contract: ไม่มี Compiler Optimization Flags หรือ Pass Control API ที่ยืนยันได้จากเอกสารที่อ่าน
+5. Working Example: ไม่มีตัวอย่างที่ยืนยันว่า Compiler ได้ปรับโค้ดระหว่าง Compile จริง
+6. Execution Trace: Not Disclosed สำหรับ Optimization Pipeline
+7. Limits & Failure Modes: ไม่สามารถรับรองว่า Expressions ถูก Fold, Functions ถูก Inline หรือ Loops ถูก Vectorize โดยอัตโนมัติ
+8. Verification: Expected: ถ้ามี Optimization IR Dump จะเปรียบเทียบก่อนและหลัง Optimization ได้; Actual: ยังไม่มีหลักฐานระดับนั้น
+9. Disclosure Status: Undisclosed
+10. Research Gaps: Pass Inventory, Optimization Levels, Determinism Constraints และ Performance Impact ต่อ Generated Code
+028 — Incremental Compilation และ Caching
+1. Direct Answer: Oriverse มีการ Stage Draft, Patch Source และ Validate ซ้ำ รวมถึง Asset Baking/Reuse ตามเครื่องมือที่เปิดให้ใช้ แต่ยังไม่มีหลักฐานยืนยันว่า Compiler Class Logic รองรับ Incremental Compilation ระดับใด
+ต้องแยกสามเรื่อง:
+* Source Patching เป็นระบบจัดการการแก้ไข
+* Asset Cache ลดการ Bake ซ้ำ
+* Incremental Compilation หมายถึงการ Compile เฉพาะส่วนของโค้ดที่เปลี่ยนจริง
+สามอย่างนี้ไม่ใช่สิ่งเดียวกัน
+2. Architecture: เครื่องมือ stage_new_world, patch_and_run_pending_world และ run_pending_world สามารถ Compile/Validate Draft ได้ โดยการนำ Asset Cache กลับมาใช้ไม่ได้พิสูจน์ว่ามี Dependency-aware Incremental Compiler
+3. Source Evidence: Oriverse Tool Contracts; weave_language
+4. API Contract: patch_and_run_pending_world({patches, agent}) รับรายการ Source Patches แล้วตรวจสอบ Draft ที่แก้ไข ส่วน run_pending_world({agent}) ตรวจ Draft ปัจจุบันอีกครั้ง
+5. Working Example: กรณีศึกษาที่ตรวจสอบได้จาก Benchmark คือการแก้ Source แล้ว Validate ซ้ำโดยไม่ต้องส่งทั้ง World Description ใหม่ในทุกครั้ง
+6. Execution Trace: Current Draft → Apply Patch → Validate Candidate → Report Revision/Diagnostics
+7. Limits & Failure Modes: หาก Patches ไม่ตรง Revision หรือ Context อาจเกิด Patch Mismatch; Compilation Cache Invalidation Rules ยังไม่เปิดเผย
+8. Verification: Expected: Patch เฉพาะส่วนแล้ว Validation ทำงาน; Actual: เคยทำสำเร็จใน Benchmark แต่ยังไม่ได้ทดสอบว่าคอมไพเลอร์ Compile เฉพาะ Class ที่เปลี่ยนหรือไม่
+9. Disclosure Status: Draft Patching Documented + Previously Verified; Incremental Compiler Undisclosed
+10. Research Gaps: Compile Unit Granularity, Dependency Graph, Cache Keys, Invalidation Rules, Parallel Compilation และ Warm/Cold Compile Benchmark
+029 — Source Mapping และ Error Location
+1. Direct Answer: Compiler Diagnostics ของ Weave สามารถระบุตำแหน่งข้อผิดพลาดใน Source ได้ จากผลการ Compile ของ Benchmark ก่อนหน้า ซึ่งเคยรายงาน line, col, start, end, source_line และ Diagnostic Code
+อย่างไรก็ตาม ยังไม่พบ Specification ของ Source Map สำหรับเชื่อม Bytecode Instruction กลับไปยัง Source Line
+2. Architecture: ระบบที่เปิดเผยมี Source Location Reporting ใน Compiler Diagnostics แต่ไม่มีหลักฐานเพียงพอที่จะอธิบาย Debug Symbol Table หรือ Bytecode-to-Source Mapping
+3. Source Evidence: weave_compile_errors; Compiler Diagnostics จาก Benchmark v0.1
+4. API Contract: ตัวอย่างชนิดข้อมูลใน Diagnostic ที่เคยได้รับ:
+นี่เป็นตัวอย่างที่ย่อจาก Diagnostic จริง ไม่ใช่ Full Diagnostic Schema
+5. Working Example: ใน Benchmark การกำหนด hud.Owner = Self ไม่ตรงชนิด player และ Compiler ชี้ตำแหน่งบรรทัดที่มีปัญหา
+6. Execution Trace: Compile → Type Mismatch → Generate Diagnostic → Associate Source Location → Return Error
+7. Limits & Failure Modes: การผิดพลาดของ Class หนึ่งอาจเกิด Cascading Diagnostics ไปยัง Class อื่น คู่มือแนะนำให้เริ่มแก้ Error แรกของแต่ละ Class
+8. Verification: Expected: Type Mismatch ต้องรายงานตำแหน่งใน Source; Actual: เคยยืนยันจาก Compiler Response ใน Benchmark ก่อนหน้า
+9. Disclosure Status: Diagnostic Source Locations Experimentally Verified; Bytecode Source Mapping Undisclosed
+10. Research Gaps: Source Map Binary Format, Macro/Generated Source Mapping, Instruction Offsets, Debug Symbol Emission และ Breakpoint Mapping
+030 — สามารถเปิดเผย Bytecode Example หรือ Compiler Trace ได้หรือไม่?
+1. Direct Answer: จากเอกสารและเครื่องมือที่ตรวจสอบในรอบนี้ ยังไม่พบ Public API สำหรับดึง Raw Bytecode, Disassembly หรือ Internal Compiler Trace
+Oriverse เปิดเผย Compiler Diagnostics และ Validation Reports ซึ่งใช้เป็นหลักฐานระดับ Black-box ได้ แต่ไม่ใช่ Bytecode Dump
+2. Architecture: สิ่งที่สามารถศึกษาได้จากภายนอกคือ Source → Compile Result → Diagnostics → Runtime Behavior โดยยังไม่สามารถตรวจ Instruction Stream ภายในโดยตรง
+3. Source Evidence: weave_language, weave_compile_errors และสัญญาของเครื่องมือ run_pending_world
+4. API Contract: เครื่องมือ run_pending_world({agent}) ใช้ Validate Draft ที่ Stage อยู่ โดยคืนผล Compile และ Simulation แต่ไม่ได้ระบุว่าคืน Bytecode Disassembly
+5. Working Example: ไม่มี Raw Bytecode Example ที่ยืนยันได้ และจะไม่สร้าง Instruction Stream สมมติขึ้นมา
+6. Execution Trace: เครื่องมือสามารถรายงาน Validation Phases และ World Logs ได้ ขณะที่ Internal Compiler Trace ยังไม่มีช่องทางที่ยืนยัน
+7. Limits & Failure Modes: หากไม่มี Bytecode Dump จะไม่สามารถตรวจ Opcode Semantics, Control-flow Lowering หรือ VM Instruction Cost ได้โดยตรง
+8. Verification: Expected: Bytecode Inspection API ต้องคืน Bytecode หรือ Disassembly ที่ตรวจสอบได้; Actual: ไม่พบ API ลักษณะดังกล่าวในเครื่องมือที่ตรวจสอบ จึงไม่ถือว่าพิสูจน์ว่า Oriverse ไม่มี API นี้ในทุกช่องทาง
+9. Disclosure Status: Validation Reports Documented; Internal Bytecode/Compiler Trace Undisclosed
+10. Research Gaps: Read-only Compiler Inspector, Bytecode Version Specification, Opcode Documentation, Instruction-level Profiler และ Deterministic Replay Trace
+________________
+
+
+TRR-03 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะ
+	021
+	Compiler Pipeline
+	Partially Documented
+	022
+	Lexer / Parser
+	Undisclosed Internals
+	023
+	AST / IR
+	Undisclosed
+	024
+	Semantic Analysis
+	Partially Documented
+	025
+	Bytecode ISA / Encoding
+	Undisclosed
+	026
+	VM / Execution Model
+	Runtime Documented; VM Undisclosed
+	027
+	Optimization Passes
+	Undisclosed
+	028
+	Incremental Compile / Cache
+	Partially Documented
+	029
+	Source Mapping
+	Diagnostics Verified; Internal Maps Undisclosed
+	030
+	Bytecode Dump / Compiler Trace
+	Not Available in Inspected Tools
+	สิ่งที่ยืนยันได้
+Weave2 มี Compiler ที่ตรวจ Syntax/Types, สร้าง Bytecode สำหรับ Class Logic และมี Diagnostics ที่ระบุตำแหน่ง Source ได้ Runtime ทำงานแบบ Tick/Event-driven และจัดการ Continuations โดยมีข้อจำกัดทรัพยากรตามเอกสาร
+สิ่งที่ยังไม่สามารถยืนยันได้
+ยังไม่ทราบ Parser Algorithm, AST Layout, Compiler IR, Opcode Encoding, VM Dispatch Model, Optimization Passes และ Incremental Compilation Strategy
+สำหรับการศึกษาเชิงลึกเพื่อสร้าง KHOSAN Studio ข้อมูลเหล่านี้ควรจัดอยู่ในสถานะ Research Gap ไม่ใช่ข้อกำหนดที่สามารถคัดลอกมาใช้ได้ทันที
+ข้อเสนอด้านวิศวกรรมสำหรับ KHOSAN Studio
+หากต้องการออกแบบ Compiler และ Runtime ของเราเอง ผมเสนอให้กำหนดสัญญาระหว่างระบบอย่างน้อยดังนี้:
+Component
+	สิ่งที่ KHOSAN ควรกำหนด
+	Source Format
+	Grammar และ Versioned Schema
+	AST
+	Node Types, Source Spans และ Stable IDs
+	Semantic Analyzer
+	Symbol Table, Types และ API Resolution
+	IR
+	Typed Instructions และ Control-flow Model
+	Code Generator
+	Target Format และ ABI
+	Runtime
+	Tick Scheduling, State, Events และ Determinism
+	Diagnostics
+	Error Code, Severity, Source Range และ Suggested Fix
+	Compiler Cache
+	Content Hash และ Dependency Invalidation
+	QA Harness
+	Golden Tests, Negative Tests และ Runtime Trace
+	นี่เป็น ข้อเสนอออกแบบใหม่สำหรับ KHOSAN Studio ไม่ใช่การอ้างว่า Oriverse ใช้สถาปัตยกรรมดังกล่าวอยู่ภายใน
+สถานะ TRR-03: Documentation Research Completed / Internal Compiler Architecture Not Fully Disclosed. ไม่มีการเปลี่ยนแปลง Benchmark World ในการศึกษารอบนี้
+หมวดถัดไปที่ควรศึกษาคือ 04 — Runtime, Tick & Event Scheduling (ข้อ 031–040) ซึ่งมีเอกสารที่เปิดเผยรายละเอียดมากกว่า Compiler Internals และสามารถนำมาสร้างชุดทดลองเชิงพฤติกรรมที่ตรวจสอบได้จริง
+________________
+
+

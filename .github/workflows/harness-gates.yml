@@ -1,0 +1,50 @@
+name: KHOSAN Harness Security Checks
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: harness-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  harness-tests:
+    name: trusted-gateway-and-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parse gateway scripts and Studio shell
+        run: |
+          node --check tools/harness-3d/repair-protocol.mjs
+          node --check tools/harness-3d/trusted-gateway.mjs
+          node --check tools/harness-3d/gateway-cli.mjs
+          node --check tools/harness-3d/gateway-daemon.mjs
+          node --check tools/harness-3d/gateway-client.mjs
+          node --check tools/harness-3d/gateway-sign.mjs
+          node --check apps/studio-server/server.mjs
+          node --check apps/studio-web/public/app.js
+      - name: Run signed gateway regression and attack fixtures
+        run: node --test scripts/test-3d-gateway.mjs
+      - name: Run existing signed artifact gate tests
+        run: npm run verify:3d-harness
+      - name: Run independent Python differential policy tests
+        run: npm run verify:part7
+      - name: Validate archived research completeness
+        run: node scripts/verify-oriverse-archive.mjs
+      - name: Verify Studio source and workspace smoke
+        run: |
+          npm run verify:source
+          npm run verify:workspace
+          python scripts/harness_check.py

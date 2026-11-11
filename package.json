@@ -14,6 +14,16 @@
     "doctor:rigging": "python tools/adapters/rigging/doctor.py --json",
     "verify:workspace": "node scripts/smoke-multi-project.mjs",
     "doctor:image-blaster": "node tools/adapters/image-blaster/doctor.mjs",
-    "image-blaster": "node tools/adapters/image-blaster/run.mjs"
+    "image-blaster": "node tools/adapters/image-blaster/run.mjs",
+    "verify:3d-harness": "node --test scripts/test-3d-harness.mjs",
+    "harness:3d-verify": "node tools/harness-3d/cli.mjs",
+    "verify:part7": "python -m unittest discover -s scripts -p test_part7_hard_locks.py",
+    "verify:gateway": "node --test scripts/test-trusted-gateway.mjs",
+    "harness:gateway": "node tools/harness-3d/gateway-cli.mjs",
+    "harness:daemon": "node tools/harness-3d/gateway-daemon.mjs",
+    "harness:client": "node tools/harness-3d/gateway-client.mjs",
+    "harness:sign": "node tools/harness-3d/gateway-sign.mjs",
+    "verify:hard-locks": "npm run verify:3d-harness && npm run verify:trusted-gateway && npm run verify:part7 && node scripts/verify-oriverse-archive.mjs",
+    "verify:trusted-gateway": "node --test scripts/test-trusted-gateway.mjs"
   }
 }

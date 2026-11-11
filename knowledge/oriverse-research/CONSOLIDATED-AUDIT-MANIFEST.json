@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "archive_name": "Oriverse/Weave consolidated capability audit",
+  "captured_date": "2026-11-11",
+  "source_title": "Oriverse Capability Audit",
+  "source_type": "user's consolidated Google Doc; not original Oriverse source code or original 200 chat transcripts",
+  "source_url": "https://docs.google.com/document/d/137S6eGaPtZhMYkTQh-kE0ZtctXTRmcj9459sHL-TwcQ",
+  "source_doc_modified_date": "2026-10-09",
+  "characters_total": 452573,
+  "parts": 21,
+  "questions_covered": 200,
+  "question_id_coverage": "001–200",
+  "exact_source_text_preserved_by_concatenating_parts_in_order": true,
+  "readback_verified_parts": 21,
+  "original_chat_transcript_status": "INCOMPLETE: original 200 question response transcripts not all recovered",
+  "first_party_claims": "Attributions to Oriverse docs/tool contracts are claims recorded in the source audit, not independent re-verification by this import",
+  "status": "Consolidated audit text archived; transcript and runtime evidence validation remain separate",
+  "files": [
+    {
+      "path": "consolidated-audit/00-background.txt",
+      "characters": 52869,
+      "question_ids": []
+    },
+    {
+      "path": "consolidated-audit/TRR-01.txt",
+      "characters": 18593,
+      "question_ids": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007",
+        "008",
+        "009",
+        "010"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-02.txt",
+      "characters": 15571,
+      "question_ids": [
+        "011",
+        "012",
+        "013",
+        "014",
+        "015",
+        "016",
+        "017",
+        "018",
+        "019",
+        "020"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-03.txt",
+      "characters": 17106,
+      "question_ids": [
+        "021",
+        "022",
+        "023",
+        "024",
+        "025",
+        "026",
+        "027",
+        "028",
+        "029",
+        "030"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-04.txt",
+      "characters": 15936,
+      "question_ids": [
+        "031",
+        "032",
+        "033",
+        "034",
+        "035",
+        "036",
+        "037",
+        "038",
+        "039",
+        "040"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-05.txt",
+      "characters": 18182,
+      "question_ids": [
+        "041",
+        "042",
+        "043",
+        "044",
+        "045",
+        "046",
+        "047",
+        "048",
+        "049",
+        "050"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-06.txt",
+      "characters": 17810,
+      "question_ids": [
+        "051",
+        "052",
+        "053",
+        "054",
+        "055",
+        "056",
+        "057",
+        "058",
+        "059",
+        "060"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-07.txt",
+      "characters": 20630,
+      "question_ids": [
+        "061",
+        "062",
+        "063",
+        "064",
+        "065",
+        "066",
+        "067",
+        "068",
+        "069",
+        "070"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-08.txt",
+      "characters": 19633,
+      "question_ids": [
+        "071",
+        "072",
+        "073",
+        "074",
+        "075",
+        "076",
+        "077",
+        "078",
+        "079",
+        "080"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-09.txt",
+      "characters": 18690,
+      "question_ids": [
+        "081",
+        "082",
+        "083",
+        "084",
+        "085",
+        "086",
+        "087",
+        "088",
+        "089",
+        "090"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-10.txt",
+      "characters": 17589,
+      "question_ids": [
+        "091",
+        "092",
+        "093",
+        "094",
+        "095",
+        "096",
+        "097",
+        "098",
+        "099",
+        "100"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-11.txt",
+      "characters": 23296,
+      "question_ids": [
+        "101",
+        "102",
+        "103",
+        "104",
+        "105",
+        "106",
+        "107",
+        "108",
+        "109",
+        "110"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-12.txt",
+      "characters": 20480,
+      "question_ids": [
+        "111",
+        "112",
+        "113",
+        "114",
+        "115",
+        "116",
+        "117",
+        "118",
+        "119",
+        "120"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-13.txt",
+      "characters": 21229,
+      "question_ids": [
+        "121",
+        "122",
+        "123",
+        "124",
+        "125",
+        "126",
+        "127",
+        "128",
+        "129",
+        "130"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-14.txt",
+      "characters": 23674,
+      "question_ids": [
+        "131",
+        "132",
+        "133",
+        "134",
+        "135",
+        "136",
+        "137",
+        "138",
+        "139",
+        "140"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-15.txt",
+      "characters": 21288,
+      "question_ids": [
+        "141",
+        "142",
+        "143",
+        "144",
+        "145",
+        "146",
+        "147",
+        "148",
+        "149",
+        "150"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-16.txt",
+      "characters": 19552,
+      "question_ids": [
+        "151",
+        "152",
+        "153",
+        "154",
+        "155",
+        "156",
+        "157",
+        "158",
+        "159",
+        "160"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-17.txt",
+      "characters": 19948,
+      "question_ids": [
+        "161",
+        "162",
+        "163",
+        "164",
+        "165",
+        "166",
+        "167",
+        "168",
+        "169",
+        "170"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-18.txt",
+      "characters": 21931,
+      "question_ids": [
+        "171",
+        "172",
+        "173",
+        "174",
+        "175",
+        "176",
+        "177",
+        "178",
+        "179",
+        "180"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-19.txt",
+      "characters": 23600,
+      "question_ids": [
+        "181",
+        "182",
+        "183",
+        "184",
+        "185",
+        "186",
+        "187",
+        "188",
+        "189",
+        "190"
+      ]
+    },
+    {
+      "path": "consolidated-audit/TRR-20.txt",
+      "characters": 24966,
+      "question_ids": [
+        "191",
+        "192",
+        "193",
+        "194",
+        "195",
+        "196",
+        "197",
+        "198",
+        "199",
+        "200"
+      ]
+    }
+  ]
+}

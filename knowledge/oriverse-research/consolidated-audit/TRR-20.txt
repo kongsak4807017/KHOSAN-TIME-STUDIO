@@ -1,0 +1,334 @@
+TRR-20 — Security, Publishing & Governance
+Oriverse / Weave Technical Research Protocol | หมวด 20 | ข้อ 191–200 | 9 ตุลาคม 2569
+ผมตรวจสอบเอกสาร Oriverse ผ่านเครื่องมือโดยตรง ได้แก่ weave_coding → weave_language, multiplayer_guidance, frame_and_scheduling_model, persistent_state_v1, html_ui, world_rules, zone_projects และ example_html_game_saves พร้อมตรวจสัญญาของเครื่องมือด้าน Draft, Publishing, Project Saving และ Permissions
+การประเมินความปลอดภัยในหมวดนี้แยกหลักฐานออกเป็นสามระดับ:
+* Documented: พฤติกรรมหรือข้อจำกัดที่คู่มือ/API ระบุชัดเจน
+* Experimentally Verified: ผลจากการเรียกเครื่องมือที่ตรวจสอบได้จริง
+* Undisclosed / Not Verified: กลไกภายใน นโยบาย หรือหลักประกันที่เอกสารไม่เพียงพอจะรับรอง
+ข้อค้นพบหลัก: Oriverse มีขอบเขตความสามารถของภาษา Weave, Compiler Validation, Resource Budgets, Multiplayer Ownership Rules และการอนุมัติบางรายการผ่าน Editor แต่ยังไม่มีหลักฐานเพียงพอให้รับรอง Security Architecture ทั้งระบบ เช่น Process Isolation, Authentication Protocol, Encryption, Audit Retention หรือ Commercial Licensing
+191 — Weave Sandbox จำกัดสิทธิ์ของเกมและสคริปต์อย่างไร?
+1. Direct Answer: Weave เป็นภาษาเฉพาะสำหรับสร้าง Gameplay และ Scene โดย Compiler อนุญาตให้เรียก Built-in APIs ตามชนิดและบริบทที่กำหนด ไม่ได้ให้ความสามารถแบบ JavaScript, Python หรือ Native Code ทั่วไปผ่าน #class
+ส่วน #html เป็น HTML/CSS Subset ที่ไม่รองรับ JavaScript, Browser Navigation และ General-purpose Forms
+อย่างไรก็ตาม ยังไม่สามารถยืนยันว่า Runtime ใช้ OS Process Sandbox, WASM Isolation หรือ Memory-safe VM Architecture แบบใดภายใน
+2. Architecture: ขอบเขตที่มีหลักฐานคือ Weave Source → Compiler/Type Validation → Bytecode → Engine-defined Simulation APIs ส่วน UI อยู่ภายใต้ Parser และ Binding Contracts ของ Oriverse
+3. Source Evidence: weave_coding → weave_language, html_ui; weave_compile_errors
+4. API Contract:
+Capability
+	ข้อกำหนด
+	Gameplay
+	#class, event, func และ Built-in Functions
+	Rendering
+	#shader ภายใต้ WGSL Material Hooks
+	UI
+	#html แบบ Restricted Subset
+	Recursion
+	Direct/Mutual Function Recursion เป็น Compile Error
+	Filesystem/OS APIs
+	ไม่พบ Public Weave Contract
+	Arbitrary Network Requests
+	ไม่พบ Public Weave Contract
+	5. Working Example — Documented Weave Pattern / Not Compiled:
+6. Execution Trace — Expected: Parse Source → Validate APIs/Types → Compile Bytecode → Instantiate Object → Dispatch OnSpawned → Update Counter
+7. Limits & Failure Modes: Unsupported Function Calls ถูกปฏิเสธ แต่การมี Function Allowlist ไม่เพียงพอพิสูจน์ว่าไม่มีช่องโหว่ใน Compiler/Runtime หรือ GPU Shader Path
+8. Verification: Expected: Script ที่ถูกต้องทำงานผ่าน Engine APIs และ Unsupported Calls ไม่ผ่าน Validation; Actual: ตรวจคู่มือแล้ว แต่ไม่ได้รัน Malicious Script หรือ Sandbox Escape Tests
+9. Disclosure Status: Language/API Restrictions Documented; OS/VM Sandbox Isolation Undisclosed
+10. Research Gaps: Process Isolation, WASM Memory Boundaries, Bytecode Verification, Shader Sandboxing, Network Egress Restrictions และ Threat Model
+192 — ป้องกัน Malicious Code และ Resource Exhaustion อย่างไร?
+1. Direct Answer: Oriverse มี Compiler Restrictions และ Resource Limits เพื่อควบคุมการใช้ทรัพยากรบางประเภท เช่น Continuations, Lists, Objects และ Runtime Operations
+โดยเฉพาะ Global Continuation Budget 262,144 Slots และข้อห้าม Recursion ใน Weave2
+แต่ยังไม่พบข้อมูลยืนยัน Instruction Fuel, Memory Quota ต่อ Game, GPU Timeout Policy หรือ Rate Limiting ทุก API
+2. Architecture: การป้องกันระดับที่เปิดเผยประกอบด้วย Compile-time Validation, Runtime Resource Caps และข้อจำกัดของ Built-in Operations
+3. Source Evidence: frame_and_scheduling_model, weave_language, html_ui, persistent_state_v1
+4. API Contract:
+ทรัพยากร
+	ข้อจำกัดจากคู่มือ
+	Global continuation slots
+	262,144
+	Persisted container entries
+	4,096 ต่อ Container
+	Runtime Tilemap Paint Diffs
+	8,192 Changed Cells
+	Retained HTML Canvases
+	128 ต่อ Viewer
+	Source HTML Nodes
+	512 ต่อ Canvas
+	Expanded HTML Nodes
+	1,024 ต่อ Canvas
+	5. Working Example — รูปแบบลด Continuation Pressure:
+ตัวอย่างนี้ใช้ Handler ที่ Return ทุก Frame แทนการเก็บ forever Continuation ค้างไว้
+6. Execution Trace — Expected: Compile Source → Initialize Scripts → Dispatch Update → Check Resource Budgets → Raise Runtime Error เมื่อชนเพดานที่มี Enforcement
+7. Limits & Failure Modes: คู่มือระบุ Error continuation slot capacity exceeded และ SameFrameLoopBudgetExceeded ในบางบริบท การเกิด Resource Exhaustion อาจทำให้ Simulation ค้างหรือล้มเหลวได้ ไม่ควรตีความว่า Engine จะ Recovery เองเสมอ
+8. Verification: Expected: Resource Limits ป้องกันการเติบโตเกินเพดานที่ระบุ; Actual: Documented, ยังไม่ได้ทำ Boundary/Fuzz Tests ในรอบนี้
+9. Disclosure Status: Resource Caps Documented; Complete DoS Protection Architecture Undisclosed
+10. Research Gaps: CPU Fuel Limits, GPU Shader Watchdog, Memory Quotas, Per-user Rate Limits, Fuzz Testing และ Resource Isolation Between Games
+193 — ตรวจและอนุญาต User-generated Content อย่างไร?
+1. Direct Answer: Oriverse มีเครื่องมือสร้าง/Import Images, Assets, Weave Source และ Public Game Projects พร้อม Validation, Library Review และบางกรณีใช้ User Approval ผ่าน Editor แต่ยังไม่พบ Public UGC Moderation Policy/API ที่เปิดเผยครบสำหรับการตรวจเนื้อหา รูปภาพ ข้อความ และเกมก่อนเผยแพร่
+2. Architecture: เครื่องมือที่สังเกตได้รองรับ Source Validation → Asset Inspection → Storage/Review → Publish อย่างไรก็ตาม Content Safety Moderation และ Rights Review ไม่ควรถูกอนุมานว่ารวมอยู่ใน Pipeline ดังกล่าวโดยอัตโนมัติ
+3. Source Evidence: save_mesh_asset, save_material_asset, rate_asset, import_image, generate_image, publish_game
+4. API Contract: rate_asset รองรับ Verdict good, bad, wrong_style พร้อม evidence_id จาก Preview แต่เป็นการตรวจความเหมาะสมของ Asset สำหรับ Use Case ไม่ใช่ Content Moderation Approval
+5. Working Example — Proposed UGC Review Record:
+นี่เป็น Schema สำหรับ KHOSAN ไม่ใช่ Oriverse API
+6. Execution Trace — Proposed: Submit UGC → Validate Source/Format → Scan Content/Rights → Human Review When Required → Approve/Reject → Publish With Audit Record
+7. Limits & Failure Modes: Asset Storage State shared ไม่ได้ยืนยันว่าเนื้อหาปลอดภัย ถูกลิขสิทธิ์ หรือได้รับอนุญาตสำหรับทุกกลุ่มอายุ
+8. Verification: Expected: UGC ที่ไม่ผ่าน Policy ถูก Block ก่อน Publish; Actual: Not Verified ว่า Oriverse ใช้ Policy/Workflow ดังกล่าวอย่างไร
+9. Disclosure Status: Asset Validation/Review Tooling Documented; Content Moderation System Undisclosed
+10. Research Gaps: Moderation Categories, Appeal Process, Abuse Reporting, Age Ratings, Copyright Claims, Automated Scanning และ Enforcement Transparency
+194 — Account Authentication และ Project Permissions
+1. Direct Answer: Oriverse มี Authenticated Account/Project Ownership Boundaries ตามสัญญาเครื่องมือ เช่น การสร้างภาพและ Import ภาพต้องมี Editor ที่ Signed-in และมีสิทธิ์เขียน Project ส่วน publish_game ทำงานกับ Public Project ของบัญชีผู้เรียก
+แต่ไม่พบเอกสารระบุ Authentication Protocol เช่น OAuth/OIDC Session Token Structure, RBAC Matrix หรือ Server-side Authorization Logic
+2. Architecture: Public Tool Contracts ใช้ Editor Session, Project Ownership และ User-confirmed Actions สำหรับบางขั้นตอน ส่วน Identity Verification ภายในยังไม่เปิดเผย
+3. Source Evidence: list_editors, select_editor, generate_image, import_image, request_project_save, publish_game
+4. API Contract: list_editors(agent) คืนข้อมูล Editor ที่เชื่อมต่อ; select_editor(editor_id, agent) เปลี่ยน Editor Target; request_project_save(name, agent) ส่ง Save Request ให้ผู้ใช้กด และ publish_game จำกัดการ Update กับ Project Name ที่อยู่ภายใต้บัญชีผู้เรียก
+5. Working Example — Read-only Tool Call:
+6. Execution Trace — Expected: Agent Connects → Editor Session Resolved → Tool Checks Required Owner/Project Permissions → Propose/Execute Operation → Return Result
+7. Limits & Failure Modes: การที่ Agent เชื่อมต่อ Editor ได้ ไม่ได้ยืนยันว่ามี Permission แก้ทุก Project และการได้ agent UUID ไม่ควรถูกถือว่าเป็น User Authentication Token
+8. Verification: Expected: Unauthorized Writes ถูกปฏิเสธ; Actual: ตรวจ Tool Contracts แต่ไม่ได้ทดลอง Unauthorized Account/Project Access
+9. Disclosure Status: Owner/Editor Boundaries Documented; Authentication/RBAC Implementation Undisclosed
+10. Research Gaps: OIDC/OAuth, MFA, Session Expiration, Role Definitions, Token Rotation, Permission Audit และ Cross-tenant Isolation
+195 — Game Publishing และ Share Links มี Lifecycle อย่างไร?
+1. Direct Answer: Oriverse มีเส้นทางเผยแพร่หลักสามแบบ ได้แก่ submit_pending_world เพื่อเสนอให้ Editor โหลด, share_game เพื่อสร้างลิงก์เล่นร่วมกันชั่วคราว และ publish_game เพื่อสร้างหรืออัปเดต Public Playable Project
+ทั้งสามแบบมีผลแตกต่างกัน โดยเฉพาะ Submit ไม่เท่ากับ Publish และ Share Link ไม่เท่ากับ Permanent Project URL
+2. Architecture: World Source → Compilation/Playtest → เลือก Delivery Channel → ตรวจสิทธิ์หรือ Source Validation ตาม Contract → ส่งผลถึง Editor หรือ Hosted Service
+3. Source Evidence: Tool Contracts ของ submit_pending_world, share_game, publish_game, get_load_status
+4. API Contract:
+Operation
+	Required Input
+	Output / Lifecycle
+	submit_pending_world
+	summary, agent
+	เสนอ Snapshot ให้ Editor กด Load
+	share_game
+	agent, optional title
+	Public Play Link อายุประมาณ 30 วัน
+	publish_game
+	project_name, world_text, optional display_name
+	Permanent Project Page URL
+	get_load_status
+	agent, optional request_id
+	ตรวจ Pending/Completed/Failed/Awaiting Click
+	share_game ต้องมี Successful Playtest ของ Exact Current Staged Source และการเรียกแต่ละครั้งสร้าง Share Link ใหม่
+publish_game หากพบ Project Name ที่ตรงกันในบัญชีผู้เรียก จะอัปเดตไฟล์เกมของ Project นั้น
+5. Working Example — ตัวอย่างการเรียก Publishing API:
+เป็นตัวอย่างตาม Tool Contract ยังไม่ได้เรียกจริง เพราะจะสร้าง Public Link ใหม่
+6. Execution Trace — Expected: Validate Staged Source → Successful Playtest → Call share_game → Receive Link → ผู้เล่นเปิดเกม → Link หมดอายุในเวลาประมาณ 30 วัน
+7. Limits & Failure Modes: การ Submit สำเร็จไม่ได้หมายความว่า Editor โหลดเกมแล้ว การสร้าง Share Link ใหม่ไม่ได้ต่ออายุลิงก์เก่าโดยอัตโนมัติ และการเรียก publish_game กับ Project Name เดิมอาจเปลี่ยน Public Game ที่ให้บริการอยู่
+8. Verification: Expected: แต่ละ Delivery Channel คืนสถานะตาม Contract; Actual: Documented แต่ไม่ได้ Submit, Share หรือ Publish ในรอบนี้
+9. Disclosure Status: Publishing Lifecycle Documented; Hosting Infrastructure / Deployment Rollback Internals Undisclosed
+10. Research Gaps: Deployment Version History, Content Delivery Cache, Session Migration, Zero-downtime Publish, Rollback API และ Share-link Revocation
+196 — Version Rollback, Backup และ Recovery
+1. Direct Answer: Oriverse รองรับการกู้คืน World Source หลายแหล่งผ่านเครื่องมือ Editor เช่น Live, Failed Submission, Persisted Draft และ Last Successfully Loaded World รวมถึงรองรับ Named Game Saves และ Cloud Save Conflict Resolution ในเกมที่เผยแพร่
+แต่ ยังไม่พบข้อรับรองว่า Project Source มี Full Version-control History, Automatic Backups หรือ Point-in-time Recovery ตามระยะเวลาที่กำหนด
+2. Architecture: ต้องแยก Recovery สองชั้น คือ Project/World Source Recovery กับ Player Gameplay Save Recovery เพราะเป็นข้อมูลคนละประเภท
+3. Source Evidence: sync_pending_world_from_current, submit_pending_world, persistent_state_v1, example_html_game_saves
+4. API Contract:
+สำหรับ Personal Saves มี RequestCreateGameSave, RequestLoadGameSave, RequestOverwriteGameSave, RequestDeleteGameSave และ RequestResolveGameSave
+5. Working Example — Read-only Recovery Inspection:
+คำสั่ง preview:true ตรวจ Source โดยไม่แทนที่ Pending Draft
+6. Execution Trace — Expected: World Load Failed → Inspect Failed/Lastworld Source → Compare Changes → Restore Appropriate Snapshot → Compile/Playtest → Submit Revised World
+7. Limits & Failure Modes: การใช้ Recovery Source ผิดอาจทำให้การแก้ล่าสุดสูญหาย ส่วน @persist Migration มี Validation เช่นการลบหรือเปลี่ยนชนิด Fields อาจถูกปฏิเสธเพื่อป้องกัน Progress Damage
+นอกจากนี้ Save Status saved_on_device ไม่ได้หมายถึงข้อมูล Sync ไป Cloud แล้ว
+8. Verification: Expected: Recovery Preview ไม่แก้ Draft และสามารถระบุ Snapshot เพื่อกู้คืนได้; Actual: Tool Contract ยืนยัน แต่ยังไม่ได้ทดลองกู้คืน Failed Project หรือ Cloud Save Conflict ในรอบนี้
+9. Disclosure Status: Recovery Sources / Game Saves Documented; Full Backup SLA / Project History Undisclosed
+10. Research Gaps: Backup Frequency, Snapshot Retention, Disaster Recovery RPO/RTO, Cloud Sync Guarantees, Version Diff และ Production Rollback
+197 — Data Privacy และ Telemetry Policy ครอบคลุมอะไร?
+1. Direct Answer: เอกสาร Weave ยืนยันว่ามี Player Identity, Local/Hosted Persistence, In-game Chat และบางส่วนของ Viewer-local UI State แต่ ยังไม่มีข้อมูลเพียงพอที่จะรับรอง Privacy Policy ฉบับเต็ม เช่นประเภท Telemetry ที่จัดเก็บจริง ระยะเวลาเก็บข้อมูล การส่งข้อมูลให้ Third Parties หรือกระบวนการลบข้อมูลผู้ใช้
+2. Architecture: คู่มือแยก Shared Simulation State จาก Viewer-local Presentation และ Hosted Save Storage โดยระบบ Multiplayer จำลอง Shared State บน Clients ที่เข้าร่วม ไม่ใช่ Secret Server-only State
+3. Source Evidence: multiplayer_guidance, persistent_state_v1, html_ui → World chat
+4. API Contract และ Data Boundaries:
+ข้อมูล
+	Behavior ที่คู่มือระบุ
+	Player gameplay fields
+	Shared Deterministic Simulation
+	Viewer-local UI focus/dialog
+	ไม่ใช่ Shared Gameplay State
+	Player-owned Canvas
+	จำกัดการแสดง/Hit-testing ตาม Viewer
+	Hosted player saves
+	ผูกกับ Oriverse Account
+	World Chat
+	Viewer-local Chat Bindings แยกจาก Weave Simulation/AI Context
+	Chat UI inspection
+	Redact Chat Content ใน Inspection/Preview
+	Telemetry retention
+	Undisclosed
+	5. Working Example — การออกแบบ Privacy Boundary สำหรับ KHOSAN:
+เป็น Proposed Data Classification ไม่ใช่ Oriverse Privacy API
+6. Execution Trace — Expected จากคู่มือ: Player Joins → Identity-based State Restored → Shared Simulation Runs → Viewer-local Chat/UI Handles Local Interaction → Hosted Saves Sync in Background
+7. Limits & Failure Modes: การซ่อน UI ไม่ทำให้ข้อมูลใน Shared Simulation เป็นความลับ และการใช้ชื่อผู้เล่นเป็น Unique Identifier ไม่ปลอดภัย เพราะ GetPlayerName() ไม่รับรองความไม่ซ้ำ
+8. Verification: Expected: Chat Binding ไม่เปิดเผยเนื้อหาใน UI Inspection และ Gameplay State ไม่ถูกเข้าใจผิดว่าเป็น Private; Actual: Documented แต่ยังไม่ได้ทดสอบ Privacy Leakage หรือ Data Subject Requests
+9. Disclosure Status: Selected Data Boundaries Documented; Privacy/Telemetry Policy, Retention และ Third-party Transfers Undisclosed
+10. Research Gaps: Privacy Notice, Consent, Data Retention, Encryption, Data Export/Deletion, Incident Reporting, Cross-border Processing และ PDPA/GDPR Applicability
+198 — Team Collaboration และ Audit Logs
+1. Direct Answer: Oriverse รองรับ Project Ownership, Editor Sessions, Revision/Snapshot Validation และการบันทึกชื่อ Summary ของ Submission แต่ยังไม่พบ Public API ที่ยืนยันระบบ Team Roles, Branch Protection, Multi-user Approval, Audit Log Export หรือการติดตามการเปลี่ยนแปลงโดยผู้ร่วมงานแต่ละคนอย่างครบถ้วน
+2. Architecture: เครื่องมือที่เปิดเผยรองรับ Agent-to-Editor Routing, Draft Validation และ Submission History Metadata บางประเภท ส่วน Collaboration Governance สำหรับหลายผู้ใช้ต้องแยกจาก Session Routing
+3. Source Evidence: list_editors, select_editor, patch_and_run_pending_world, submit_pending_world, request_project_save
+4. API Contract: patch_and_run_pending_world รับ expected_revision สำหรับกัน Stale Updates และ submit_pending_world รับ summary เพื่อระบุการเปลี่ยนแปลง ส่วน Editor Selection ใช้ editor_id และ agent
+5. Working Example — Proposed Audit Event:
+นี่เป็น KHOSAN Audit Schema ไม่ใช่ Log Format ของ Oriverse
+6. Execution Trace — Expected: Agent Selects Editor → Reads Revision → Proposes Patch → Revision Validated → Compilation Runs → Submission Creates History Summary → User Loads
+7. Limits & Failure Modes: Revision Guard ป้องกัน Stale Edits ได้บางกรณี แต่ไม่ใช่ระบบ Permission Approval หรือ Audit Integrity โดยอัตโนมัติ และ Submission Summary ไม่ใช่ Complete Immutable Audit Log
+8. Verification: Expected: สามารถตรวจเส้นทาง Edit/Submit และจับ Stale Revision ได้; Actual: ตรวจ Tool Contract และพบ Editor Session จริง แต่ไม่ได้รัน Concurrent Editing หรือ Audit Export
+9. Disclosure Status: Editor/Draft Metadata Documented; Team RBAC/Audit Log System Undisclosed
+10. Research Gaps: Team Roles, Invitation, Review Workflow, Immutable History, Branching/Merging, Signature-based Approval และ SOC 2/ISO 27001 Evidence
+199 — Licensing, Monetization และ Commercial-use Restrictions
+1. Direct Answer: ยังไม่พบหลักฐานเพียงพอจากคู่มือ/API ที่ตรวจให้สรุปสิทธิ์เชิงพาณิชย์ของ Weave Code, Generated Assets, Marketplace Library Assets หรือ Hosted Runtime อย่างครอบคลุม
+เช่นเดียวกัน ไม่พบ Public Contract ที่ระบุระบบ In-app Purchases, Revenue Share, Royalties, Subscription Billing หรือ Marketplace Payouts สำหรับเกมที่สร้างขึ้น
+ดังนั้นต้องตอบว่า Commercial Rights / Licensing Terms: Not Verified และ Monetization Framework: Undisclosed
+2. Architecture: สิทธิ์ใช้งานต้องพิจารณาแยกตาม Source Code, Procedural Assets, Third-party/Marketplace Assets, Hosted Publishing และ External-engine Export เพราะแต่ละส่วนอาจอยู่ภายใต้ข้อกำหนดต่างกัน
+3. Source Evidence: asset_aliases, save_mesh_asset, save_material_asset, save_clip_asset, share_game, publish_game, generate_image
+4. API Contract: เครื่องมือมี Contracts สำหรับการสร้าง เก็บ และเผยแพร่ Assets/Games แต่ไม่มี Verified Fields สำหรับ license_id, royalty_rate, commercial_use_allowed, payment_provider หรือ revenue_share
+5. Working Example — Proposed Release Compliance Manifest:
+เป็นข้อเสนอสำหรับ KHOSAN Studio ไม่ใช่ Oriverse License Contract
+6. Execution Trace — Proposed: Assemble Release Manifest → Resolve Asset Licenses → Review Commercial Terms → Approve/Reject Distribution → Archive Rights Evidence
+7. Limits & Failure Modes: การสร้าง Asset สำเร็จ ไม่ได้พิสูจน์กรรมสิทธิ์หรือสิทธิ์นำไปจำหน่าย และการสร้าง Public Playable URL ไม่ได้เท่ากับสิทธิ์นำ Runtime/Asset Binary ไปเผยแพร่บน Store อื่น
+8. Verification: Expected: มีเอกสารสิทธิ์จากเจ้าของแพลตฟอร์มและผู้สร้าง Assets ยืนยันเงื่อนไขก่อนจำหน่าย; Actual: ไม่ได้ยืนยันเอกสาร Licensing/Monetization ฉบับปัจจุบันจากผู้ให้บริการ
+9. Disclosure Status: Technical Publishing Capabilities Documented; Licensing/Monetization/Commercial Rights Undisclosed / Not Verified
+10. Research Gaps: Terms of Service, IP Ownership, Asset Redistribution, Commercial Use, Revenue Share, Marketplace Payments, Tax Handling และ License Termination
+200 — Security Architecture และ Deployment Responsibility Matrix
+1. Direct Answer: จากหลักฐานที่มี สามารถสร้าง Security Architecture ระดับ Public Capability Boundary ของ Oriverse ได้ แต่ไม่สามารถจัดทำ Internal Security Architecture ที่ยืนยัน Process Isolation, Network Trust Zones, Encryption หรือ Operations Controls ทั้งหมดได้
+สำหรับ KHOSAN Studio จึงควรออกแบบ Defense-in-depth Architecture แยกระหว่าง AI Authoring, Compiler/Runtime, Asset Supply Chain, Account/Project Authorization, Publishing และ Data Operations
+2. Architecture — เส้นทางและขอบเขตความปลอดภัย
+ผังเสนอสำหรับ KHOSAN Studio; ไม่ใช่ข้อยืนยันว่า Oriverse ใช้ Internal Components เหล่านี้ทั้งหมด
+3. Source Evidence: weave_language, multiplayer_guidance, persistent_state_v1, html_ui, frame_and_scheduling_model, world_rules และ Tool Contracts ด้าน Editor/Publishing
+4. API Contract: ขอบเขตที่ตรวจได้ เช่น expected_revision, expected_snapshot, SetPlayerOwnerIndex, @persist, RequestCreateGameSave, GameSaveResult, submit_pending_world, share_game และ publish_game ไม่ได้มี Public Security Administration API ครบชุด
+5. Working Example — KHOSAN Security Policy Proposal:
+เป็น Policy Configuration ที่เสนอสำหรับ KHOSAN ไม่ใช่ไฟล์ตั้งค่าที่ Oriverse รองรับโดยตรง
+6. Execution Trace — Proposed: User Requests Change → Check Agent Permission → Read Project Revision → Validate Source/Assets → Execute Isolated Tests → Collect Security/Gameplay Evidence → Approval → Publish → Monitor/Recover
+7. Limits & Failure Modes: หากใช้ Shared Simulation เก็บข้อมูลที่ต้องเป็นความลับ ข้อมูลอาจปรากฏต่อ Clients ที่เข้าร่วมได้ และหากไม่มี License/Provenance Gate อาจเผยแพร่ Assets โดยยังไม่มีหลักฐานสิทธิ์ที่เพียงพอ
+8. Verification — Security Acceptance Matrix:
+Test ID
+	Expected Result
+	Actual
+	SEC-01 Script API Allowlist
+	Unsupported APIs ถูกปฏิเสธ
+	Not Run
+	SEC-02 Resource Exhaustion
+	Budget Enforcement ถูกต้อง
+	Not Run
+	SEC-03 UGC Validation
+	Malformed Content ถูกปฏิเสธ
+	Not Run
+	SEC-04 Unauthorized Project Edit
+	Access Denied
+	Not Run
+	SEC-05 Revision Race
+	Stale Change Rejected
+	Not Run
+	SEC-06 Private UI Visibility
+	Other Viewer Cannot Interact
+	Not Run
+	SEC-07 Gameplay Secret Isolation
+	No Sensitive State Exposure
+	Not Run
+	SEC-08 Save Compatibility
+	Invalid Migration Rejected
+	Not Run
+	SEC-09 Release Approval
+	No Unapproved Publish
+	Not Run
+	SEC-10 Backup / Restore
+	Verified Recovery
+	Not Run
+	SEC-11 License Compliance
+	Assets Have Approved Rights
+	Not Verified
+	SEC-12 Audit Integrity
+	All Critical Changes Traceable
+	Not Verified
+	9. Disclosure Status: Public Security-related Controls Documented; Complete Oriverse Security Architecture Undisclosed; KHOSAN Architecture Proposed / Not Implemented
+10. Research Gaps: Threat Modeling, Authentication/RBAC, Runtime Isolation, Network Security, Encryption, Key Management, Secrets Handling, Audit Retention, Incident Response, Data Residency, Disaster Recovery และ Compliance Certifications
+Deployment Responsibility Matrix
+ตารางนี้เป็นการกำหนดความรับผิดชอบ ที่เสนอสำหรับ KHOSAN Studio หากสร้าง Platform ของตนเอง ไม่ใช่สัญญา Shared Responsibility ของ Oriverse
+Control
+	KHOSAN Platform
+	Game Developer
+	End User
+	Account authentication
+	ออกแบบ/ดูแล Identity System
+	ใช้สิทธิ์ตาม Role
+	ป้องกันบัญชี
+	AI Tool Permissions
+	Enforce Scopes/Approval
+	เลือกใช้เครื่องมือตามสิทธิ์
+	ยืนยัน High-impact Actions
+	Weave/Script Runtime Security
+	Compiler/VM Isolation
+	เขียน Code ตาม Contract
+	—
+	Asset Supply Chain
+	Scanner/Registry
+	ตรวจที่มา/License
+	—
+	Gameplay Validation
+	Test Infrastructure
+	เขียน Rules/Acceptance Tests
+	รายงานปัญหา
+	Multiplayer Security
+	Trust/Session Architecture
+	ตรวจ Gameplay Authorization
+	ใช้งานตามกติกา
+	Player Data Privacy
+	Policy, Access, Storage
+	Data Minimization
+	จัดการข้อมูลบัญชี
+	Backup/Recovery
+	Backup Infrastructure
+	Migration/Reconciliation
+	จัดการ Personal Saves
+	Publishing
+	Release/Approval Controls
+	ตรวจ Game Quality และ Rights
+	—
+	Audit/Incident Response
+	Central Audit & Response
+	รายงานเหตุการณ์
+	แจ้งเหตุผิดปกติ
+	________________
+
+
+TRR-20 — Consolidated Technical Research Record
+ข้อ
+	หัวข้อ
+	Disclosure Status
+	191
+	Weave Sandbox
+	Language Restrictions Documented; Isolation Internals Undisclosed
+	192
+	Malicious Code/Resource Limits
+	Partial Controls Documented
+	193
+	UGC Review/Moderation
+	Asset Review Documented; Moderation Undisclosed
+	194
+	Authentication/Permissions
+	Selected Boundaries Documented; RBAC Undisclosed
+	195
+	Publishing/Share Lifecycle
+	Documented
+	196
+	Rollback/Backup/Recovery
+	Recovery Sources Documented; Backup SLA Undisclosed
+	197
+	Privacy/Telemetry
+	Selected Data Boundaries Documented; Policy Undisclosed
+	198
+	Team Collaboration/Audit
+	Draft/Editor Controls Documented; Audit System Undisclosed
+	199
+	Licensing/Commercial Use
+	Not Verified
+	200
+	Security Architecture/Responsibility
+	Proposed; Not Runtime Verified
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse มี Weave Compiler Restrictions, Resource Budgets, Viewer-local UI Boundaries, Deterministic Multiplayer, Runtime Persistence, Revision/Snapshot Checks, User-confirmed Editor Actions และ Hosted Publishing Paths
+สามารถอ่าน World Source แบบ Read-only ได้จริง รอบนี้ตรวจพบ 181 บรรทัด ขนาด 9,654 Bytes โดย Pending Draft และ Patch Stack ยังคงเดิม
+เครื่องมือ list_editors แสดง Editor Session ประเภท wasm_web ที่เชื่อมต่ออยู่ แต่ยังไม่ยืนยัน Render Capability ของ Session นี้
+สิ่งที่ยังไม่เปิดเผย
+OS/VM Sandbox Architecture, Authentication Protocol, Centralized RBAC, Moderation Workflow, Data Privacy/Telemetry Policy, Encryption/Key Management, Audit Log Retention, Backup SLA และ Licensing/Commercial Rights
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ผมเสนอให้ KHOSAN ใช้ Security-by-design Governance ตั้งแต่ AI Tool Invocation จนถึง Production Publishing โดยทุก High-impact Operation ต้องมี Permission Check, Exact Revision, Test Evidence, Approval และ Audit Receipt และห้ามนำ Shared Simulation State ไปเก็บ Secrets ที่ผู้เล่นอื่นไม่ควรเข้าถึง
+ควรแยก Security Verification, Gameplay Acceptance, Data Privacy Compliance และ Commercial Licensing Review เป็นคนละ Release Gate เพราะการผ่าน Compiler หรือ Runtime Test ไม่ได้แสดงว่าผ่านข้อกำหนดทั้งสี่ด้าน
+สถานะ TRR-20: Documentation Research Completed / Live World Read-only Inspection PASS / Editor Session Inspection PASS / Security Penetration & Permission Tests Not Run.
+ไม่มีการ Stage, Patch, Submit, Share หรือ Publish Oriverse World ในรอบนี้
+สรุปการวิจัย Oriverse / Weave ครบ 200 คำถาม ใน 20 หมวดแล้ว โดยแยกข้อเท็จจริงจากเอกสาร ข้อที่ตรวจสอบด้วยเครื่องมือได้ และประเด็นที่ยังไม่เปิดเผยไว้ในแต่ละ Technical Research Record ตามหลัก No Evidence → No Done

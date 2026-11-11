@@ -1,5 +1,30 @@
 # Session Handoff
 
+## 11 Nov 2026 — Trusted six-hard-lock implementation handoff
+- Source of truth: private GitHub `kongsak4807017/KHOSAN-TIME-STUDIO`, draft PR #22, branch `docs/oriverse-weave-archive-20261111`. **Do not merge without independent QA and Executive Producer acceptance.**
+- Follow `docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md`; signed tool protocol is at `tools/harness-3d/trusted-gateway.mjs` and bounded differential patch core at `repair-protocol.mjs`.
+- `npm run verify:gateway`: GitHub Actions signed-protocol tests PASS 29/29. `npm run verify:3d-harness`: PASS 17/17; `npm run verify:part7`: PASS 20/20 (run 43003471960). Later doc commits require up-to-date CI status checks.
+- DevSpace Maker communicates through local named pipe and Maker key only. Gateway service and Reviewer/Human keys must be provisioned under separate Windows identities and ACLs. Studio HTTP exposes **only opt-in verified task state**, not mutation.
+- **Not deployed or verified on target PC:** `C:\KHOSAN\KHOSAN-TIME-STUDIO` existed but was an empty non-Git directory. User must authenticate a real checkout before deployment; do not overwrite other game folders.
+- Next priority: dedicate Windows service account/NTFS ACL, real renderer+camera measurements, isolated VLM reviewer with protected Ed25519 key, authenticated Human Approval backend, protection of main with required GitHub Actions check, real scene acceptance on GPU. Keep incomplete items BLOCKED, never fake PASS.
+
+
+## Continuation: Part 7 six hard locks and Python review (11 Nov 2026)
+- Current new source: Google Doc `AI 3D harness`, 114,348 characters including Part 7. Exact archive readback verified on `docs/oriverse-weave-archive-20261111`.
+- Priority vulnerabilities in original Part 7 Python: hardcoded default HMAC secret, arbitrary/self-declared checker PASS, unknown patch targets silently ignored, arbitrary node field merge, no revision binding or real post-patch geometry regression check, no trusted gateway, no actual installed Git/CI enforcement.
+- New bounded Python differential policy: `tools/ugir-geometry-linter/hard_lock_enforcer.py`; tests `scripts/test_part7_hard_locks.py` (**20/20 PASS** on local isolated Python environment); security audit `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md`.
+- Existing separate Ed25519 signed 3D acceptance gate remains in `tools/harness-3d/gate.mjs`. These modules are not yet orchestrated as a mandatory Studio API workflow.
+- Next: build trusted tool gateway/locked project-root writes, authentic critic and human signers, real GLB 16-view verification and protected required CI gate. Do not claim 100% LLM compliance from prompt or sample code.
+
+
+## 2026-11-11 — AI 3D harness archival and verification foundation
+- Active documentation branch for current work: `docs/oriverse-weave-archive-20261111`, draft PR #22 to main; `main` not changed.
+- Read the connected `AI 3D harness` Google Doc and archived its complete extracted text, with source review distinguishing sample claims from verifiable implementation.
+- New executable scripts: `tools/harness-3d/gate.mjs`, `layout-lint.mjs`, `coordinates.mjs`, `cli.mjs`; tests: `scripts/test-3d-harness.mjs` (17/17 isolated Node fixture tests PASS, including signed trust receipts).
+- No actual independent vision provider, signed checker/human approval, complete mesh validation, Blender worker, Studio API wiring or real target Windows GPU acceptance exists yet.
+- On next session: checkout the GitHub branch in a **real repo**, run `npm run verify:3d-harness` and `node scripts/verify-oriverse-archive.mjs`, then wire real adapters and run a reference-to-asset vertical slice; never accept a visual critic stub returning PASS.
+
+
 **Repository:** `kongsak4807017/KHOSAN-TIME-STUDIO`
 **Branch:** `main`
 **Studio source version:** `0.2.0`

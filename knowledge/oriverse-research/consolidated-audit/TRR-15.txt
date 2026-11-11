@@ -1,0 +1,280 @@
+TRR-15 — NPC, Animation, Crowd & AI
+Oriverse / Weave Technical Research Protocol | หมวด 15 | คำถาม 141–150 | 9 ตุลาคม 2569
+ผมตรวจสอบเอกสาร Oriverse ผ่านตัวเชื่อมต่อโดยตรง ได้แก่ weave_coding → object_types, tile_pathfinding, animations, kinematic_physics_and_movement, multiplayer_guidance, frame_and_scheduling_model, event_list และ example_team_target_attack รวมทั้งค้น Signature ของ API สำคัญ
+ข้อค้นพบหลัก: Oriverse รองรับ NPC ที่เขียนพฤติกรรมด้วย Weave, Walker สำหรับงานเดินตามเส้นทาง, Crowd สำหรับการหลบหลีก, Climbing Crowd สำหรับฝูงที่ไล่เป้าหมาย, Tile-based Pathfinding และ Skeletal Animation พร้อม Upper-body Layering แต่รายละเอียดภายในของ Avoidance Solver, Animation Mixer และระบบ AI Planning ยังเปิดเผยไม่ครบ
+การวิจัยรอบนี้เป็น Documentation + API Verification ยังไม่ได้สร้าง NPC จำนวน 100–1,000 ตัวหรือรัน Benchmark ใหม่ จึงไม่มีตัวเลข FPS/CPU ที่อ้างว่าเป็นผลทดสอบปัจจุบัน
+NPC Simulation Architecture — สิ่งที่เอกสารรองรับ
+เป็นแผนภาพเชิงหน้าที่สำหรับการวิจัย ไม่ใช่ Internal Class Diagram ของ Engine
+141 — NPC Behavior เขียนด้วย Weave ได้ในระดับใด?
+1. Direct Answer: Weave รองรับ NPC ที่มีตัวแปรสถานะ Functions, Events, Movement, Interaction, Combat, Inventory และการตัดสินใจตามเงื่อนไข ผู้เขียนสามารถสร้าง State-based NPC Logic ได้เอง แต่ไม่พบหลักฐานว่ามี LLM-driven NPC Runtime ใน Weave เป็นฟังก์ชันพื้นฐาน
+2. Architecture: NPC Object ผูกกับ #class แล้วใช้ OnSpawned, Update, Touched, ClickThisObject, WasAttacked หรือ Events อื่นเพื่อประมวลผล Rules และเปลี่ยนสถานะ ตัวละครสามารถเคลื่อนที่ด้วย Movement APIs หรือระบบ Pathfinding
+3. Source Evidence: weave_coding → weave_language, object_types, event_list, inventory
+4. API Contract:
+State เป็นตัวแปรที่ผู้พัฒนาสร้างเอง ไม่ใช่ Built-in FSM Component ของ Oriverse
+5. Working Example — รูปแบบจาก Syntax ที่มีเอกสารรับรอง:
+ตัวอย่างนี้ยังไม่ได้ Compile ในรอบนี้ จึงเป็น Documented Syntax Example / Not Verified ไม่ใช่ผล Compile PASS
+6. Execution Trace — Expected: Spawn Merchant → Player Clicks NPC → ClickThisObject → Increment Visits → Print Log
+7. Limits & Failure Modes: display ไม่รองรับ Click/Collision Events; การใช้ Update จำนวนมากมี Dispatch Overhead และลำดับ Events ข้าม Objects ไม่รับประกัน
+8. Verification: Expected: Click 3 ครั้งแล้ว Visits = 3; Actual: Not Run
+9. Disclosure Status: NPC Scripting Documented; LLM NPC Runtime Undisclosed
+10. Research Gaps: Conversation Graphs, Memory, Goal Planner, AI Safety Boundaries, Dialogue Persistence และ NPC Debugging APIs
+142 — Walker และ Crowd ต่างกันอย่างไรในเชิง Simulation?
+1. Direct Answer: Walker เหมาะสำหรับ NPC เดินตาม Navigation Routes โดยใช้ Stepped Followers ที่มีต้นทุนต่ำ ส่วน CrowdObject มี Local Collision Avoidance เพื่อหลบผู้คนและสิ่งกีดขวางขณะเคลื่อนที่
+สำหรับฝูงจำนวนมากยังมี climbingCrowd ซึ่งใช้ Deterministic Climbing-crowd Step แยกจาก CrowdObject ปกติ
+2. Architecture:
+ชนิด
+	Global Navigation
+	Local Behavior
+	เหมาะกับ
+	walker
+	Tile Path + Stepped Follow
+	ไม่ทำ Avoidance
+	ชาวบ้านเดินตามถนน
+	crowd
+	Tile Path หรือ Flow Field
+	Steering + Avoidance
+	NPC เดินสวนกัน
+	climbingCrowd
+	Chasing Target ใน XY
+	Climbing/Stacking
+	ฝูงศัตรูจำนวนมาก
+	object
+	Custom Weave Logic
+	ไม่มี Crowd Avoidance โดยค่าเริ่มต้น
+	NPC สำคัญ/มีแอนิเมชันเฉพาะ
+	3. Source Evidence: object_types, tile_pathfinding, frame_and_scheduling_model
+4. API Contract: Walker รองรับการใช้ StartTilePathFollowStepped และ StartTileFlowFollowStepped; Crowd ใช้ MoveAlongTilePathContinuous หรือ MoveAlongTileFlowContinuous; Climbing Crowd มี SetDefaultClimbingCrowdSpeed(Speed) และ SetClimbingCrowdSpeed
+5. Working Example:
+เป็นการประกาศ Objects เท่านั้น ยังไม่มี Route Setup จึงไม่ได้พิสูจน์การเดิน
+6. Execution Trace — Expected: Walker: Route → Native Stepped Follower → Waypoint-granular Position; Crowd: Route → Preferred Velocity → Avoidance Steering → Continuous Movement
+7. Limits & Failure Modes: Crowd Avoidance คำนวณในระนาบ XY ไม่คำนึงถึง Z; สิ่งกีดขวางตรงหน้าอาจทำให้ Crowd หยุด จึงต้องใช้ Pathfinding อ้อมไป และ Walker ไม่หลบ NPC อื่นแบบ Crowd
+8. Verification: Expected: Walker เดินตาม Route; Crowd ปรับทิศเพื่อหลบได้เมื่อสภาพแวดล้อมเหมาะสม; Actual: Not Run
+9. Disclosure Status: Movement Categories Documented; Internal Simulation Algorithms Partially Undisclosed
+10. Research Gaps: Walker Update Frequency, Avoidance Cost, Agent Radius Models, Crowd Density Scaling และ CPU/Memory per Agent
+143 — Pathfinding, Steering และ Avoidance ใช้ Algorithm ใด?
+1. Direct Answer: คู่มือระบุว่า TileGrid Pathfinding ใช้ A* บน Tile Coordinates และมี Flow Fields สำหรับกลุ่มที่มีเป้าหมายร่วมกัน แต่ไม่ได้เปิดเผย Algorithm ภายในของ Crowd Avoidance เช่น ORCA/RVO หรือ Steering Optimization Method
+2. Architecture: ระบบแบ่ง Global Route Planning กับ Local Avoidance ชัดเจน: TileGrid สร้าง Path หรือ Flow Field ส่วน Crowd Movement แปลง Route เป็น Preferred Velocity แล้วระบบ Avoidance ปรับการเคลื่อนที่
+3. Source Evidence: tile_pathfinding, object_types
+4. API Contract:
+TileGridFindPath8 คืน Path แบบกลับลำดับ Goal → Start และ Path Lists เก็บ Tile IDs ที่เป็น Opaque Numbers
+5. Working Example: คู่มือรองรับการสร้าง TileGrid เดียวใน Manager แล้วให้ NPC หลายตัวใช้ Shared Grid และ Shared Flow Field เดียวกัน ไม่ควรสร้าง Navigation Grid ใหม่ทุก NPC
+6. Execution Trace — Expected: Build Grid → Define Walkability → Find Path/Build Flow → Submit Movement → Avoidance Resolution → Update NPC Position
+7. Limits & Failure Modes: Dense TileGrid สูงสุด 1,048,576 Tiles; Terrain-based Grids รองรับ 8,192 Tiles ต่อแกน แต่การหา Path ระยะไกลบางประเภทจำกัด 256 Tiles และต้องใช้ TileGridFindRoute แทนสำหรับเส้นทางไกล
+TileGridBakeCrowdObstacles เป็น Snapshot จึงต้อง Re-bake เมื่อ Walkability เปลี่ยน
+8. Verification: Expected: NPC เดินอ้อมอาคารได้เมื่อมี Grid ถูกต้อง; Actual: Not Run
+9. Disclosure Status: A* / Flow Fields Documented; Avoidance Solver Internals Undisclosed
+10. Research Gaps: A* Heuristic, Tie-breaking, ORCA/RVO Usage, Avoidance Solver Complexity, Dynamic Obstacle Handling และ Determinism at High Density
+144 — Animation Clips และ Skeletal Rig เชื่อมกับ Object อย่างไร?
+1. Direct Answer: Rigged Models และ Procedural Rigged Meshes รองรับ Animation Clips ผ่าน Asset References และ Runtime Calls โดยสามารถใช้ Clips ของ Model เอง, Canonical Humanoid Clips หรือ Local #clip Definitions
+2. Architecture: Mesh มี Skeleton/Bone Hierarchy แล้ว Animation System นำ Clip มาใช้เปลี่ยน Bone Poses ระหว่าง Rendering โดย Built-in Auto Locomotion เลือก Idle/Walk/Run/Jump/Sit ตามสถานะได้
+3. Source Evidence: animations, mesh_dsl → bones_and_clips; เครื่องมือ inspect_rig, inspect_clip, preview_mesh
+4. API Contract:
+ตัวอย่าง Clip References:
+5. Working Example — จากคู่มือ:
+ต้องเรียกบน Object ที่ใช้ Rig/Model เข้ากันได้ ไม่ใช่รับรองว่าทุก Model รองรับทุก Clip
+6. Execution Trace — Expected: Attach Rigged Model → Resolve Clip → Sample Bone Poses → Apply Animation → Render
+7. Limits & Failure Modes: Clip Names เป็น Case-sensitive และ Static Models ที่ไม่มี Rig/Clips ไม่สามารถแสดง Skeletal Animation ได้อย่างถูกต้อง ส่วน Imported Rig อาจมีแกนกระดูกต่างจาก Canonical Rig
+8. Verification: Expected: Goblin เล่น Run และ Attack Clips ได้เมื่อ Model Compatible; Actual: มีตัวอย่าง API จากคู่มือ แต่ไม่ได้ Inspect/Render Goblin Rig ใหม่ในรอบนี้
+9. Disclosure Status: Clip Binding Documented; Skeletal Mixer Internals Undisclosed
+10. Research Gaps: Skeleton Serialization, GPU Skinning, Animation Compression, Retargeting Accuracy และ Animation LOD
+145 — รองรับ Animation Blending, State Machines และ IK หรือไม่?
+1. Direct Answer: Oriverse รองรับ Animation Blending และ Procedural Bone Overrides ที่เปิดเผยผ่าน API โดยเฉพาะ Upper-body Animation Layer และ Bone Look-at แต่ยังไม่พบ Public Contract สำหรับ Animation State Machine Graph Editor หรือ Full-body IK Solver ที่สามารถระบุ Algorithm ได้
+2. Architecture: ระบบมี Base Clip สำหรับการเคลื่อนไหวหลัก เช่น Walk/Run และสามารถซ้อน Upper-body Clip หรือ Bone-level Transform เพิ่มเติม ขณะที่ Auto Locomotion เลือก Clips ตามสถานะการเคลื่อนที่ ส่วน FSM ระดับ Gameplay สามารถเขียนเองด้วยตัวแปร State ของ Weave
+3. Source Evidence: weave_coding → animations; Built-in Function Declarations ของ PlayUpperBodyAnimation, SetUpperBodyAnimationWeight, SetBoneRotationMix และ BoneLookAt
+4. API Contract:
+SetBoneRotationMix เป็น Display-only Bone Layer จำกัด 16 Bones ต่อ Object ส่วน BoneLookAt ทำให้ Bone เล็งไปยัง World Target ภายในขอบเขตมุมที่กำหนด
+5. Working Example — จากรูปแบบในคู่มือ:
+ต้องมี Friend เป็น Reference ที่มีอยู่และใช้ Rig ที่มีกระดูกตามชื่อ จึงยังไม่ใช่ Standalone Compile-tested Fixture
+6. Execution Trace — Expected: Auto Locomotion Selects Walk → Upper-body Clip Overlays Base Pose → BoneLookAt Aims Head → Procedural Override Updates Torso → Renderer Displays Final Pose
+7. Limits & Failure Modes: Crowd Instances ไม่รองรับ Bone/Pose Simcalls บางชนิด; Imported Rig อาจใช้ Local Bone Axes ต่างจาก World Axes และ Animation Layer ที่ไม่ได้ Key ครบทุก Upper-body Bone อาจทำให้บางกระดูกกลับไปอยู่ Rest Pose
+8. Verification: Expected: NPC เดินไปพร้อมกับหันศีรษะมองผู้เล่นได้; Actual: Not Run สำหรับ Layering Test ใหม่
+9. Disclosure Status: Animation Blending/Bone Look-at Documented; Full-body IK / Built-in State Machine Graph Undisclosed
+10. Research Gaps: IK Chains, Foot Placement, Animation Graph Representation, Crossfade Internals, Root Motion Handling และ Network Animation State Replay
+146 — NPC Perception, Targeting และ Combat Logic เขียนอย่างไร?
+1. Direct Answer: สามารถสร้าง NPC Perception ผ่าน Spatial Queries, Tags, Teams, Distance Checks และ Tile Line-of-Sight แล้วเขียน Combat Rules เช่น Cooldown, HP, Attack และ Death ด้วย Weave ได้โดยตรง
+เอกสารไม่ได้รับรองว่ามีระบบ Perception Component หรือ Aggro Table สำเร็จรูปที่ใช้แทน Gameplay Logic ทั้งหมด
+2. Architecture: Query Potential Targets → Filter Team/Distance/LOS → Select Target → Check Attack Cooldown → Apply Damage → Update Health/Death State
+3. Source Evidence: example_team_target_attack, tile_pathfinding, tags, event_list
+4. API Contract:
+และ:
+5. Working Example — จาก Official Combat Fixture:
+ตัวอย่างนี้เป็น Class จาก example_team_target_attack โดยตรง แต่ต้องประกอบกับ Scene Objects และ Player Logic ใน Fixture เดียวกัน
+6. Execution Trace — Expected: Player Enters Range → Nearest Enemy Selected → Check Cooldown → Call TakeDamage() → HP Decreases → Remove Combat Tag on Death
+7. Limits & Failure Modes: Nearest Query ไม่ได้ตรวจ Line-of-Sight โดยอัตโนมัติ; NPC อาจเลือกเป้าหมายหลังกำแพง หากไม่เพิ่ม LOS Check นอกจากนี้ต้องตรวจ Team และ Cooldown ซ้ำใน Damage Logic
+8. Verification: Expected: Ally ไม่ถูกเลือกเป็น Enemy, Target นอกระยะไม่ถูกโจมตี, HP ไม่ติดลบ; Actual: Official Fixture ระบุ Expected Behavior แต่ยังไม่ได้รันจริงในรอบนี้
+9. Disclosure Status: Public Targeting/Combat APIs Documented; Internal AI Perception Architecture Undisclosed
+10. Research Gaps: Perception Cache, Threat Evaluation, Hearing/Vision Cones, Target Prioritization, Combat Authority และ Damage Event Ordering
+147 — รองรับ Behavior Trees หรือ Utility AI หรือไม่?
+1. Direct Answer: ไม่พบ Public Behavior Tree DSL หรือ Built-in Utility AI Framework จากคู่มือที่ตรวจสอบ แต่สามารถสร้าง FSM, Priority-based Logic หรือ Utility Scoring เองใน Weave ได้
+ไม่ควรตีความว่าไม่มีการใช้ Behavior Trees ในระบบภายในของ Oriverse เพียงเพราะไม่มี Public API
+2. Architecture: แนวทางที่สร้างเองสามารถใช้ #class เก็บ NPC State, Utility Scores และเรียก Functions ที่ทำหน้าที่เป็น Behaviors ภายใน Update หรือ Manager Tick
+3. Source Evidence: weave_language, frame_and_scheduling_model, variable_types
+4. API Contract: มี #class, func, event Update, Number, Bool, Lists และ Object References สำหรับสร้าง Logic เอง แต่ไม่มี BehaviorTree, Blackboard หรือ UtilitySelector Contract ที่ตรวจพบ
+5. Working Example — ตัวอย่าง FSM ที่เขียนเอง:
+เป็นตัวอย่างเชิง Syntax ไม่ใช่ Built-in FSM และยังไม่ได้ Compile แยก
+6. Execution Trace — Expected: Update Hunger → Evaluate Conditions → Set State → Run State-specific Behavior เมื่อเขียน Logic เพิ่มเติม
+7. Limits & Failure Modes: Large Per-object Decision Trees เพิ่ม Script Dispatch Cost และการใช้ while แบบไม่ Yield อาจชน SameFrameLoopBudgetExceeded
+8. Verification: Expected: เมื่อ Hunger สูงถึง Threshold จะเปลี่ยน State; Actual: Not Run
+9. Disclosure Status: Custom AI Logic Documented; Built-in Behavior Tree / Utility Framework Undisclosed
+10. Research Gaps: Native AI Graph Runtime, Blackboard Storage, Utility Scoring APIs, Behavior Debugger และ AI Authoring Tools
+148 — ทำ NPC จำนวน 100–1,000 ตัวอย่างมีประสิทธิภาพได้อย่างไร?
+1. Direct Answer: เอกสาร Oriverse แนะนำการใช้ Native Stepped Followers, Shared TileGrids/Flow Fields, Centralized Manager Loops และการลดจำนวน Collision Bodies สำหรับ NPC จำนวนมาก
+2. Architecture: แบ่ง NPC ตามระดับ Simulation Fidelity:
+จำนวนเป้าหมาย
+	แนวทางที่ควรทดสอบ
+	เหตุผล
+	100
+	Walker หรือ Crowd ตามพฤติกรรม
+	ยังสามารถใช้ Logic รายตัวอย่างระมัดระวัง
+	300
+	Shared Grid + Staggered Perception
+	ลด Navigation/Query Cost
+	600
+	Centralized Manager + Stepped Followers
+	ลด Per-object Dispatch
+	1,000
+	Climbing Crowd หรือ Non-colliding/Stepped Agents
+	ลด Collision และ Continuation Pressure
+	ตัวเลขข้างต้นเป็น Test Design Tiers ไม่ใช่ข้อรับรองว่าแต่ละจำนวนจะได้ FPS ตามเป้าหมาย
+3. Source Evidence: frame_and_scheduling_model, tile_pathfinding, object_types
+4. API Contract และ Performance Guidance:
+* StartTilePathFollowStepped ใช้ Native Follower ที่ไม่ต้องเรียก Movement ต่อ NPC ทุก Frame
+* TilePathFollowTakeArrivals() อ่าน Movers ที่ถึงเป้าหมายได้แบบรวมศูนย์
+* TileGridFlowFieldBuild() สร้าง Shared Direction Field
+* NearestObjectWithTagNotOnTeam() ใช้แทนการ Scan List ทั้งหมดทุก NPC ทุก Frame
+* SetCanCollide(false) ลด Collision Pressure สำหรับ Units ที่ไม่ต้องมี Solid Collision
+5. Working Example — Architecture Pattern:
+ผังนี้เป็น KHOSAN Proposed Design ไม่ใช่ Weave Source ที่ Compile แล้ว
+6. Execution Trace — Expected: Build Grid Once → Spawn NPCs → Assign Routes → Native Followers Move NPCs → Manager Reads Arrivals → Reassign Work → Profile Frame Cost
+7. Limits & Failure Modes: คู่มือเตือนว่าหลายร้อย Per-object forever Loops มีต้นทุนสูง เพราะต้องเก็บ Continuations ภายใต้ Global Budget 262,144 Slots และ Regular Colliding Objects จำนวนประมาณ 500 ตัวอาจเริ่มมี Collision-pair Bottleneck
+คู่มือรายงานว่า Manager Loop ที่เรียก u.Tick() ให้ NPC 600 ตัวมีต้นทุนต่ำกว่าการให้แต่ละ Object มี forever ของตัวเองประมาณ 8 เท่า แต่ ไม่ได้เป็นผล Benchmark ที่ผมรันเอง
+8. Verification: Expected: Manager + Native Followers ใช้ Frame Budget น้อยกว่า Per-object Loops เมื่อโหลดสูง; Actual: Documented Performance Guidance, ยังไม่มีตัวเลขใหม่จากการทดสอบในรอบนี้
+9. Disclosure Status: Optimization Techniques Documented; Target Hardware Performance Not Verified
+10. Research Gaps: NPC CPU Profiling, Memory per NPC, Pathfinding Throughput, Animation Cost, Collision Density Scaling และ Device-specific Limits
+149 — Animation และ NPC Behavior Deterministic ใน Multiplayer อย่างไร?
+1. Direct Answer: Oriverse ระบุว่า Gameplay Simulation ใช้ Deterministic Lockstep พร้อม Prediction/Rollback โดย NPC ที่เปลี่ยน Shared State ผ่าน Weave จะอยู่ภายใต้ Simulation Model เดียวกัน
+แต่ไม่ควรสรุปว่า GPU Skinning หรือ Visual Animation Output ให้ภาพเหมือนกันทุก Pixel บนอุปกรณ์ต่างกัน เพราะ Render Determinism เป็นคนละประเด็นกับ Gameplay Determinism
+2. Architecture: AI Decisions และ NPC World State อยู่ใน Shared Simulation ส่วน Visual Animation มีบางส่วนที่เป็น Display-only เช่น Bone Overrides/Retargeting
+3. Source Evidence: multiplayer_guidance, animations, frame_and_scheduling_model, object_types
+4. API Contract:
+SetAIMoveVector เป็น Held Input ที่มีผลใน Frame ถัดไป ส่วน PressAIAction ทำให้เกิด Action Down ใน Frame ถัดไป และ Release โดยอัตโนมัติใน Frame ต่อมา
+5. Working Example:
+ตัวอย่างนี้มาจาก API Pattern ในคู่มือ และต้องอยู่ใน Event/Function ที่เหมาะสม ยังไม่ได้ทดสอบ Bot Input ในรอบนี้
+6. Execution Trace — Expected: Spawn Bot → Attach #class player → Set AI Input → Next Frame Action/Move Event → Gameplay State Update → Render Animation
+7. Limits & Failure Modes: AI Bots ไม่มี Keyboard/Mouse Input จริง ต้องใช้ AI Input APIs และ SpawnAIPlayer มี Hard Cap 64 Players รวม Human/Bots
+การใช้ Random ที่ไม่เป็นไปตาม Determinism Guidance อาจทำให้ Simulation Results ต่างกันตาม Context ของ Prediction
+8. Verification: Expected: Bot Input เดียวกันให้ State ตรงกันระหว่าง Participants; Actual: ไม่ได้รัน Cross-client State Comparison หรือ Rollback Trace
+9. Disclosure Status: Shared Simulation/Bot API Documented; Pixel-level Animation Determinism Undisclosed
+10. Research Gaps: NPC State Hash Coverage, Animation State Serialization, Bot Input Ordering, Rollback Cost และ Cross-device Gameplay Reproducibility
+150 — Benchmark NPC เดิน ซื้อขาย และโต้ตอบกับผู้เล่น
+1. Direct Answer: ผมจัดทำ Benchmark Protocol สำหรับ NPC จำนวน 100, 300, 600 และ 1,000 ตัว โดยครอบคลุม Walking, Pathfinding, Trading Interaction และ Player Response
+ยังไม่มีการรัน Benchmark ใหม่ในรอบนี้ จึงไม่รายงานค่า FPS, CPU Time หรือ Memory ที่ไม่ได้วัดจริง
+2. Architecture: ควรใช้ Isolated Benchmark World ที่มี Shared TileGrid, Navigation Manager, Shop Inventory, NPC Registry, Player Interaction และ Measurement Hooks เพื่อทดสอบอย่างเป็นระบบ
+3. Source Evidence: tile_pathfinding, inventory, example_html_shop, multiplayer_guidance, frame_and_scheduling_model และ Tool Contract ของ playtest
+4. API Contract: เครื่องมือ playtest รองรับการจำลองผู้เล่น 1–8 Seats, การส่ง Input Actions และ Timeline Observation สูงสุด 180 Simulation Seconds ต่อรอบ ส่วนการวัด CPU/GPU Profiler ที่ละเอียดต้องมีเครื่องมือวัดภายนอกหรือ Telemetry ที่เข้าถึงได้จริง
+5. Working Example — Proposed Scenario:
+นี่เป็น Test Specification ไม่ใช่ Weave World ที่ Compile ผ่านแล้ว
+6. Execution Trace — Expected:
+7. Limits & Failure Modes: NPC ที่เดินถึงร้านพร้อมกันจำนวนมากอาจเกิด Queue Congestion, Collision Pressure และ Repeated Queries ส่วน Inventory Transactions ต้องตรวจ Item Conservation เพื่อป้องกันการเพิ่ม/หายของสินค้าโดยไม่ตั้งใจ
+8. Verification — Proposed Benchmark Matrix:
+Test ID
+	Scenario
+	Expected
+	Actual
+	NPC-100
+	100 Walkers
+	Route Completion
+	Not Run
+	NPC-300
+	300 Walkers
+	Stable Navigation
+	Not Run
+	NPC-600
+	600 Walkers
+	Manager Scheduling Works
+	Not Run
+	NPC-1000
+	1,000 Climbers/Walkers
+	No Capacity Failure
+	Not Run
+	AI-PATH
+	Path Around Building
+	No Illegal Crossing
+	Not Run
+	AI-QUEUE
+	Shop Queue
+	No Double Service
+	Not Run
+	AI-TRADE
+	NPC Buy/Sell
+	Item/Currency Conservation
+	Not Run
+	AI-INTERACT
+	Player Click NPC
+	One Response per Action
+	Not Run
+	AI-RECONNECT
+	Player Leaves/Rejoins
+	NPC/Shop State Consistent
+	Not Run
+	AI-DETERM
+	Two-client Replay
+	Matching Gameplay State
+	Not Run
+	AI-PERF
+	CPU/Frame Budget
+	Report P50/P95/P99
+	Not Measured
+	สำหรับการทดสอบประสิทธิภาพ ควรแยก CPU Simulation Cost, Render FPS, Memory, Navigation Completion และ Collision Errors เพื่อไม่ให้ผลจากระบบหนึ่งถูกนำไปแทนอีกระบบหนึ่ง
+9. Disclosure Status: Benchmark Design Proposed; Runtime Execution Not Verified
+10. Research Gaps: Real Hardware Profiles, 100–1,000 NPC Scaling Curves, Animation CPU/GPU Cost, Nav Query Throughput, Inventory Transaction Contention และ Multiplayer Rollback Stress Tests
+________________
+
+
+TRR-15 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	Disclosure Status
+	141
+	Weave NPC Behavior
+	Documented
+	142
+	Walker vs Crowd
+	Documented
+	143
+	Pathfinding/Steering
+	A* Documented; Avoidance Internals Undisclosed
+	144
+	Animation/Rig Integration
+	Documented
+	145
+	Blending/IK
+	Blending Documented; Full IK Undisclosed
+	146
+	Perception/Combat
+	Public APIs Documented
+	147
+	Behavior Trees/Utility AI
+	Custom Logic Supported; Built-in Framework Undisclosed
+	148
+	100–1,000 NPC Optimization
+	Documented Guidance; Performance Not Verified
+	149
+	Multiplayer Determinism
+	Simulation Model Documented; Cross-client Test Pending
+	150
+	NPC Benchmark
+	Designed / Not Run
+	ข้อเท็จจริงจาก Oriverse
+Oriverse รองรับ NPC Behavior ด้วย Weave Classes, Walker Path Following, Crowd Avoidance, Climbing Crowd, A* Tile Pathfinding, Flow Fields, Skeletal Animation, Upper-body Blending, Bone Look-at และ AI Player Inputs
+คู่มือยังให้แนวทางเพิ่มประสิทธิภาพสำหรับหลายร้อย NPC เช่น Shared Navigation Grid, Native Stepped Followers, Staggered Perception และ Centralized Manager Updates
+สิ่งที่ยังไม่เปิดเผย
+Crowd Avoidance Solver Algorithm, Animation Mixer Internals, Full-body IK, Native Behavior Tree/Utility AI Framework, NPC Profiler Details และ Scalability Guarantees บน Hardware ต่างกัน
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ผมเสนอให้ KHOSAN NPC Runtime แยก AI Decision Layer, Perception, Navigation, Crowd Steering, Animation State, Interaction/Economy และ Multiplayer Determinism ออกจากกัน โดยใช้ Centralized Scheduling สำหรับ NPC จำนวนมาก และกำหนด Performance Budgets ต่อ Agent Class
+ควรมี NPC Benchmark Harness ที่รันแบบ Deterministic Input Replay พร้อมเก็บหลักฐาน Arrival, State Transitions, Economy Conservation และ CPU/Memory Scaling ของประชากร 100–1,000 ตัว โดยไม่ใช้ Render FPS อย่างเดียวเป็นตัวชี้วัด
+สถานะ TRR-15: Documentation Research Completed / API Signatures Verified / 100–1,000 NPC Benchmark Not Executed.
+ไม่มีการ Stage, Patch, Submit หรือ Publish Oriverse World ในรอบนี้ และ Editor ยังรายงาน Build 05Oct26-23:23 ซึ่งควร Reload ก่อนเริ่มทดสอบ Performance เพื่อให้ผลอ้างอิงตรงกับ Build ปัจจุบัน
+________________
+
+

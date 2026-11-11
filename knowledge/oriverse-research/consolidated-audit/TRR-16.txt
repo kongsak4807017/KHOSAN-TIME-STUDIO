@@ -1,0 +1,287 @@
+TRR-16 — Audio, VFX & Cinematics
+Oriverse / Weave Technical Research Protocol | หมวด 16 | คำถาม 151–160 | 9 ตุลาคม 2569
+ผมตรวจคู่มือ Oriverse โดยตรง ได้แก่ weave_coding → sound_dsl_usage, particles_json_usage, camera, animations และคู่มือเฉพาะ particle_vfx, shader_dsl พร้อมค้น Signature ของ Sound, Particle, Animation และ Camera APIs
+ข้อค้นพบสำคัญ: Oriverse รองรับ Procedural Sound Synthesis, Positional Audio, Particle Effects, WGSL-based Visual Effects, Camera Controllers และการจัดจังหวะ Animation กับเหตุการณ์ในเกม แต่ยังไม่ได้เปิดเผยรายละเอียด Audio Mixer Graph, Voice Virtualization, Particle Simulation Backend หรือระบบ Cinematic Timeline แบบ Non-linear Editor อย่างครบถ้วน
+Audio / VFX / Cinematic — โครงสร้างเชิงหน้าที่
+เป็นการแบ่งหน้าที่ตาม Public APIs ไม่ใช่ Internal Audio/Render Engine Diagram
+151 — #sound DSL สร้างเสียงและจัดการ Asset อย่างไร?
+1. Direct Answer: #sound Name ... #end เป็น DSL สำหรับสังเคราะห์เสียง Procedural แบบ SFX โดยนำ Oscillators, Noise, Envelopes และ Filters มาประกอบเป็น Signal และ Bake เป็น Local Sound Asset เมื่อโหลด World
+ข้อจำกัดสำคัญคือ ความยาวเสียงสูงสุด 8 วินาที จึงไม่ใช่เครื่องมือแต่งเพลงหรือสร้าง BGM ยาวโดยตรง
+2. Architecture: Sound Definition → Evaluate Signal Expressions → Bake Sound Asset → Reference Ori.sound.name → Trigger Playback
+3. Source Evidence: weave_coding → sound_dsl_usage
+4. API Contract:
+Function
+	บทบาท
+	osc(sin/saw/square/tri, freq, phase)
+	สร้าง Oscillator
+	noise(white/pink, seed)
+	สร้าง Noise
+	biquad(lp/hp/bp, input, cutoff, q)
+	Filtering
+	env_adsr(attack, decay, sustain, release)
+	Amplitude Envelope
+	env_exp(start, end, time)
+	Exponential Envelope
+	layer(a, b, ...)
+	รวมสัญญาณ
+	mix(a, b, t)
+	ผสมสัญญาณ
+	delay(input, time, feedback, mix)
+	Delay Effect
+	pitch(input, ratio)
+	เปลี่ยน Pitch
+	normalize(input, peak)
+	ปรับ Peak
+	limit(input, ceiling)
+	จำกัดสัญญาณ
+	duration มีค่าเริ่มต้น 1 วินาทีและไม่เกิน 8 วินาที ผลลัพธ์ต้องกำหนดผ่าน out
+5. Working Example — ตัวอย่างจากคู่มือ Oriverse:
+เรียกใช้งานด้วย PlaySound(Ori.sound.laser, 1.0) ใน Event หรือ Function ที่เหมาะสม
+6. Execution Trace — Expected: Read #sound → Evaluate Sweep/Filter/Envelope → Bake Asset → Gameplay Triggers PlaySound → Playback
+7. Limits & Failure Modes: ไม่มี Instrument Sequencer สำหรับ Music Composition การแก้ Sound Definition ต้อง Reload เพื่อ Bake ใหม่ และการใช้เสียงยาวเกิน 8 วินาทีไม่อยู่ใน Contract
+8. Verification: Expected: เสียง Laser ถูก Bake และเล่นหนึ่งครั้งเมื่อเรียก API; Actual: ตัวอย่างมาจากคู่มือโดยตรง แต่ ยังไม่ได้ Compile หรือฟังเสียงจริงในรอบนี้
+9. Disclosure Status: Sound DSL Documented; Runtime Playback Test Not Verified
+10. Research Gaps: Sample Rate, PCM Encoding, Compression, Asset Cache, Bake Cost และ Audio Thread Implementation
+152 — Spatial Audio และ Attenuation ทำงานอย่างไร?
+1. Direct Answer: Oriverse แยก Global Audio Playback จาก Positional Playback โดยคู่มืออธิบายว่า PlaySound เป็นเสียงที่เล่นทั่วทุก Client ด้วยระดับเสียงตามที่กำหนด ส่วน PlaySoundAtPosition รองรับ Positional Attenuation ตามผู้ฟัง
+อย่างไรก็ตาม ยังไม่มีหลักฐานเพียงพอที่จะระบุสูตร Distance Attenuation, Spatialization Algorithm, HRTF หรือ Occlusion Model
+2. Architecture: Gameplay เรียก Sound Asset ที่ World Position → Audio System ประเมินตำแหน่งผู้ฟังแต่ละ Client → Playback Output
+3. Source Evidence: weave_coding → built_in_function_list → PlaySound ซึ่งระบุ Positional Playback ด้วย PlaySoundAtPosition
+4. API Contract:
+สำหรับ PlaySoundAtPosition ยืนยันได้ว่ามี API ตามคำอธิบายของ PlaySound แต่ยังไม่ได้รับ Exact Declaration ในผลตรวจรอบนี้ จึงไม่ระบุ Signature โดยคาดเดา
+5. Working Example:
+เป็นตัวอย่าง Global Sound ที่ใช้ API Signature จริง ไม่ใช่การทดสอบ Spatial Attenuation
+6. Execution Trace — Expected: Trigger Event → Resolve Sound Asset → Resolve Listener Position สำหรับ Positional Call → Apply Attenuation → Output Audio
+7. Limits & Failure Modes: การใช้ PlaySound สำหรับเสียงฝีเท้าหรือเสียงจาก NPC อาจทำให้ผู้เล่นทุกคนได้ยินโดยไม่ขึ้นกับระยะ หากต้องการเสียงเฉพาะตำแหน่งควรใช้ Positional API
+8. Verification: Expected: Global Sound ได้ยินทุก Client; Positional Sound ลดระดับตามระยะ; Actual: Not Run สำหรับ Distance/Attenuation Matrix
+9. Disclosure Status: Global/Positional Playback Documented; Exact Attenuation Curve Undisclosed
+10. Research Gaps: Distance Model, HRTF, Stereo Panning, Doppler, Occlusion, Reverb และ Listener Mixing Rules
+153 — Audio Mixing, Buses และ Priorities ทำงานอย่างไร?
+1. Direct Answer: Oriverse เปิดเผยการควบคุมระดับเสียงและการหยุดเสียงในระดับ Asset รวมถึง Looped Playback แต่ยังไม่พบ Audio Bus Graph, Priority-based Voice Stealing หรือ Audio Ducking Contract ที่ยืนยันได้
+2. Architecture: Sound Playback สามารถเปิดหลาย Instances ของ Asset และควบคุม Volume ของ Asset ทั้งหมดได้ด้วย SetSoundVolume
+3. Source Evidence: Built-in API Lookup ของ PlaySoundLooped, StopSound, SetSoundVolume
+4. API Contract:
+SetSoundVolume มีผลกับ Instances ที่กำลังเล่น รวมถึง Loops และการ Play ครั้งต่อไป ค่า 0 ทำให้เงียบแต่ไม่ได้หยุด Loop
+5. Working Example:
+เป็นตัวอย่าง API Composition ไม่ใช่แนวทางที่แนะนำให้ Loop เสียง Laser จริง และยังไม่ได้รัน
+6. Execution Trace — Expected: Start Loop → Change Asset Gain → All Instances Reflect Gain → Stop All Instances of Asset
+7. Limits & Failure Modes: StopSound หยุดทุก Instances ของ Asset เดียวกัน ไม่ใช่หยุด Instance ID เฉพาะราย และไม่ได้รับรองว่า Engine รองรับ Named Buses เช่น Music/SFX/Voice แบบที่ผู้พัฒนากำหนดเอง
+8. Verification: Expected: เปลี่ยน Volume แล้ว Loop มีความดังเปลี่ยน; Actual: Not Run
+9. Disclosure Status: Asset-level Mixing Documented; Bus/Priority System Undisclosed
+10. Research Gaps: Mixer Topology, Max Concurrent Voices, Priority Policy, Voice Virtualization, Ducking, Loudness Normalization และ Output Device Handling
+154 — #particles สร้างและอัปเดต Particle Systems อย่างไร?
+1. Direct Answer: #particles ใช้ JSON Array ของ Emitter Components และรองรับ Billboard, Mesh และ Ribbon Particles พร้อม Emission, Lifetime, Velocity, Acceleration, Color/Opacity Curves, Flipbooks และ Procedural Shader Materials
+2. Architecture: Emitter Configuration → Effect Asset → Spawn Effect Object → Emit/Update Particles → Render/Destroy ตาม Lifecycle
+3. Source Evidence: particle_vfx, weave_coding → particles_json_usage
+4. API Contract: Parameters ที่สำคัญ:
+Parameter
+	ความหมาย
+	spawnRate
+	จำนวน Particles ต่อวินาที
+	burstParticleCount
+	Burst เริ่มต้น
+	lifeTimeRange
+	อายุ Particles
+	isLooping
+	เปิด/ปิดการวนรอบ Emitter
+	emitterShapeType
+	Sphere, Box, Cylinder, Disc
+	speedRange
+	ความเร็วเริ่มต้น
+	accelerationVector
+	แรงเร่งในหน่วย m/s²
+	sizeSequence
+	ขนาดตามอายุ
+	opacitySequence
+	Alpha ตามอายุ
+	colorSequence
+	สีตามอายุ
+	boundingBoxSize
+	ขนาดอ้างอิงของ Effect
+	renderResolution
+	Full/Half Resolution
+	5. Working Example — จากคู่มือ Oriverse:
+ตัวอย่างนี้ต้องมี #texture Spark ด้วย จึงเป็น Particle Fragment ไม่ใช่ Standalone World ที่ Compile ผ่าน
+6. Execution Trace — Expected: Load Effect → Spawn Emitter → Emit Particles at Rate → Integrate Motion/Lifetime → Fade → Remove Dead Particles
+7. Limits & Failure Modes: Particle Components แบบ Mesh มีต้นทุนสูงเพราะแต่ละตัวเป็น Lit Draw; คู่มือแนะนำให้ spawnRate × lifeTime ต่ำกว่าประมาณ 100 ต่อ Mesh Component และ boundingBoxSize ต้องกำหนดเพื่อป้องกัน Scale ผิด
+8. Verification: Expected: Sparks ปรากฏและหายไปตาม Lifetime; Actual: Not Run
+9. Disclosure Status: Particle DSL Documented; Internal CPU/GPU Simulation Undisclosed
+10. Research Gaps: Particle Buffer Layout, Update Backend, Sorting, GPU Culling, Max Particle Counts และ Cross-device Performance
+155 — VFX ผูกกับ Event และ Object Lifecycle อย่างไร?
+1. Direct Answer: Weave สามารถ Spawn VFX เมื่อเกิด Gameplay Event และผูก Effect กับ Object/Anchor เพื่อให้เคลื่อนที่ตาม Parent ได้ รองรับการปิด Emission โดยปล่อยให้ Particles ที่มีอยู่เล่นจนจบ
+2. Architecture: Gameplay Event → SpawnEffect → Attach/Follow Parent → Emit → Stop Emitting → Destroy After Remaining Particles
+3. Source Evidence: particles_json_usage, particle_vfx; Built-in Functions SpawnEffectWithAutoDestroy, SpawnEffectAttached, SetEmitting, DestroyAfterParticles
+4. API Contract:
+SpawnEffectAttached ติดตาม Anchor ของ Parent โดย Duration <= 0 ให้ใช้ Lifetime ตาม Effect Definition
+5. Working Example:
+ต้องมี #particles SmallSparks อยู่ใน World เดียวกัน และยังไม่ได้ทดสอบ Runtime
+6. Execution Trace — Expected: Click Object → Spawn Effect → Emit Burst → Lifetime Ends → Effect Auto-destroyed
+7. Limits & Failure Modes: การ Destroy Emitter ทันทีอาจตัด Particles ที่ยังไม่จบ คู่มือจึงแนะนำ DestroyAfterParticles() สำหรับ Continuous/Attached Effects และหลีกเลี่ยงการ Destroy/Respawn ทุกครั้งที่เปลี่ยนทิศทาง
+8. Verification: Expected: Effect แสดงเต็ม Lifetime และถูกลบหลังจบ; Actual: Not Run
+9. Disclosure Status: Effect Lifecycle Documented; Particle Scheduling Internals Undisclosed
+10. Research Gaps: Parent Destruction Semantics, Effect Completion Events, Lifetime Precision, Rollback Behavior และ Visual Synchronization
+156 — Shader Effects เช่น Wind, Dissolve และ Flow ทำงานอย่างไร?
+1. Direct Answer: #shader ของ Oriverse รองรับ Raw WGSL Hooks สำหรับแก้ Vertex Positions และ Surface Parameters จึงสามารถสร้าง Wind, Dissolve, Flow, Emission Pulses และ Fullscreen Distortion ได้
+2. Architecture: Shader ถูกผูกกับ Material แล้ว Engine Inject Code เข้า Standard Lit Pipeline โดย @vertex ปรับ Geometry และ Fragment Body เขียน Surface Outputs
+3. Source Evidence: shader_dsl → Structure, Runtime control, Particle shaders, Screen shaders
+4. API Contract:
+Runtime Scalar Parameters สูงสุด 32 Slots ต่อ Material ผ่าน SetMaterialParameterNumber และ WGSL อ่านผ่าน mat.params4
+5. Working Example — จากคู่มือ Shader:
+6. Execution Trace — Expected: Material Bind → WGSL Compile → Vertex Offset by Time/Noise → Fragment Surface Evaluation → Engine Lighting → Final Image
+7. Limits & Failure Modes: Shader Space เป็น Y-up หน่วยเมตร ต่างจาก Weave Simulation ที่เป็น Z-up หน่วยเซนติเมตร และ WGSL Compile Failure อาจทำให้ Material ใช้ Default Rendering
+8. Verification: Expected: ใบไม้ไหวตามเวลา; Actual: ตัวอย่างจากคู่มือ แต่ไม่ได้ Render/Compile ในรอบนี้
+9. Disclosure Status: WGSL Hooks Documented; Shader Compiler/Pipeline Internals Undisclosed
+10. Research Gaps: Shader Variant Caching, GPU Cost, Vertex Deformation Motion Vectors, Material Instance Isolation และ Device Compatibility
+157 — รองรับ Timeline, Cutscene และ Camera Transitions อย่างไร?
+1. Direct Answer: Oriverse รองรับ Camera Modes, Fixed Cameras, Per-frame Overrides และ Custom #camera Controllers ที่ใช้สร้าง Cinematic Shots และ Camera Transitions ได้ แต่ไม่พบ Public Cutscene Timeline Editor หรือ Non-linear Sequencer ที่ยืนยันได้จากเอกสารชุดนี้
+2. Architecture: Camera Ownership มี Native Mode, Custom Controller และ Per-frame Cinematic Overrides โดย Per-frame Override มีลำดับความสำคัญชั่วคราวเหนือ Controller และคืนกลับเมื่อหยุด Override
+3. Source Evidence: weave_coding → camera
+4. API Contract:
+สำหรับ Custom Camera มี:
+5. Working Example — Camera Shot:
+6. Execution Trace — Expected: Player Spawn → Set Fixed Camera → Camera Remains at Fixed Pose → Camera Mode Switch Releases Fixed View
+7. Limits & Failure Modes: SetCameraFixed คงอยู่ข้าม Frames รวมถึง Save/Reload จึงไม่ควรเรียกซ้ำทุก Frame บนตำแหน่งที่เปลี่ยน และ #camera Controller จำกัดให้ใช้ Camera/Math APIs ไม่ให้แก้ Gameplay State
+8. Verification: Expected: กล้องถูกล็อกที่ Shot Position; Actual: Not Run
+9. Disclosure Status: Camera Control Documented; Full Timeline/Cutscene Sequencer Undisclosed
+10. Research Gaps: Timeline Tracks, Camera Blend Curves, Shot Markers, Cinematic Editor, Sequencing Authoring และ Audio/Animation Track Binding
+158 — Animation/VFX Synchronization กับ Audio มีอย่างไร?
+1. Direct Answer: Oriverse รองรับการจัดจังหวะ Animation Contact ผ่าน PlayAnimationHittingContactIn และ GetAnimationLeadSeconds ซึ่งช่วยให้ Gameplay Event, Hit Contact, Audio และ VFX ถูกเรียกให้สัมพันธ์กับจังหวะเดียวกันได้
+แต่ยังไม่พบ Public Event Marker Track สำหรับ Animation/Audio/VFX Synchronization โดยตรงในรูปแบบที่เปิดเผยครบถ้วน
+2. Architecture: Gameplay กำหนดเวลาที่ต้องการให้เกิด Contact แล้ว Animation System ปรับ Playback Rate เพื่อให้ Contact Percent ตรงกับเวลานั้น จากนั้นสามารถเรียกเสียงและ VFX ณ Gameplay Event ที่ต้องการได้
+3. Source Evidence: weave_coding → animations; Built-in API Lookup ของ PlayAnimationHittingContactIn
+4. API Contract:
+PlayAnimationHittingContactIn คืน false เมื่อยังเร็วเกินไป และปรับอัตราการเล่นในช่วงประมาณ 0.5×–2× เพื่อให้ Contact Percent ตรงเวลา
+5. Working Example:
+6. Execution Trace — Expected: Attack Scheduled → Animation Waits for Valid Start Window → Clip Plays Rate-adjusted → Contact Percent Reaches Target Time → Gameplay May Trigger Sound/VFX
+7. Limits & Failure Modes: การเรียก Sound ทันทีเมื่อฟังก์ชันคืน true อาจไม่ตรง Contact Frame เพราะ true หมายถึง Animation เริ่มแล้ว ไม่ใช่ Contact เกิดขึ้นแล้ว ต้องใช้ Timing Contract หรือ State/Timer ที่สอดคล้องกัน
+8. Verification: Expected: Animation Contact ตรงกับ Target Time; Actual: Not Run สำหรับ Audio/VFX Sync Matrix
+9. Disclosure Status: Animation Contact Timing Documented; Audio/Particle Sync Precision Not Verified
+10. Research Gaps: Sample-accurate Audio Scheduling, Animation Notifies, VFX Event Markers, Latency Compensation และ Cutscene Track Synchronization
+159 — Multiplayer Synchronization ของ Effects
+1. Direct Answer: Oriverse ใช้ Deterministic Lockstep สำหรับ Shared Gameplay State โดยสามารถเรียก VFX/Audio จาก Gameplay Events ที่ทุกฝ่ายจำลองร่วมกันได้ แต่ยังไม่มีหลักฐานเพียงพอให้รับรองว่าเสียงและภาพจาก Particle/Shader จะเหมือนกันแบบ Sample-accurate หรือ Pixel-identical บนอุปกรณ์ต่างกัน
+2. Architecture: Gameplay Event ถูกประมวลผลผ่าน Shared Simulation ส่วนการแสดงผล Audio/Visual ถูกสร้างบน Client ตาม State และ Runtime/Rendering Context ของแต่ละ Viewer
+3. Source Evidence: multiplayer_guidance, frame_and_scheduling_model, particles_json_usage, shader_dsl
+4. API Contract: ใช้ SpawnEffectWithAutoDestroy, SpawnEffectAttached, PlaySound, PlaySoundAtPosition และ Shader/Material Parameters ตาม Public APIs
+5. Working Example:
+ต้องมี Effect/Sound Definitions ที่ถูกต้อง และไม่ได้ทดสอบ Multi-client Execution
+6. Execution Trace — Expected: Shared Input → Gameplay Event → Shared Simulation State Updates → Each Client Renders Effect/Plays Sound
+7. Limits & Failure Modes: Audio Playback Latency, Particle Timing และ Shader Time-dependent Effects อาจแตกต่างระหว่างอุปกรณ์ และคู่มือยังไม่เผยว่า Rollback จัดการ One-shot Audio/VFX Duplicates อย่างไร
+8. Verification: Expected: ผู้เล่นทั้งสองฝ่ายเห็น/ได้ยินผลตาม Gameplay Event เดียวกัน; Actual: Not Run สำหรับ Cross-client A/V Sync Test
+9. Disclosure Status: Shared Simulation Documented; Exact A/V Synchronization Guarantees Undisclosed
+10. Research Gaps: Rollback-safe Effect IDs, Audio Deduplication, Prediction Effects, Visual Event Replay, Network Clock Alignment และ Latency Compensation
+160 — Test Scene ที่มีเสียง สภาพอากาศ และ Cinematic Camera
+1. Direct Answer: สามารถออกแบบ Scene สำหรับทดสอบเสียง สภาพอากาศ และ Cinematic Camera ด้วย Weave โดยใช้ #sound, #particles, #shader, Lighting/Fog Settings และ Camera APIs
+ในรอบนี้ ยังไม่ได้สร้าง/Stage Test Scene จริง เพื่อหลีกเลี่ยงการแทนที่ Pending Draft ของ World ปัจจุบัน
+2. Architecture: Test Scene แยกเป็น Environment, Rain/Wind VFX, Sound Sources, Cinematic Camera และ Test Controller เพื่อให้ทดสอบแต่ละระบบได้แยกกัน
+3. Source Evidence: sound_dsl_usage, particle_vfx, particles_json_usage, shader_dsl, camera
+4. API Contract: ใช้ #sound, #particles, PlaySound, SpawnEffectWithAutoDestroy, SetCameraFixed, SetCameraLookAtThisFrame และ #shader ตามที่ตรวจสอบข้างต้น
+5. Working Example — Research Fixture:
+ตัวอย่างนี้สร้างพื้นและ Player พร้อมกล้อง Cinematic แบบ Fixed และเสียง Procedural เป็นฐานสำหรับเพิ่ม VFX และ Weather
+ตัวอย่างนี้ ยังไม่ได้ Compile และยังไม่รวม Rain/Wind Effects แบบสมบูรณ์ ดังนั้นไม่ใช่ Working End-to-end Weather/Cinematic Scene ที่ผ่าน Acceptance
+6. Execution Trace — Expected: World Load → Player Spawn → Set Cinematic Camera → Play Chime → Render Environment
+สำหรับ Weather/VFX Test ที่เพิ่มในขั้นต่อไป: Spawn Rain/Wind Emitters → Animate Shader → Observe/Record Frames → End Scene
+7. Limits & Failure Modes: การใช้ Particle Rain จำนวนมากอาจมี Overdraw Cost สูง การวาง Sound แบบ Global แทน Positional อาจให้ผล Spatial Audio ผิด และ Fixed Camera อาจไม่กลับสู่ Player Camera หากไม่ได้เปลี่ยน Camera Mode เมื่อ Cutscene จบ
+8. Verification — Proposed Acceptance Matrix:
+Test ID
+	Scenario
+	Expected
+	Actual
+	AV-01
+	Procedural Sound Bake
+	Asset Valid
+	Not Run
+	AV-02
+	Global Sound Playback
+	One-shot Heard
+	Not Run
+	AV-03
+	Positional Attenuation
+	Volume Falls with Distance
+	Not Run
+	AV-04
+	Rain Particles
+	Rain Emission Visible
+	Not Run
+	AV-05
+	Wind Shader
+	Geometry Sways
+	Not Run
+	AV-06
+	Looping Ambient Sound
+	Continues Until Stop
+	Not Run
+	AV-07
+	Fixed Camera
+	Stable Cinematic Shot
+	Not Run
+	AV-08
+	Camera Return
+	Player Camera Restored
+	Not Run
+	AV-09
+	Animation Contact
+	Clip Contact at Target Time
+	Not Run
+	AV-10
+	Multiplayer Effects
+	Shared Trigger Consistency
+	Not Run
+	AV-11
+	100+ Particles
+	Frame Time Recorded
+	Not Measured
+	AV-12
+	A/V Rollback
+	No Duplicate One-shots
+	Not Verified
+	9. Disclosure Status: Test Design Proposed; Source API Contracts Documented; End-to-end Runtime Not Verified
+10. Research Gaps: Weather Integration APIs, Camera Timeline System, Audio Capture/Analysis, Device-specific Performance, GPU Particle Metrics และ Cross-client A/V Synchronization Tests
+________________
+
+
+TRR-16 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	Disclosure Status
+	151
+	Procedural Sound DSL
+	Documented
+	152
+	Spatial Audio
+	Partially Documented
+	153
+	Audio Mixing/Buses
+	Asset-level Controls Documented; Internal Mixer Undisclosed
+	154
+	Particle DSL
+	Documented
+	155
+	Effect Lifecycle
+	Documented
+	156
+	WGSL Effects
+	Documented
+	157
+	Cinematic Camera
+	Camera APIs Documented; Timeline Undisclosed
+	158
+	Animation/A-V Timing
+	Contact Timing Documented; A/V Precision Not Verified
+	159
+	Multiplayer A/V
+	Shared Simulation Documented; Sample Accuracy Undisclosed
+	160
+	Integrated Test Scene
+	Designed / Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse มี Sound DSL สำหรับ SFX ความยาวไม่เกิน 8 วินาที, Global และ Positional Playback APIs, Particle DSL ที่รองรับ Billboards/Mesh/Ribbons, Effect Lifecycle Controls, WGSL Shader Effects และ Camera Controllers สำหรับ Cinematic Presentation
+ระบบยังรองรับ Animation Contact Timing และ Multiplayer Shared Simulation แต่รายละเอียดเรื่อง Audio Mixer, Full Timeline Editor และ Rollback-safe A/V Presentation ยังไม่เปิดเผย
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ผมเสนอให้ KHOSAN แยก Audio Engine, Particle/VFX Runtime, Shader Effects, Cinematic Timeline, Camera System และ Synchronization Layer เป็นโมดูลที่มี API Contracts ชัดเจน
+ส่วนที่ควรให้ความสำคัญเป็นพิเศษคือ Rollback-safe Effects และ Audio Event Deduplication เพื่อป้องกันเสียงซ้ำหรือ Particle Burst ซ้ำใน Multiplayer รวมถึงระบบ Cinematic Timeline ที่บันทึก Camera/Animation/Audio/VFX Tracks เป็นข้อมูลที่ตรวจสอบย้อนกลับและทดสอบอัตโนมัติได้
+สถานะ TRR-16: Documentation Research Completed / Public API Contracts Verified / Integrated A/V & Cinematic Test Not Executed.
+ไม่มีการ Stage, Patch, Submit หรือ Publish World ในรอบนี้ จึงไม่มีการเปลี่ยนแปลง World ปัจจุบัน
+หมวดถัดไปคือ 17 — Performance, Profiling & Optimization (ข้อ 161–170) เพื่อศึกษาข้อจำกัด Runtime, CPU/GPU Budgets, Memory, Rendering Scalability และการสร้าง Automated Performance Benchmarks
+________________
+
+

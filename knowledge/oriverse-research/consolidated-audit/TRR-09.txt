@@ -1,0 +1,254 @@
+Oriverse / Weave Technical Research Record — TRR-09
+หมวด 09: Procedural Mesh & Asset Generation | คำถาม 081–090 | 8 ตุลาคม 2569
+ตรวจสอบเอกสารจาก Oriverse โดยตรง ได้แก่ mesh_dsl ในหัวข้อ function_inventory, ranges_and_budgets, uvs_and_art_stamps, bones_and_clips, placement_and_modeling_rules และ weave_coding → mesh_dsl_usage
+ข้อค้นพบหลัก: #mesh ไม่ได้จำกัดอยู่แค่การสร้าง Cube, Sphere และ Cylinder แต่เป็นภาษาเฉพาะทางสำหรับสร้างรูปทรงสามมิติ รวมถึง Polygon Modeling, Loft, Extrusion, Boolean Operations, UV Mapping, Procedural Materials, Rigging และ LOD
+นอกจากนี้ ผมได้ส่งตัวอย่าง Procedural House เข้าสู่ Mesh Inspector ของ Oriverse โดยไม่แก้ไข World และได้รับผล Geometry Inspection จริง ซึ่งจะรายงานในข้อ 090
+081 — #mesh DSL รองรับ Geometry Primitives และ Operations อะไรบ้าง?
+1. Direct Answer: #mesh เป็นภาษาสำหรับสร้าง Procedural Geometry แบบ CPU-baked รองรับรูปทรงพื้นฐาน การประกอบชิ้นส่วน การเปลี่ยนรูป และ Geometry ที่สร้างจากเส้นทางหรือ Profile
+2. Architecture: แต่ละ #mesh ประกอบด้วย Expressions ที่คืนค่า Geometry จากนั้นรวมเป็นผลลัพธ์สุดท้ายผ่าน out.geo
+3. Source Evidence: mesh_dsl → function_inventory, placement_and_modeling_rules
+4. API Contract:
+ประเภท
+	Functions ที่ยืนยันจากคู่มือ
+	Basic solids
+	box, sphere, cylinder, capsule, wedge, torus, polyhedron
+	Geometry placement
+	box_at, box_center, box_bounds
+	Architectural
+	gable_roof, frame_rect, arch_frame, rect_grid_frame
+	Extrusion
+	extrude, extrude_shape, extrude_loop
+	Loft & sweep
+	loft_sections, loft_solid, sweep_profile_path, pipe_path
+	Curves
+	bezier_tube, spline_points, arc_points
+	Composition
+	merge, translate, scale, rotate, mirror
+	Repetition
+	array, grid_array, radial_array, copy_to_points
+	Surface modeling
+	bevel, solidify, smooth_shade, flat_shade
+	Organic geometry
+	rock, noise_displace, roughen, tessellate
+	5. Working Example: ตัวอย่างจากคู่มือ:
+6. Execution Trace: Evaluate Parameters → Generate Geometry → Apply Operations → Assign out.geo → Bake Mesh
+7. Limits & Failure Modes: Unknown Functions, Wrong Argument Types และ Out-of-range Values ทำให้ Bake ล้มเหลว
+8. Verification: Expected: Geometry Generators สร้าง Mesh ได้; Actual: ผมทดสอบ box_at, gable_roof, frame_rect และ merge กับ Mesh Inspector สำเร็จในรอบนี้
+9. Disclosure Status: Documented + Experimentally Verified สำหรับ Functions ที่ใช้ทดสอบ
+10. Research Gaps: Implementation Algorithms ของ Generator แต่ละประเภท, Tessellation Strategy และ Internal Geometry Representation
+082 — Mesh Generation Pipeline จาก Expression ถึง Vertex Buffer
+1. Direct Answer: คู่มือระบุว่า Mesh ถูกประมวลผลจาก DSL เป็น Geometry และ Bake เป็น Asset เมื่อมีการอ้างอิง model = "mesh.Name" แต่ไม่ได้เปิดเผยขั้นตอนทั้งหมดจนถึง GPU Vertex Buffer Allocation
+2. Architecture: กระบวนการที่ยืนยันได้ในระดับหน้าที่คือ DSL Evaluation → Geometry Assembly → Mesh Bake → Mesh Asset Reference → Rendering
+3. Source Evidence: mesh_dsl → Geometry inspection, weave_coding → mesh_dsl_usage
+4. API Contract:
+ใช้ใน Scene:
+5. Working Example: Procedural House ที่ตรวจในรอบนี้สร้าง Geometry สำเร็จ และ Inspector รายงาน 288 vertices, 432 indices, 144 triangles
+6. Execution Trace: Evaluate walls → Evaluate roof → Evaluate door/windows → merge → Inspect/Bake Geometry → Provide Render Geometry
+7. Limits & Failure Modes: Polygon Geometry อาจมีปัญหา Winding, Degenerate Faces หรือ Non-manifold Structure ส่วนการจัดสรร GPU Buffer ภายในยังไม่มีเอกสาร
+8. Verification: Expected: Mesh Inspector คืนค่า Geometry ที่ตรวจสอบได้; Actual: PASS สำหรับการประเมิน Geometry และ Inspector Metadata ของตัวอย่างบ้าน
+9. Disclosure Status: Geometry Evaluation/Baking Documented + Experimentally Verified; GPU Buffer Upload Undisclosed
+10. Research Gaps: Mesh Intermediate Representation, Vertex Deduplication, Index Optimization, GPU Upload, Buffer Lifetime และ Render Backend Allocation
+083 — Normals, Tangents, UV และ Material Slots กำหนดอย่างไร?
+1. Direct Answer: Mesh DSL รองรับการกำหนด Shading Normals, UV Coordinates และ Material Slots โดยตรง รวมถึง UV Unwrapping และ Normal-map Baking ส่วนการจัดการ Tangent Buffer ภายในยังไม่พบ Specification ครบถ้วน
+2. Architecture: Geometry Generators สร้าง Default UVs ตามรูปทรง และผู้เขียนสามารถ Project หรือ Transform UV ใหม่ ก่อนนำ Geometry ไปใช้กับ Materials
+3. Source Evidence: mesh_dsl → uvs_and_art_stamps, function_inventory
+4. API Contract:
+Material Slots ใช้ material: "Name" บน Geometry Generators หรือ paint(g, material: "Name")
+5. Working Example:
+6. Execution Trace: Geometry Generation → Shading/UV Operations → Material Assignment → Bake → Render
+7. Limits & Failure Modes: UV Unwrapping อัตโนมัติอาจเปลี่ยนการวางลวดลายเดิม และการ Bake Normal Maps ต้องมี UV Coverage ที่ถูกต้อง
+8. Verification: Expected: Geometry ได้ UVs และ Materials ตาม Expression; Actual: คู่มือรองรับ แต่ไม่ได้รัน UV Inspector บนตัวอย่างนี้
+9. Disclosure Status: Normals/UV/Slots Documented; Tangent Generation Internals Undisclosed
+10. Research Gaps: Tangent Basis Convention, Vertex Attribute Layout, UV Seam Duplication Rules และ Material-slot-to-Submesh Mapping
+084 — Boolean, Extrusion, Loft, Subdivision และ Instancing
+1. Direct Answer: Mesh DSL รองรับ Extrusion, Lofting, Subdivision/Tessellation, Boolean Modeling และการทำซ้ำ Geometry หลายรูปแบบ แต่ต้องแยก Baked Geometry Repetition ออกจาก GPU Instancing ใน Runtime
+2. Architecture: Operations เหล่านี้เป็นส่วนหนึ่งของ Procedural Geometry Evaluation ก่อนนำไปใช้เป็น Model Asset
+3. Source Evidence: mesh_dsl → function_inventory, placement_and_modeling_rules, mesh_dsl_usage
+4. API Contract:
+คู่มือยังกล่าวถึง Boolean Operations รวมถึง boolean(..., solver: "exact") แต่ในส่วนเอกสารที่ตรวจสอบยังไม่ได้ยืนยัน Signature ของ Overloads ทั้งหมด จึงไม่ระบุพารามิเตอร์อื่นโดยคาดเดา
+5. Working Example: grid_array ในตัวอย่าง Chair ของคู่มือทำซ้ำ Geometry ขาเก้าอี้ ส่วน gable_roof และ frame_rect ที่ทดสอบจริงเป็นตัวอย่าง Geometry Composition อีกประเภท
+6. Execution Trace: Generate Base Geometry → Apply Operations → Combine Outputs → Bake Final Geometry
+7. Limits & Failure Modes: grid_array จำกัด Product ของ Counts ไม่เกิน 512 และ Boolean บางประเภทต้องการ Geometry ที่ปิดสนิทและมี Topology ถูกต้อง
+8. Verification: Expected: Operations สร้าง Geometry ผลลัพธ์ได้ตามข้อกำหนด; Actual: ยืนยัน Geometry Composition บางส่วนแล้ว แต่ยังไม่ได้ทดสอบ Boolean/Loft/Instancing ทั้งหมด
+9. Disclosure Status: Documented / Partially Experimentally Verified
+10. Research Gaps: Boolean Solver Details, GPU Instancing Representation, Geometry Expansion Cost และ Subdivision Topology Preservation
+085 — LOD Generation และ Mesh Simplification
+1. Direct Answer: Oriverse รองรับการกำหนด LOD0–LOD3 สำหรับ Procedural Mesh โดยผู้พัฒนาสามารถสร้าง Geometry แต่ละระดับเองได้ เอกสารระบุการสลับ Static LOD ตามขนาดภาพที่ฉายบนจอ แต่ยังไม่พบการรับรองว่าทุก Mesh ได้รับ Automatic LOD Simplification
+2. Architecture: #mesh Name เป็น LOD0 ส่วน #mesh Name lod: N เป็น Display Variants ซึ่งใช้ร่วมกับ Reference Frame ของ Base Mesh
+3. Source Evidence: mesh_dsl → far_display_variants
+4. API Contract:
+LOD ต้องเรียงต่อเนื่องตั้งแต่ 1–3; หาก LOD หยาบไม่พร้อม ระบบสามารถใช้ LOD ที่ละเอียดกว่าแทนได้
+5. Working Example: ข้างต้นเป็น Syntax Pattern ตามคู่มือ ยังไม่มี Source ของ LOD Tree ที่ผ่านการตรวจในรอบนี้
+6. Execution Trace — Expected: Reference Mesh → Bake LOD Variants → Camera-based LOD Selection → Draw Selected Geometry
+7. Limits & Failure Modes: lod: 0 ถูกปฏิเสธ และ sim_box/anchor ที่ประกาศใน LOD Variant จะถูกละเลยพร้อม Warning โดย Collider ใช้ Base หรือ Dedicated Collider ไม่ใช้ Display LOD
+8. Verification: Expected: โมเดลระยะไกลใช้ Geometry ที่หยาบกว่า; Actual: Not Run สำหรับ LOD Switching Test
+9. Disclosure Status: Authoring/Selection Rules Documented; Auto-simplification Algorithm Undisclosed
+10. Research Gaps: LOD Screen-size Thresholds, Hysteresis, Auto-decimation, Runtime LOD Metrics และ Mobile Device Profiles
+086 — Mesh Collision สร้างจาก Geometry อย่างไร?
+1. Direct Answer: Mesh Collision รองรับการใช้ Base Mesh Geometry หรือ Dedicated collider Block โดยมีข้อจำกัดจำนวน Vertices และ Performance Guidelines ที่ระบุไว้
+2. Architecture: เมื่อกำหนด collision = mesh Engine ใช้ Dedicated Collider Geometry หากมี หรือใช้ Base LOD0 Mesh มิฉะนั้น
+3. Source Evidence: mesh_dsl → far_display_variants, weave_coding → world_description_information
+4. API Contract:
+5. Working Example: ตัวอย่างบ้านที่ตรวจในรอบนี้มี Default Display Geometry 288 Vertices และ Inspector ระบุ collider_verts = 288 หากเลือก collision = mesh โดยไม่มี Dedicated Collider Block
+6. Execution Trace: Evaluate Mesh → Choose Collider Source → Bake Collision Geometry → Register Collider → Physics Queries
+7. Limits & Failure Modes: คู่มือกำหนด Collider Vertex Cap ที่ 6,000 Vertices และแนะนำให้ใช้ไม่เกินประมาณ 1,000 Vertices เพื่อประสิทธิภาพ หากเกิน Cap หรือ Bake ล้มเหลวจะ Fallback เป็น Box Collision
+8. Verification: Expected: ตัวอย่างบ้านใช้ Mesh Collider ที่มี Geometry 288 Vertices; Actual: Inspector ยืนยัน Geometry ที่พร้อมเป็น Collider แต่ยังไม่ได้รันผู้เล่นเดินชน/ผ่านช่องประตูจริง
+9. Disclosure Status: Collider Source Selection Documented; Geometry Inspection Experimentally Verified; Runtime Collision Test Not Verified
+10. Research Gaps: Collision Triangle Acceleration Structure, Dynamic Mesh Restrictions, Collider Rebuild Cost, Hit Precision และ Contact Solver Internals
+087 — Mesh Caching และ Asset Hashing ทำงานอย่างไร?
+1. Direct Answer: Oriverse เปิดเผยว่า Procedural Mesh มีการ Bake เมื่อถูกอ้างอิงเป็น Asset และมีการใช้ Source/Dependency Hashes รวมถึงการ Re-bake เมื่อ Source หรือ Dependencies ที่เกี่ยวข้องเปลี่ยน
+แต่ยังไม่ได้เปิดเผย Cache Storage Format, Eviction Policy หรือรายละเอียด Hash Algorithm ทั้งหมด
+2. Architecture: Mesh Definition → Dependency Resolution → Content Identity/Hash → Bake → Asset Reuse
+3. Source Evidence: mesh_dsl → shared_file_constants, far_display_variants; weave_coding → mesh_dsl_usage; Mesh Inspector Results
+4. API Contract: เอกสารระบุว่าการแก้ #meshdefs จะ Re-bake Mesh ที่อ้างถึง Definition เหล่านั้น และการแก้ LOD Variant จะมีผลต่อ Hash Chain ของ Base Mesh
+5. Working Example: Mesh Preview ในรอบนี้คืนค่า source_hash และ evaluator_version ใน Evaluation Metadata ของ ResearchHouse
+6. Execution Trace: Evaluate Source/Dependencies → Generate Geometry → Associate Hash/Version → Prepare Reusable Asset
+7. Limits & Failure Modes: การเปลี่ยน Source, Shared Constants, Variants หรือ Dependencies อาจทำให้ต้อง Bake ใหม่ ส่วน Cache Hit/Miss Policy ยังไม่เปิดเผย
+8. Verification: Expected: Source เดิมมี Evaluation Identity ที่ใช้ตรวจสอบซ้ำได้; Actual: Mesh Inspector คืน Source Hash และ Evaluator Version จริง แต่ไม่ได้รัน Benchmark Cache Hit/Miss
+9. Disclosure Status: Hash/Dependency Behavior Partially Documented; Cache Internals Undisclosed
+10. Research Gaps: Hash Function, Cache Key Composition, Storage Location, Incremental Bake Granularity, Cache Eviction และ Cross-device Asset Reuse
+088 — รองรับ Rigged Mesh และ Skeletal Geometry หรือไม่?
+1. Direct Answer: รองรับ Oriverse Mesh DSL สามารถประกาศ Bones, ผูก Geometry กับ Bones และสร้าง Skin Weights รวมถึง Animation Clips ได้โดยตรง
+2. Architecture: #mesh ประกาศ Rig และ Geometry Binding ส่วน #clip ประกาศ Animation Tracks ให้ Mesh ที่เกี่ยวข้อง
+3. Source Evidence: mesh_dsl → bones_and_clips, weave_coding → animations
+4. API Contract:
+5. Working Example: ตัวอย่างแนวทาง Rigging จากคู่มือ:
+6. Execution Trace — Expected: Define Skeleton → Bind Geometry → Bake Rigged Mesh → Load Clip/Pose → Apply Bone Transforms → Render Deformed Mesh
+7. Limits & Failure Modes: สูงสุด 48 Bones ต่อ Mesh ตามคู่มือ และ Skin Weights เก็บ Influences ที่แรงที่สุดไม่เกิน 4 Bones ต่อ Vertex
+8. Verification: Expected: Bones และ Weights สามารถใช้งานกับ Mesh ได้; Actual: API มีเอกสารยืนยัน แต่ไม่ได้ Compile ตัวอย่าง Rig นี้ในรอบนี้
+9. Disclosure Status: Rigging/Skinning Documented; Internal GPU Skinning Pipeline Undisclosed
+10. Research Gaps: Skinning Buffer Format, GPU/CPU Skinning Selection, Bone Palette Layout, Animation Compression และ Runtime Retarget Cost
+089 — ข้อจำกัด Vertices, Triangles และ Memory
+1. Direct Answer: mesh_dsl → ranges_and_budgets ระบุทั้ง Target Budgets และ Hard Caps ที่ใช้ในการ Bake Geometry
+2. Architecture: Procedural Geometry ถูกประเมินภายใต้ Vertex/Index Budgets และสามารถกำหนดขอบเขตด้วย budget(...)
+3. Source Evidence: mesh_dsl → ranges_and_budgets
+4. API Contract:
+Resource
+	ข้อกำหนด
+	Recommended Vertices
+	≤ 50,000
+	Recommended Indices
+	≤ 90,000
+	Custom Vertex Budget สูงสุด
+	600,000
+	Custom Index Budget สูงสุด
+	1,800,000
+	Material Slots
+	Hard Cap 20; แนะนำ ≤ 10
+	Array/Loop Expansion
+	สูงสุด 512
+	Collider Vertices
+	Hard Cap 6,000; แนะนำ ≤ 1,000
+	Bones
+	สูงสุด 48
+	Skin Influences
+	สูงสุด 4 ต่อ Vertex
+	5. Working Example:
+6. Execution Trace: Set Budget → Evaluate Geometry → Count Vertices/Indices → Accept หรือ Reject หากเกิน Budget
+7. Limits & Failure Modes: Geometry ที่ทำซ้ำจำนวนมากอาจขยายเกิน Vertex/Index Budget แม้ Primitive แต่ละชิ้นจะมีจำนวน Vertices ต่ำ
+8. Verification: Expected: Geometry ที่อยู่ใน Budget ผ่าน Bake; Actual: ResearchHouse มี 288 Vertices และ 432 Indices อยู่ในเกณฑ์ แต่ไม่ได้ทดสอบ Hard Cap Boundaries
+9. Disclosure Status: Budget Rules Documented; Actual GPU Memory Limits Undisclosed
+10. Research Gaps: Vertex Stride, Index Width, VRAM Residency, Mesh Compression, Streaming และ Device-specific Memory Constraints
+090 — ตัวอย่างบ้าน 3D มีหลังคา หน้าต่าง ประตู และ Collider จริง
+1. Direct Answer: ผมสร้างตัวอย่าง ResearchHouseOpen ด้วย Mesh DSL โดยแยกผนังเป็นชิ้นเพื่อเหลือช่องเปิดประตู และให้หลังคา หน้าต่าง และประตูเป็น Geometry คนละส่วน
+ผมส่งโค้ดเข้า Oriverse preview_mesh แบบ Inline Source ซึ่งไม่เปลี่ยน World ที่เปิดอยู่ ผลยืนยันว่า Geometry Bake สำเร็จ
+Vertices
+432
+Triangles
+216
+Material slots
+4
+________________
+
+
+ขนาด Mesh: 680 × 500 × 458 cm | Indices: 648 | Evaluator Version: 57
+ยืนยันจาก Mesh Preview; ยังไม่ได้ทดสอบ Collision ของผู้เล่นใน Runtime
+2. Architecture: บ้านแบ่งออกเป็นพื้น ผนังหลัง ผนังซ้าย–ขวา ผนังหน้าสองฝั่ง คานเหนือประตู หลังคาทรงจั่ว บานประตู และกรอบหน้าต่าง
+<svg viewBox="0 0 340 200" width="100%" xmlns="http://www.w3.org/2000/svg"><path d="M63 78L170 14L277 78" fill="none" stroke="#ae7048" stroke-width="19" stroke-linejoin="round" /><rect x="69" y="78" width="202" height="113" fill="#a5a399" fill-opacity=".23" stroke="currentColor" stroke-width="2" /><rect x="144" y="116" width="52" height="75" fill="#704d39" fill-opacity=".5" stroke="#925a36" stroke-width="3" /><rect x="84" y="109" width="41" height="39" fill="#60a5fa" fill-opacity=".27" stroke="#94623e" stroke-width="6" /><rect x="215" y="109" width="41" height="39" fill="#60a5fa" fill-opacity=".27" stroke="#94623e" stroke-width="6" /><path d="M104 109v39m111 -19h41M84 129h41" stroke="#94623e" stroke-width="3" /><circle cx="185" cy="159" r="3" fill="#d5b56c" /><text x="170" y="198" font-size="10" fill="currentColor" text-anchor="middle">แผนภาพอธิบายส่วนประกอบ ไม่ใช่ Render จาก Oriverse</text></svg>
+3. Source Evidence: mesh_dsl → function_inventory, placement_and_modeling_rules, far_display_variants และผล preview_mesh ของ ResearchHouseOpen
+4. API Contract: ใช้ box_at, gable_roof, frame_rect, merge, #mesh และ Scene Declaration collision = mesh
+5. Working Example: ตัวอย่าง Source ที่ Mesh Preview ประมวลผลผ่านจริง:
+ข้อจำกัดของตัวอย่าง: ประตูเป็น Geometry ติดอยู่ใน Mesh เดียวกับผนัง ยังไม่ใช่ประตูที่เปิด–ปิดได้ หากต้องการ Gameplay จริง ควรแยก Door Object พร้อม Collision Control ออกมาต่างหาก นอกจากนี้หน้าต่างเป็นกรอบตกแต่งบนผนังทึบ ไม่ใช่ช่องทะลุ
+6. Execution Trace: Evaluate box_at Components → Build gable_roof → Build Window Frames → Merge Geometry → Generate Render Mesh → Report Geometry Statistics
+7. Limits & Failure Modes: แม้ Geometry Bake สำเร็จ แต่ยังต้องตรวจว่า Mesh Collider รักษาช่องเปิดได้จริง และไม่มี Geometry ที่ทับซ้อนกันทำให้ Player ติดขัด
+8. Verification:
+Test
+	Expected
+	Actual
+	Mesh DSL Evaluation
+	ผ่าน
+	PASS
+	Geometry Preview
+	สร้าง Geometry
+	PASS
+	Vertex/Index Report
+	มีค่าที่วัดได้
+	PASS
+	Material Slot Detection
+	พบ Slots
+	PASS — 4
+	Runtime Mesh Collision
+	ชนตาม Geometry
+	Not Run
+	Player Enter/Exit
+	เดินผ่านประตูได้เมื่อเปิด
+	Not Run
+	Door Animation
+	เปิด/ปิดประตู
+	Not Implemented
+	PBR Visual Quality
+	Render สมจริง
+	Not Verified
+	9. Disclosure Status: Geometry Bake Experimentally Verified; Runtime Interaction Not Verified; Opening-door Gameplay Not Implemented
+10. Research Gaps: Dedicated Collider Optimization, Door Sweep, Enterable Interior QA, Lighting, Normal Maps และ Runtime Performance
+________________
+
+
+TRR-09 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	081
+	Mesh Generators & Operations
+	Documented / Partially Verified
+	082
+	Mesh Bake Pipeline
+	Partially Documented / Geometry Verified
+	083
+	Normals, UV & Materials
+	Documented
+	084
+	Boolean, Loft, Subdivision
+	Documented / Partially Verified
+	085
+	LOD
+	Documented / Runtime Not Verified
+	086
+	Collision Geometry
+	Documented / Runtime Not Verified
+	087
+	Caching & Hashing
+	Partially Documented
+	088
+	Rigged Mesh & Skinning
+	Documented
+	089
+	Geometry Budgets
+	Documented
+	090
+	Procedural House
+	Geometry Bake Verified / Gameplay Not Verified
+	ข้อเท็จจริงที่ได้รับการยืนยัน
+Weave Mesh DSL สามารถสร้าง Procedural Models ด้วย Expressions, Geometry Generators, Composition, UV/Normal Operations, Materials, LOD Variants, Dedicated Colliders และ Skeletal Rigs ได้
+ในรอบนี้ผมได้ตรวจ Mesh Geometry จริงสองรูปแบบ โดยผลล่าสุดของบ้านแบบแยกผนังคือ 432 Vertices, 648 Indices, 216 Triangles และ 4 Material Slots
+ข้อมูลที่ยังไม่เปิดเผย
+GPU Buffer Layout, Vertex Compression, Mesh Bake Cache Internals, Automatic LOD Simplification, Collision Solver Internals และ Memory Residency Management
+ข้อเสนอสำหรับ KHOSAN Studio
+ผลวิจัยนี้สนับสนุนแนวทางสร้าง KHOSAN Procedural Asset Compiler โดยแยก Geometry DSL, Asset Dependency Graph, Mesh Bake, Material Mapping, LOD, Collider Generation และ Rig/Animation Pipeline ให้มีสัญญาและชุดทดสอบแยกกัน
+โดยเฉพาะควรมี Mesh Inspector ที่รายงาน Vertex/Index Budgets, Topology Problems, Material Slots และ Collider Geometry ก่อนนำ Asset เข้า Runtime รวมถึง Scene-level QA เพื่อตรวจทางเดิน ช่องเปิด และการชนจริง
+สถานะ TRR-09: Documentation Research Completed / Procedural Geometry Experiment PASS / Runtime Collision Not Verified.
+ไม่มีการแก้ไขหรือ Publish Oriverse World ระหว่างการศึกษานี้ เครื่องมือรายงานว่า Editor ปัจจุบันยังใช้ Build 05Oct26-23:23 ซึ่งควร Reload ก่อนทำการทดลอง Gameplay เพิ่มเติม
+หมวดวิจัยถัดไปคือ 10 — Texture, Shader & Rendering (ข้อ 091–100) โดยจะศึกษาตั้งแต่ Procedural PBR Materials, WGSL Shader Hooks, Lighting, Shadow, Transparency ไปจนถึง Render Pipeline และ GPU Performance
+________________
+
+

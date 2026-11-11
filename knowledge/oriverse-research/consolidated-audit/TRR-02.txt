@@ -1,0 +1,234 @@
+Oriverse / Weave Technical Research Record — TRR-02
+Grammar, Types & Semantics | คำถาม 011–020 | 8 ตุลาคม 2569
+ตรวจสอบคู่มือ Oriverse โดยตรงแล้ว ได้แก่ weave_coding → weave_language, weave2_migration, frame_and_scheduling_model, built_in_function_list และ weave_compile_errors
+ขอบเขตของหลักฐาน: เอกสารยืนยันกฎภาษาและ Compiler Diagnostics หลายประการ แต่ไม่ได้เปิดเผย Formal Grammar หรือ Implementation ของ Type Checker ทั้งหมด รายงานจึงไม่สมมติว่าข้อมูลที่ยังไม่เปิดเผยเป็นความสามารถที่รองรับจริง
+011 — Grammar Specification / EBNF ของ Weave ทั้งหมด
+1. Direct Answer: ยังไม่พบ EBNF ฉบับสมบูรณ์ที่ Oriverse เผยแพร่ คู่มือระบุ Syntax และรูปแบบการประกาศหลายประเภท แต่ยังไม่เพียงพอสำหรับสร้าง Parser ที่เทียบเท่าของจริง
+2. Architecture: แหล่งข้อมูลแบ่งโครงสร้างออกเป็น World-level Declarations, Compiler Directives และ Class Body Statements โดย #class เป็นส่วนที่ Compile เป็น Bytecode
+3. Source Evidence: weave_language, weave_compile_errors
+4. API Contract: ตัวอย่าง Syntax ที่ยืนยันจากคู่มือ:
+5. Working Example: ตัวอย่างข้างต้นเป็นรูปแบบที่คู่มือรองรับ แต่ยังไม่ได้ Compile แยกเพื่อยืนยันเป็นโปรแกรมสมบูรณ์
+6. Execution Trace: Source text → Syntax validation → Type/Reference validation → Code compilation เป็นการเรียงขั้นตอนเชิงหน้าที่ ไม่ใช่ Parser Trace ที่ Oriverse เปิดเผย
+7. Limits & Failure Modes: ฟังก์ชันไม่มี parameter ต้องเขียน func Name() ไม่ใช่ func Name {}; การขึ้นบรรทัดใหม่กลาง Expression ต้องทำตามกฎ continuation
+8. Verification: Expected: รูปแบบที่ถูกต้องผ่าน Syntax Check ส่วนรูปแบบผิดต้องเกิด Diagnostics. Actual: มีเอกสารยืนยันตัวอย่างข้อผิดพลาด แต่ยังไม่ได้ทดสอบคู่ดังกล่าวในรอบนี้
+9. Disclosure Status: Partially Documented / Full EBNF Undisclosed
+10. Research Gaps: Token grammar, precedence grammar, ambiguity resolution, comment syntax ทั้งหมด, formal AST schema และ parser conformance suite
+012 — Primitive Types และ Composite Types
+1. Direct Answer: เอกสารยืนยันชนิดข้อมูลที่ปรากฏใน API และการประกาศตัวแปร ได้แก่ Number, Bool, Text, Vector, Position, Object, Timer, Class Types และ List<T> แต่ยังไม่ยืนยันว่าเป็นรายการครบทั้งหมดของ Language Type System
+2. Architecture: Weave2 ใช้ชนิดข้อมูลที่ Compiler ตรวจสอบ และรองรับ typed class references สำหรับเข้าถึงสมาชิกเฉพาะ Class
+3. Source Evidence: weave2_migration, weave_compile_errors, built_in_function_list
+4. API Contract:
+Type
+	ตัวอย่าง
+	หลักฐาน
+	Number
+	var Health = 100
+	weave_language
+	Bool
+	var Enabled = false
+	weave_compile_errors
+	Text
+	Print("Hello")
+	Built-in API
+	Vector
+	PrintVector(Vector)
+	Built-in API
+	Position
+	List<Position>
+	Migration guide
+	Object
+	var Target: Object
+	Class examples
+	Timer
+	var TimerRef: Timer
+	List/type examples
+	List
+	List<Number>
+	Compiler diagnostics
+	Class reference
+	(target as ClassName)
+	Cross-class rules
+	5. Working Example:
+6. Execution Trace: Declaration → Compiler infers/checks Type → Runtime stores values → Operations enforce compatible types
+7. Limits & Failure Modes: Lists ที่ไม่มีข้อมูลเพียงพอสำหรับ Type Inference อาจเกิด W2C0620/W2C0621; List ที่มีชนิดไม่สอดคล้องกันอาจเกิด W2C0210
+8. Verification: Expected: List<Number> รับสมาชิกชนิด Number. Actual: เป็นข้อกำหนดในเอกสาร ยังไม่ได้รันทดสอบแยก
+9. Disclosure Status: Documented สำหรับชนิดที่กล่าวถึง; Undisclosed สำหรับรายการชนิดข้อมูลทั้งหมด
+10. Research Gaps: Type metadata, nullability, generics constraints, representation ของ Object และชนิดข้อมูลภายใน Bytecode
+013 — Variable Declaration, Scope และ Lifetime
+1. Direct Answer: Weave ใช้ var สำหรับประกาศตัวแปร และตัวแปรที่อยู่ภายใน Class ใช้เก็บสถานะของ Instance ส่วนตัวแปรภายในฟังก์ชันหรือ Event เป็นข้อมูลสำหรับการทำงานของ Handler นั้น
+2. Architecture: คู่มือ Runtime ระบุว่าการใช้งาน Wait() หรือ forever อาจพัก Execution Continuation ซึ่งต้องเก็บ Local Variables และ Call Scratch ไว้ระหว่างการรอ
+3. Source Evidence: weave_language, frame_and_scheduling_model
+4. API Contract: ตัวอย่าง:
+5. Working Example: โครงสร้างลักษณะนี้ใช้จริงใน Benchmark ผ่าน Class DoorLogic และตัวแปร Open
+6. Execution Trace: Instantiate object → Initialize class fields → Invoke event/function → Update instance state → Retain state between subsequent events
+7. Limits & Failure Modes: Continuations มีงบส่วนกลาง 262,144 slots ตามคู่มือ การใช้ Suspended Handlers มากเกินไปอาจทำให้เกิด continuation slot capacity exceeded
+8. Verification: Expected: Class field ยังคงค่าข้าม Event. Actual: Benchmark เคยตรวจว่าการเรียก Door Handler เพิ่มตัวนับการใช้งานได้ แต่ยังไม่ตรวจ lifetime ทุกกรณี เช่น destroy/reload
+9. Disclosure Status: Documented / Partially Verified
+10. Research Gaps: Lexical shadowing, closure capture, exact lifetime ของ Locals, heap/stack allocation และ Garbage Collection
+014 — Static Typing, Type Inference และ Casting
+1. Direct Answer: Weave2 มีการตรวจสอบชนิดข้อมูลขณะ Compile และรองรับ Type Inference รวมถึงการ Cast Object ไปยัง Class Type ที่คอมไพเลอร์รู้จัก
+2. Architecture: เมื่อใช้ Object Reference ทั่วไปเรียกสมาชิกเฉพาะ Class ต้องให้ Compiler รู้ชนิดของ Receiver ก่อน
+3. Source Evidence: weave2_migration, weave_compile_errors
+4. API Contract:
+5. Working Example: ใน Benchmark v0.1 เคยเกิด Assignment Type Mismatch ขณะกำหนด hud.Owner = Self และแก้เป็น hud.Owner = Self as player จน Compile ผ่าน
+6. Execution Trace: Parse assignment → Resolve receiver/target type → Check compatibility → Emit diagnostic หรือยอมรับโค้ด
+7. Limits & Failure Modes: Cross-class call ที่ไม่มี Typed Receiver อาจเกิด W2C0614; การอนุมาน List Type ที่ไม่เพียงพอเกิด W2C0620/W2C0621
+8. Verification: Expected: การ Cast อย่างถูกต้องแก้ Type Error. Actual: ผ่านจริงใน Benchmark รุ่นก่อนหน้า
+9. Disclosure Status: Documented + Experimentally Verified
+10. Research Gaps: Exact cast failure behavior, subtype relations, overload selection และ implicit numeric conversions
+015 — Class Inheritance, Interfaces และ Polymorphism
+1. Direct Answer: เอกสารยืนยันว่า Weave รองรับการประกาศ Class, Class-typed references, Methods และการผูก Class กับ Object แต่ยังไม่พบหลักฐานชัดเจนว่ารองรับ inheritance, interfaces หรือ virtual dispatch แบบ C#/Java
+2. Architecture: #class กำหนด fields/functions/events และ object Name : ClassName ใช้ Class นั้นควบคุม Instance
+3. Source Evidence: weave_language, weave_compile_errors → Cross-class
+4. API Contract: ตัวอย่าง (target as ClassName).TheFunc(...) แสดงการเรียก Method ของ Class อื่นผ่าน Typed Cast
+5. Working Example:
+นี่เป็นตัวอย่างตามกฎการประกาศ Class ไม่ใช่หลักฐานของ Inheritance
+6. Execution Trace: Object ถูกสร้าง → ผูก Class → เก็บ Fields → เรียก Methods/Events
+7. Limits & Failure Modes: หาก Receiver ยังเป็น Object ทั่วไป Compiler อาจปฏิเสธการเข้าถึงสมาชิกเฉพาะ Class
+8. Verification: Expected: Object ที่ผูก Class สามารถใช้ Methods ของตนเองได้; Actual: Pattern นี้ผ่านการใช้งานใน Benchmark ก่อนหน้า แต่ไม่ได้ทดสอบ inheritance/interface
+9. Disclosure Status: Documented สำหรับ Class Binding; Undisclosed สำหรับ Inheritance, Interfaces และ Polymorphism
+10. Research Gaps: Base classes, method overriding, dynamic dispatch, interface contracts และ generic class constraints
+016 — Lists, Maps, Object References และ Generics
+1. Direct Answer: Weave2 รองรับ Typed Lists เช่น List<Number>, List<Position>, List<Timer> และ Lists ของ Class References แต่เอกสารที่ตรวจสอบไม่ได้ยืนยันว่ามี Generic Collections ทุกประเภทหรือ Map/Dictionary แบบทั่วไป
+2. Architecture: Lists มี Element Type ที่ Compiler ใช้ตรวจความเข้ากันได้ ขณะที่ Object References ใช้อ้างถึง Instances และเข้าถึงสมาชิกตามชนิดที่ Compiler รู้จัก
+3. Source Evidence: weave2_migration, weave_compile_errors → Lists
+4. API Contract:
+ตามคู่มือ Contains/IndexOf รองรับ Lists บางชนิด แต่ไม่รองรับ List<Text> และ List<Timer> ในกรณีที่ระบุไว้
+5. Working Example:
+ตัวอย่างนี้เป็นโค้ดประกอบคำอธิบาย ยังไม่ได้ Compile ทดสอบโดยตรง
+6. Execution Trace: สร้าง List → กำหนด Element Type → เพิ่มหรืออ่านสมาชิก → ตรวจ Type Compatibility
+7. Limits & Failure Modes:
+* W2C0620/W2C0621: ไม่สามารถอนุมาน Element Type
+* W2C0210: List Literal หรือ Initializer ไม่ถูกต้อง
+* W2C0214: ไม่รองรับ Nested Lists แบบ List<List<T>>
+* W2C0614: Method ไม่รองรับกับ Element Type บางชนิด
+8. Verification: Expected: Typed Lists ที่ถูกต้องผ่าน Compiler และ Nested Lists ที่ไม่รองรับถูกปฏิเสธ; Actual: Documented แต่ยังไม่ได้ทดสอบแยกในรอบนี้
+9. Disclosure Status: Documented สำหรับ Typed Lists; Undisclosed สำหรับ Generic Type System แบบครบถ้วนและ Map API
+10. Research Gaps: Collection ownership, mutation semantics, indexing bounds, memory complexity และ iterator invalidation
+017 — Operator Precedence และ Numeric Conversion
+1. Direct Answer: คู่มือยืนยันว่า Scene Numeric Expressions รองรับ +, -, *, /, unary signs และ parentheses แต่ไม่ได้เผยแพร่ตาราง Operator Precedence ฉบับสมบูรณ์สำหรับทุก Expression ของ Weave
+2. Architecture: ค่าตัวเลขใน Weave ใช้ Deterministic 48.16 Fixed-point Representation ตามคู่มือ เพื่อให้การคำนวณเกมมีพฤติกรรมที่สอดคล้องกัน
+3. Source Evidence: weave_language
+4. API Contract: ตัวอย่าง Scene Expression:
+5. Working Example: Expression ดังกล่าวใช้ Operators ที่เอกสารระบุ แต่ยังไม่ได้ Compile ตัวอย่างนี้แยกต่างหาก
+6. Execution Trace: Parse Expression → ตรวจ Operands → ประเมินหรือเตรียมการคำนวณ → ได้ผลเป็น Number
+7. Limits & Failure Modes: Fixed-point 48.16 มีความละเอียดจำกัด ค่าทศนิยมที่เล็กมากอาจสูญเสีย Precision คู่มือแนะนำให้ใช้หน่วยที่เล็กลงเมื่อจำเป็น
+8. Verification: Expected: (100 * 4) ให้ค่า 400; Actual: เป็นผลทางคณิตศาสตร์ที่คาดหมาย แต่ยังไม่ได้ยืนยัน Compiler Evaluation ของตัวอย่าง
+9. Disclosure Status: Documented สำหรับ Operators ที่ระบุและ Fixed-point Format; Undisclosed สำหรับ Full Precedence Table และ Numeric Conversion Rules
+10. Research Gaps: Overflow handling, rounding mode, division semantics, implicit conversion, equality precision และ constant folding
+018 — Error Handling และ Runtime Exceptions
+1. Direct Answer: Weave มีระบบ Compiler Diagnostics ที่ระบุ Error Code และข้อความผิดพลาด รวมถึง Runtime Error สำหรับการเรียกใช้งานบางประเภทที่ไม่ถูกต้อง
+ยังไม่พบเอกสารยืนยันระบบ try/catch, exception objects หรือ user-defined exceptions แบบภาษาทั่วไป
+2. Architecture: จากหลักฐาน สามารถแยกความผิดพลาดเป็น Syntax/Type Errors ระหว่าง Compile และ Runtime Failures ระหว่าง Simulation
+3. Source Evidence: weave_compile_errors, weave2_migration
+4. API Contract: ตัวอย่าง Error Codes:
+Code
+	ความหมายตามกรณีที่คู่มือระบุ
+	W2C0107
+	Expression/Statement Syntax ผิด
+	W2C0210
+	List Literal หรือ Initializer ผิด
+	W2C0214
+	Nested Lists หรือ Legacy List Method
+	W2C0407
+	การ Assignment ที่ไม่อนุญาต เช่น Const
+	W2C0605
+	Unknown Function ในกรณี Migration
+	W2C0614
+	Type/API Usage Errors หลายประเภท
+	W2C0620/0621
+	List Type Inference ล้มเหลว
+	5. Working Example: การเขียน func Test { ... } โดยไม่ใส่ () เป็นตัวอย่าง Syntax Error ที่คู่มือระบุ
+6. Execution Trace: Compile → พบ Diagnostic → ปฏิเสธหรือหยุดขั้นตอน → ผู้พัฒนาแก้ Source → Compile ใหม่
+7. Limits & Failure Modes: Error Code เดียวกันอาจครอบคลุมหลายสาเหตุ เช่น W2C0614 จึงต้องอ่านข้อความ Diagnostic ทั้งหมด
+8. Verification: Expected: Compiler ปฏิเสธรูปแบบผิด; Actual: คู่มือยืนยันกรณีดังกล่าว และ Benchmark ก่อนหน้าเคยพบ Type Error จริง แต่ไม่ได้รันทดสอบ Error Matrix ครบทุก Code ในรอบนี้
+9. Disclosure Status: Documented / Partially Experimentally Verified
+10. Research Gaps: Exception propagation, error recovery, panic containment, stack traces, debugger hooks และการจัดหมวด Runtime Fault ทั้งหมด
+019 — เหตุใด Weave ไม่รองรับ Recursion และมีทางเลือกใด?
+1. Direct Answer: เอกสารระบุชัดเจนว่า Weave ไม่รองรับ Direct หรือ Mutual Recursion และ Compiler จะปฏิเสธ Function Call Cycles แต่ ไม่ได้เปิดเผยเหตุผลการตัดสินใจเชิงสถาปัตยกรรม ว่าเกิดจากข้อจำกัดใดโดยเฉพาะ
+2. Architecture: ฟังก์ชันสามารถเรียกฟังก์ชันอื่นได้ แต่ Call Graph ที่วนกลับมายังฟังก์ชันเดิมไม่ผ่าน Compilation
+3. Source Evidence: weave_language
+4. API Contract: คู่มือแนะนำให้ใช้ Iterative Loops หรือ List เป็น Explicit Stack
+5. Working Example:
+ตัวอย่างนี้แสดงแนวคิดการแทน Recursion ด้วย Loop แต่ไม่ได้ Compile ตรวจสอบแยกในรอบนี้
+6. Execution Trace: เริ่ม Loop → ตรวจเงื่อนไข → เปลี่ยน Value → วนจนถึง Limit → คืนการควบคุม
+7. Limits & Failure Modes: การใช้ Loop ที่ไม่สิ้นสุดภายใน Frame เดียวอาจชน SameFrameLoopBudgetExceeded ตามคู่มือ Runtime
+8. Verification: Expected: Recursive Call Cycle ถูก Compiler ปฏิเสธ; Actual: Documented, ยังไม่มีผลทดสอบ Compiler โดยตรงของกรณี Recursion ในรอบนี้
+9. Disclosure Status: Documented สำหรับข้อห้ามและทางเลือก; Undisclosed สำหรับเหตุผลภายใน
+10. Research Gaps: Call Graph Algorithm, Loop Budgets, Maximum Call Depth และแนวทางเปลี่ยน Recursive Algorithms ไปเป็น Iterative State Machines
+020 — Edge Cases ของ Type Checking และ Diagnostics
+1. Direct Answer: คู่มือ weave_compile_errors มีตัวอย่างหลายกลุ่มที่เหมาะสำหรับสร้าง Compiler Conformance Tests ได้แก่ Lists, Cross-class Access, Invalid Syntax และ Legacy APIs
+2. Architecture: สามารถจัดการทดสอบเป็น Positive Cases และ Negative Cases โดย Positive Cases ต้อง Compile ผ่าน ส่วน Negative Cases ต้องให้ Diagnostic ที่มีสาเหตุตรงกับสิ่งที่ทดสอบ
+3. Source Evidence: weave_compile_errors, weave2_migration
+4. API Contract และ 5. Working Example: ชุด Test Matrix ที่สกัดจากคู่มือ:
+Test ID
+	Input / Condition
+	Expected
+	T01
+	func Run {}
+	Syntax Error
+	T02
+	func Run() {}
+	Valid Syntax
+	T03
+	var X: List โดยไม่มีข้อมูลให้ infer
+	Type Inference Error
+	T04
+	var X: List<Number> = []
+	Valid Typed List
+	T05
+	List<List<Number>>
+	Unsupported Nested List
+	T06
+	Cross-class access ผ่าน Untyped Object
+	Type/Member Diagnostic
+	T07
+	Cross-class access พร้อม Typed Cast
+	Valid หากชนิดตรง
+	T08
+	Wait() ภายใน func
+	Compiler Error
+	T09
+	#set Weave2 0
+	Legacy Engine Rejected
+	T10
+	Direct/Mutual Recursion
+	Compiler Error
+	6. Execution Trace: Prepare test source → Compile → Collect Diagnostics → Compare Expected Codes/Messages → Record Result
+7. Limits & Failure Modes: Error Cascades อาจทำให้มี Diagnostics หลายรายการจากสาเหตุเดียว คู่มือแนะนำให้แก้ Error แรกของแต่ละ Class ก่อน Compile ใหม่
+8. Verification: Expected Results ในตารางอ้างอิงคู่มือจริง แต่ Actual Results ของ Test Matrix นี้ยังเป็น Not Run เพราะยังไม่ได้ส่งแต่ละ Test Case เข้า Compiler แยกกัน
+9. Disclosure Status: Documented / Test Execution Not Verified
+10. Research Gaps: ต้องสร้าง Automated Negative Test Harness ที่ Compile แต่ละกรณีใน Isolated Draft พร้อมเก็บ Compiler Version, Error Code, Line/Column และ Regression History
+________________
+
+
+TRR-02 — Research Summary
+หัวข้อ
+	สถานะ
+	011 Grammar / EBNF
+	Partially Documented
+	012 Types
+	Partially Documented
+	013 Scope / Lifetime
+	Partially Documented
+	014 Typing / Casting
+	Documented + Previously Verified
+	015 Inheritance / Interfaces
+	Undisclosed
+	016 Lists / Generics
+	Documented, Limited
+	017 Operators / Numeric Conversion
+	Partially Documented
+	018 Diagnostics / Exceptions
+	Partially Documented
+	019 Recursion
+	Documented
+	020 Edge Cases
+	Documented; Tests Not Run
+	ข้อค้นพบสำคัญ: Weave2 ไม่ได้เป็นเพียงภาษาสคริปต์แบบอิสระ แต่มี Type Checking, Deterministic Numeric Representation และข้อจำกัดของ Execution Model ที่ Compiler บังคับใช้ได้บางส่วน สิ่งเหล่านี้มีประโยชน์ต่อการออกแบบ KHOSAN Game IR และ Compiler Validation Layer
+สถานะงาน: ตอบครบ 10 ข้อจากเอกสาร Oriverse แล้ว โดยไม่มีการแก้ไขหรือส่ง World ใหม่ให้ Editor และยังไม่ถือว่าการทดสอบ Compiler Conformance Matrix ผ่าน เพราะไม่ได้รันทดสอบกรณีทั้งหมด
+ก่อนการทดลองรอบถัดไป ควร Reload Oriverse Editor เนื่องจากระบบแจ้งว่า Build 05Oct26-23:23 เก่ากว่า Build ปัจจุบัน
+การวิจัยลำดับถัดไป: หมวด 03 — Compiler, Bytecode & VM (ข้อ 021–030) โดยเน้นแยกสิ่งที่ Compiler เปิดเผยต่อผู้เขียนเกมออกจากรายละเอียดภายในที่ยังเป็น Undisclosed
+________________
+
+

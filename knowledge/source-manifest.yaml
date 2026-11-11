@@ -16,6 +16,45 @@ github_references:
     url: https://github.com/kongsak4807017/img2threejs
     role: core_3d_reconstruction
 
+oriverse_weave_research:
+  status: consolidated_audit_archived_original_chat_transcripts_incomplete
+  source_title: Oriverse Capability Audit
+  source_provider: google_docs
+  source_document_id: 137S6eGaPtZhMYkTQh-kE0ZtctXTRmcj9459sHL-TwcQ
+  captured: '2026-11-11'
+  report_source_characters: 452573
+  consolidated_parts: 21
+  question_ids_present: 200
+  coverage_register: knowledge/oriverse-research/questions.md
+  audit_manifest: knowledge/oriverse-research/CONSOLIDATED-AUDIT-MANIFEST.json
+  canonical_archive: knowledge/oriverse-research/consolidated-audit/
+  interpretation_notes: knowledge/oriverse-research/supplemental/MCP-Pipeline-Interpretive-Notes.txt
+  diagram_reconstruction: knowledge/oriverse-research/workflows/WORKFLOWS-16.md
+  original_tool_transcripts: incomplete
+  original_diagram_svg_zip: knowledge/oriverse-research/workflows/Oriverse_Capability_Audit_SVG_Workflows.zip
+  original_diagram_zip_sha256: fcf52504a98b4fdcd055eb8afabcd9c9a01a61db94ba6c3483682d385b796ec6
+  original_diagram_provenance: 'Earlier ChatGPT editorial SVG/DOT reconstructions, not original first-party Oriverse diagrams.'
+  caveat: 'Consolidated user research is not first-party documentation or new verification of runtime internals.'
+  dependency_policy: 'Historical research only: KHOSAN native independent; no Oriverse connection required.'
+
+ai_3d_harness_blueprint:
+  source_title: "AI 3D harness"
+  source_url: https://docs.google.com/document/d/1Cm8CkZoRbtwB5U71IJY5B9R2_sI9zfR7dr77wv9SG5I/edit
+  source_modified: "2026-11-11"
+  extracted_text_characters: 114348
+  github_blob_sha1: 8aa3da9a316291cc5632c8f5d12de4d45f36763d
+  archive_text: knowledge/oriverse-research/harness-blueprint/AI-3D-HARNESS-SOURCE.txt
+  source_review: knowledge/oriverse-research/harness-blueprint/README.md
+  derived_contract: docs/27-HARNESS-3D-EXECUTION-CONTRACT.md
+  native_evidence_gate: tools/harness-3d/gate.mjs
+  part7_review: docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md
+  differential_patch_policy: tools/ugir-geometry-linter/hard_lock_enforcer.py
+  differential_patch_tests: scripts/test_part7_hard_locks.py
+  source_latest_part7: '6 Hard Locks, Cryptographic Gatekeeper, Differential Patch Lock (source reviewed, not adopted verbatim)'
+  verification_tests: scripts/test-3d-harness.mjs
+  status: "full_source_text_archived_native_bounded_gate_tested_full_production_harness_not_complete"
+  restrictions: "source includes illustrative Oriverse proprietary runtime claims and mock Visual Critic PASS; do not adopt unverified behavior or treat this document as executable production proof"
+
 project_source_documents:
   - file: KHOSAN_Studio_Deployment_and_Operations_Manual.md
     status: pending_verbatim_mirror

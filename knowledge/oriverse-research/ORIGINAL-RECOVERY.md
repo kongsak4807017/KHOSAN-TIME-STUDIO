@@ -1,6 +1,6 @@
 # Original-full-text recovery procedure
 
-**Current status: BLOCKED ON COMPLETE ORIGINAL TRANSCRIPT.** The project chat contains research TRR-01–TRR-20 (questions 001–200), but GitHub currently contains only an index and a 200-ID register. A conversation summary or regenerated response is not an original transcript.
+**Original message recovery status: STILL INCOMPLETE.** The user's consolidated 452,573-character Google Doc audit for TRR-01–TRR-20 (questions 001–200) **is now preserved in GitHub**, see [consolidated audit](consolidated-audit/) and [manifest](CONSOLIDATED-AUDIT-MANIFEST.json). But a consolidated report is not the exact original ChatGPT conversation/tool transcript with message IDs. Recover those separately as specified below; never mislabel the audit as verbatim message history.
 
 ## Accepted input
 - Original ChatGPT data export (`conversations.json`) containing the complete Oriverse/Weave research conversation, **or** a verbatim Markdown/plain-text export of the entire original conversation.

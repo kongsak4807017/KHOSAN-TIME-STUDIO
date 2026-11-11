@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khosan.studio/contracts/3d-verification-evidence.v1.schema.json",
+  "title": "KHOSAN 3D Native Evidence Gate v1 (fail-closed)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "project_id",
+    "task_id",
+    "asset_id",
+    "source_revision",
+    "reference_mode",
+    "maker",
+    "renderer",
+    "reviewer",
+    "technical",
+    "artifacts",
+    "human_approval"
+  ],
+  "properties": {
+    "schema": {
+      "const": "khosan.3d.verification.v1"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "asset_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reference_mode": {
+      "enum": [
+        "reference",
+        "original"
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_seam_gap_cm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.1
+        },
+        "max_camera_blocked_frac": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2
+        },
+        "max_vertices": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      }
+    },
+    "maker": {
+      "$ref": "#/$defs/agentIdentity"
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "session_id",
+        "run_id",
+        "isolated_session",
+        "verdict",
+        "defects",
+        "reviewed_contact_sha256",
+        "signature_base64"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isolated_session": {
+          "const": true
+        },
+        "verdict": {
+          "const": "ACCEPT"
+        },
+        "defects": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "reviewed_contact_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "reviewed_reference_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "signature_base64": {
+          "type": "string",
+          "minLength": 32
+        }
+      }
+    },
+    "technical": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_revision",
+        "tool_id",
+        "run_id",
+        "compile_exit_code",
+        "floating_count",
+        "piercing_count",
+        "max_seam_gap_cm",
+        "max_camera_blocked_frac",
+        "vertex_count"
+      ],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tool_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compile_exit_code": {
+          "const": 0
+        },
+        "floating_count": {
+          "const": 0
+        },
+        "piercing_count": {
+          "const": 0
+        },
+        "max_seam_gap_cm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.1
+        },
+        "max_camera_blocked_frac": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2
+        },
+        "vertex_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ugir_json",
+        "glb",
+        "contact_sheet_png"
+      ],
+      "properties": {
+        "ugir_json": {
+          "$ref": "#/$defs/artifact"
+        },
+        "glb": {
+          "$ref": "#/$defs/artifact"
+        },
+        "contact_sheet_png": {
+          "$ref": "#/$defs/artifact"
+        },
+        "reference": {
+          "$ref": "#/$defs/artifact"
+        }
+      }
+    },
+    "human_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approved",
+        "approval_reference",
+        "approved_by",
+        "asset_id",
+        "approved_glb_sha256",
+        "signature_base64"
+      ],
+      "properties": {
+        "approved": {
+          "const": true
+        },
+        "approval_reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_glb_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "signature_base64": {
+          "type": "string",
+          "minLength": 32
+        }
+      }
+    },
+    "renderer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "renderer_id",
+        "run_id",
+        "source_revision",
+        "rendered_glb_sha256",
+        "contact_sheet_sha256",
+        "reference_sha256",
+        "views_rendered",
+        "camera_ids",
+        "signature_base64"
+      ],
+      "properties": {
+        "renderer_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_revision": {
+          "$ref": "#/$defs/hash"
+        },
+        "rendered_glb_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "contact_sheet_sha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "reference_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "views_rendered": {
+          "const": 16
+        },
+        "camera_ids": {
+          "type": "array",
+          "minItems": 16,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "signature_base64": {
+          "type": "string",
+          "minLength": 32
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "reference_mode": {
+            "const": "reference"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "required": [
+              "reference"
+            ]
+          },
+          "reviewer": {
+            "required": [
+              "reviewed_reference_sha256"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "reference_mode": {
+            "const": "reference"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "renderer": {
+            "properties": {
+              "reference_sha256": {
+                "$ref": "#/$defs/hash"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "reference_mode": {
+            "const": "original"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "renderer": {
+            "properties": {
+              "reference_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "agentIdentity": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "session_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    }
+  }
+}

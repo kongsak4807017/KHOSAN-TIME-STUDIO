@@ -1,0 +1,264 @@
+Oriverse / Weave Technical Research Record — TRR-05
+หมวด 05: Scene Graph & Object Lifecycle | ข้อ 041–050 | 8 ตุลาคม 2569
+ผมตรวจสอบเอกสารจากตัวเชื่อมต่อ Oriverse โดยตรงแล้ว ได้แก่ weave_coding หัวข้อ object_types, saved_objects, attachments, tags, events, event_list, frame_and_scheduling_model, world_description_information, persistent_state_v1 และ multiplayer_guidance
+ข้อค้นพบสำคัญ: Weave มีระบบประกาศวัตถุและสร้างวัตถุระหว่าง Runtime มีความสัมพันธ์แบบ Parent–Child ผ่าน Attachments และมีระบบ Tags, Spatial Queries และ Persistence แต่ยังไม่พบเอกสารเปิดเผยโครงสร้างภายในของ World Registry เช่น Object ID Encoding, ECS Archetypes, Component Storage หรือ Memory Allocator
+World Object Lifecycle — ตามข้อมูลที่เปิดเผย
+ผังเชิงแนวคิด ไม่ใช่การรับรองลำดับ Cleanup ภายในทั้งหมด โดยเฉพาะกรณี Destroy ระหว่าง Event Dispatch
+041 — Scene Graph หรือ World Registry จัดเก็บ Object อย่างไร?
+1. Direct Answer: เอกสารยืนยันว่า Weave อ้างอิงวัตถุในโลกผ่าน Scene.Name, Object References, Tags และ Object Queries แต่ยังไม่เปิดเผยว่า World Registry ใช้ Array, Hash Table, ECS หรือโครงสร้างข้อมูลอื่น
+2. Architecture: World Description ประกาศ Scene Objects ซึ่งถูกสร้างเป็น Runtime Objects และสามารถเข้าถึงได้ผ่าน References ส่วน Object ที่สร้างระหว่างเล่นสามารถเก็บ Reference ไว้ใน Class Fields
+3. Source Evidence: weave_language, object_types, tags
+4. API Contract: Scene.Name ใช้อ้างถึง Named Scene Object; GetAllObjectsWithTag(Tag) ใช้ค้นวัตถุตาม Tag; GetAllPlayers() คืนผู้เล่นที่มีอยู่
+5. Working Example:
+6. Execution Trace — Expected: อ่าน Declaration → สร้าง Object → ผูกชื่อและ Tag → สามารถค้นผ่าน Scene.VillageHouse หรือ Query ตาม Tag
+7. Limits & Failure Modes: การ Query วัตถุจำนวนมากทุก Frame มีต้นทุนสูง คู่มือแนะนำการกระจายความถี่ Query หรือใช้ Nearest-object Queries ในกรณีเหมาะสม
+8. Verification: Expected: Named Object และ Tagged Object สามารถอ้างอิงได้; Actual: เอกสารรองรับ แต่ยังไม่ได้ทดสอบ World Registry โดยแยกจากเกมอื่น
+9. Disclosure Status: Public Reference/Query Model Documented; Internal Registry Implementation Undisclosed
+10. Research Gaps: Object ID Format, Allocation Strategy, Lookup Complexity, Registry Consistency และ ECS/Scene Graph Relationship
+042 — object, display, physics, saved และ region ต่างกันอย่างไร?
+1. Direct Answer: เอกสาร object_types ให้ความแตกต่างชัดเจนดังนี้
+Keyword
+	Runtime Type / บทบาท
+	Collision
+	object
+	WorldObject สำหรับวัตถุทั่วไป
+	Static และชนได้โดยค่าเริ่มต้น
+	display
+	DisplayObject สำหรับการแสดงภาพ
+	ไม่มี Collision
+	physics
+	PhysicsObject เริ่มเป็น Dynamic Body
+	มี Collision โดยค่าเริ่มต้น
+	saved
+	นิยาม Object Template เพื่อ Spawn ภายหลัง
+	ขึ้นกับชนิด Object ภายใน
+	region
+	RegionObject สำหรับตรวจการเข้า/ออกหรือ Overlap
+	ไม่มี Solid Collision
+	2. Architecture: การเลือก Keyword มีผลต่อความสามารถของวัตถุ เช่น DisplayObject ไม่รองรับ Touch/Click Interaction และไม่ตอบสนองต่อ Forces
+3. Source Evidence: object_types, saved_objects, events
+4. API Contract: saved X { object Y : Class { ... } } เป็นรูปแบบที่รองรับ โดย Saved Template ต้องมี Root Object/Group เพียงหนึ่งรายการ
+5. Working Example:
+6. Execution Trace: Scene Loader สร้าง Object ตามชนิด; PhysicsObject เข้าสู่ Dynamic Physics; DisplayObject ใช้แสดงภาพโดยไม่มี Solid Collider
+7. Limits & Failure Modes: การสร้างกำแพงเป็น display จะทำให้ผู้เล่นเดินทะลุได้ หากต้องการให้ชนจริงต้องใช้ Collider อีกชั้นหรือเลือก object
+8. Verification: Expected: object ชนได้ ส่วน display ไม่ชน; Actual: Documented แต่ยังไม่รันทดสอบตัวอย่างแยก
+9. Disclosure Status: Documented
+10. Research Gaps: Component Layout ของ Object Types, Internal Collider Registration และ Costs ต่อ Instance
+043 — Object Identity และ Reference มีอายุการใช้งานอย่างไร?
+1. Direct Answer: Weave มี Object References และสามารถตรวจสถานะเชื่อมต่อของ PlayerObject ได้ แต่ยังไม่มีเอกสารเปิดเผย Object Identity Scheme หรือ Reference Invalidation Semantics ครบถ้วน
+2. Architecture: Scene Objects ใช้ Named References; Runtime Objects สามารถเก็บเป็น Object References; PlayerObject มี Reconnect Grace Period ประมาณ 90 วินาที
+3. Source Evidence: multiplayer_guidance, persistent_state_v1
+4. API Contract: GetAllPlayers(), IsConnected(), Exists() และ GetPlayerIndex() เป็น API ที่คู่มือกล่าวถึง โดยแนะนำไม่ใช้ Display Name เป็น Unique Identity
+5. Working Example:
+6. Execution Trace: Player Join → สร้าง PlayerObject → Disconnect → IsConnected() เป็น false → เก็บ Object ใน Grace Period → Destroy เมื่อหมดระยะเวลาหรือยุติเซสชันตามเงื่อนไข
+7. Limits & Failure Modes: GetPlayerName() ไม่ใช่ Unique Identifier; การอ้างอิง Index แบบตายตัวอาจผิดพลาดเมื่อผู้เล่นเข้า/ออก
+8. Verification: Expected: Disconnect แล้ว PlayerObject ยังอยู่ชั่วคราว; Actual: เป็นพฤติกรรมตามคู่มือ ยังไม่ได้ทดสอบ Reconnect Window จริง
+9. Disclosure Status: Player Identity/Lifecycle Documented; Internal Object Identity Undisclosed
+10. Research Gaps: Generation Counters, Object Handle Reuse, Dangling References, Garbage Collection และ Identity Across Saves
+044 — Spawn, Clone, Destroy และ Cleanup มีลำดับอย่างไร?
+1. Direct Answer: คู่มือให้ข้อกำหนดสำคัญว่า SpawnObject() ส่งคืน Object Reference ที่ใช้ได้ทันที แต่ OnPreSpawn และ OnSpawned ของ Object ใหม่นั้นจะเข้าสู่การประมวลผลใน Tick ถัดไป
+ส่วนการ Clone ใช้ Saved Templates เป็นกลไกการสร้างวัตถุซ้ำ ขณะที่ Cleanup หลัง Destroy ยังไม่มีรายละเอียดครบทุกกรณี
+2. Architecture: Source/Template → Spawn Request → Runtime Object Reference → Deferred Spawn Events → Active Object → Destroy
+3. Source Evidence: events, saved_objects, attachments
+4. API Contract: SpawnObject(SavedObject.X, Position) เป็นรูปแบบที่มีเอกสารตัวอย่าง; Destroy() ใช้ลบ Object; OnDestroy เป็น Lifecycle Event
+5. Working Example:
+6. Execution Trace — Expected: SpawnObject → ได้ Reference ทันที → Tick ถัดไปประมวลผล OnPreSpawn → OnSpawned → Object ทำงานตามปกติ
+7. Limits & Failure Modes: การคาดว่า OnSpawned ของ Child ทำงานแล้วทันทีหลัง SpawnObject() เป็นความเข้าใจผิด และลำดับ Spawn ระหว่าง Objects ไม่รับประกัน
+8. Verification: Expected: Spawn Events เกิดใน Tick ถัดไป; Actual: Documented, ไม่ได้รันทดสอบเฉพาะกรณี
+9. Disclosure Status: Spawn Timing Documented; Complete Destroy/Cleanup Ordering Undisclosed
+10. Research Gaps: Clone Semantics, Destruction Queue, Reference Invalidation และ Event Cancellation
+045 — Parent–Child Transforms และ Coordinate Spaces รองรับอย่างไร?
+1. Direct Answer: Oriverse รองรับการเชื่อมวัตถุแบบ Parent–Child ผ่าน AttachTo, AttachToAnchor และ Detach โดย Child จะเคลื่อนที่และหมุนตาม Parent ในแต่ละ Tick
+2. Architecture: Attachment ใช้ความสัมพันธ์ของ Object References ไม่จำเป็นต้องเขียน Loop คัดลอกตำแหน่งทุก Frame สามารถประกอบเป็นลำดับชั้น เช่น Vehicle → Turret → Weapon ได้
+3. Source Evidence: weave_coding → attachments, movement_laws, world_description_information และ API Lookup ของ AttachTo
+4. API Contract:
+API
+	ความหมาย
+	Object.AttachTo(Parent: Object)
+	ติดตาม Parent โดยรักษา Relative Pose ปัจจุบัน
+	Object.AttachTo(Parent: Object, LocalPosition: Position, LocalRotation: Vector)
+	กำหนด Relative Transform อย่างชัดเจน
+	Object.AttachToAnchor(Parent: Object, AnchorName: Text)
+	ยึดกับ Model Anchor
+	Object.Detach()
+	ถอด Attachment โดยรักษา World Transform
+	Object.GetAttachParent() -> Object
+	คืน Parent หรือ Object ที่ไม่มีอยู่หากไม่ได้ Attach
+	5. Working Example: ตัวอย่างที่คู่มือให้ไว้:
+โค้ดนี้เป็นการดัดแปลงตัวอย่าง Attachment จากคู่มือ แต่ยังไม่ได้ Compile เป็นเกมสมบูรณ์ในรอบนี้
+6. Execution Trace — Expected: Create objects → Attach Turret → Parent moves/rotates → Child follows Parent Transform → Detach → Child retains last World Transform
+7. Limits & Failure Modes: Child ต้องไม่มี Collision; Attachment Cycles และความลึกมากกว่า 16 ระดับเกิด Error การ Destroy Parent จะ Detach Children ให้อยู่ที่ World Transform ล่าสุด ไม่ได้ลบ Children ตามไปด้วยโดยอัตโนมัติ
+8. Verification: Expected: เมื่อ TankBody เคลื่อนที่ Turret เคลื่อนที่ตาม; Actual: Documented, ยังไม่ได้รัน Attachment Test แยก
+9. Disclosure Status: Documented สำหรับ Attachment API และ Constraints; Internal Transform Hierarchy Storage Undisclosed
+10. Research Gaps: Matrix Composition Algorithm, Dirty Transform Propagation, Transform Cache, Bone-to-Object Attachment Internals และ Hierarchical Culling
+046 — Scene Loading และ World Transitions ทำงานอย่างไร?
+1. Direct Answer: เอกสารยืนยันว่ามีระบบ World Loading, World Readiness, Game Restart และการเปลี่ยนพื้นที่ผ่าน Portal/Travel Events แต่ยังไม่เปิดเผย Internal Scene Streaming Pipeline ทั้งหมด
+2. Architecture: เมื่อโหลด World ระบบสร้าง Scene Objects และเริ่ม Spawn Events จากนั้น OnWorldReady ทำงานเมื่อ OnSpawned ของ Scene Objects ทั้งหมดได้เริ่มประมวลผลแล้ว ไม่ได้หมายความว่า Handler ทุกตัวทำงานจนจบหากมีการ Wait()
+3. Source Evidence: events, event_list, persistent_state_v1
+4. API Contract: event OnWorldReady, IsWorldReady(), RestartGame(), PortalOpened, PortalFailed, TravelArrived และ TravelFailed
+5. Working Example:
+6. Execution Trace — Expected: Load World → Spawn Scene Objects → Start OnSpawned Handlers → World Ready Condition → OnWorldReady → Gameplay/Transition Events
+7. Limits & Failure Modes: OnWorldReady ไม่รับรองว่า Async-like Work ภายใน Handler ที่พักด้วย Wait() จบแล้วทั้งหมด
+8. Verification: Expected: World Ready Event เกิดหลังการเริ่ม Spawn Handlers; Actual: Documented, ยังไม่ได้ทดลอง World Transition ด้วย Portal ในรอบนี้
+9. Disclosure Status: World Readiness Documented; Internal Loading/Streaming Undisclosed
+10. Research Gaps: Streaming Boundaries, Asset Prefetch, Cross-world Object References, Transition Atomicity และ Failure Recovery
+047 — Prefab หรือ Reusable Object Composition มีอย่างไร?
+1. Direct Answer: Weave มีระบบ saved ที่ทำหน้าที่ใกล้เคียง Prefab Template สำหรับเก็บวัตถุหรือกลุ่มวัตถุ แล้ว Spawn ซ้ำใน Runtime
+2. Architecture: saved Definition → SavedObject.Name → SpawnObject() → Runtime Instance
+3. Source Evidence: saved_objects, events และ API Lookup SpawnObject
+4. API Contract:
+Saved Template ต้องมี Root Object หรือ Root Group เพียงหนึ่งรายการ และ Class ต้องประกาศบน Object ภายใน ไม่ใช่บน saved โดยตรง
+5. Working Example:
+6. Execution Trace — Expected: Resolve Saved Template → Spawn Object → Return Object Reference ทันที → Process Spawn Events ใน Tick ถัดไป
+7. Limits & Failure Modes: การเขียน saved X : ClassName {} เป็น Syntax Error และห้ามมี Root Objects มากกว่าหนึ่งภายใน Template
+8. Verification: Expected: SpawnObject สร้าง Instance จาก Template; Actual: เป็นข้อกำหนดจากคู่มือ ยังไม่ได้ Compile ตัวอย่าง CrateSpawner แยก
+9. Disclosure Status: Documented
+10. Research Gaps: Template Serialization, Override Inheritance, Nested Template Composition, Live Prefab Updating และ Instance Diff Tracking
+048 — Object Tags และ Spatial Queries มีโครงสร้างอย่างไร?
+1. Direct Answer: Weave รองรับ Tags ที่ผู้เขียนตั้งชื่อได้เองโดยไม่ต้องประกาศล่วงหน้า โดยมีข้อจำกัดสูงสุด 64 Tag Names ต่อ World และมี Spatial Query APIs สำหรับค้นวัตถุ
+2. Architecture: เอกสารระบุว่า Tag Queries ใช้ Tag-indexed Lookup ส่วน Nearest-object Query เหมาะสำหรับการค้นหาเป้าหมายทุก Frame มากกว่าการสร้าง List ของวัตถุทั้งหมดซ้ำ ๆ
+3. Source Evidence: tags, frame_and_scheduling_model, API Lookup GetAllObjectsWithTag, NearestObjectWithTagNotOnTeam
+4. API Contract:
+API
+	Return / Constraint
+	Object.AddTag(Tag: Number)
+	เพิ่ม Tag
+	Object.RemoveTag(Tag: Number)
+	ลบ Tag
+	GetAllObjectsWithTag(Tag: Number) -> List
+	คืน List ใหม่ทุกครั้ง
+	AnyBasicType.NearestObjectWithTagNotOnTeam(Tag: Number, TeamId: Number, MaxDistance: Number) -> Object
+	คืน Object ใกล้ที่สุดหรือ Object ที่ไม่มีอยู่
+	5. Working Example:
+6. Execution Trace — Expected: Tag Assigned → Query Tag Index → Filter by Team and Range → Return Nearest Matching Object
+7. Limits & Failure Modes: Tag Name ลำดับที่ 65 ทำให้ Compile ล้มเหลวตามคู่มือ และการสร้าง List จาก GetAllObjectsWithTag ทุก Frame อาจเพิ่ม Allocation Overhead
+8. Verification: Expected: Query ค้น Object ตาม Tag และเงื่อนไขระยะ; Actual: Documented, ยังไม่ได้รัน Benchmark Spatial Query โดยตรง
+9. Disclosure Status: Public Tag/Query Behavior Documented; Internal Spatial Index Undisclosed
+10. Research Gaps: Spatial Index Type, Nearest-neighbor Algorithm, Update Complexity, Query Ordering และ Memory Footprint
+049 — ข้อจำกัดจำนวน Object และ Component ต่อ World
+1. Direct Answer: ไม่พบค่าเดียวที่ใช้เป็น Hard Limit ของ Object ทั้งหมดใน World แต่คู่มือระบุข้อจำกัดและ Performance Guidance สำหรับบางประเภทอย่างชัดเจน
+2. Architecture: ต้นทุนของวัตถุขึ้นกับลักษณะการประมวลผล เช่น Collision, Event Dispatch, Crowd Avoidance, Continuations และ Multiplayer State
+3. Source Evidence: frame_and_scheduling_model, object_types, tags, attachments
+4. API Contract และ Limits:
+Resource
+	ข้อมูลจากคู่มือ
+	ประเภทของข้อจำกัด
+	Tag Names
+	สูงสุด 64 ต่อ World
+	Hard Limit
+	Attachment Depth
+	ไม่เกิน 16 ระดับ
+	Hard Limit
+	Continuation Slots
+	262,144 Slots ส่วนกลาง
+	Resource Budget
+	Always-active Objects
+	หลายร้อยตัวเริ่มมี Dispatch Overhead
+	Performance Guidance
+	Regular Colliding Objects
+	ราว 500 ตัวเริ่มชนข้อจำกัดด้าน Collision Pairs
+	Performance Guidance
+	Climbing Crowd
+	แนะนำสำหรับฝูงจำนวน 1,000+
+	Architecture Guidance
+	Object Size
+	Static 500 m, Dynamic 100 m, Display-only 1 km ต่อแกน
+	Size Clamp
+	5. Working Example: สำหรับเกมที่มี NPC จำนวนมาก คู่มือแนะนำให้ใช้ walker สำหรับประชากรเดินทั่วไป, crowd เมื่อจำเป็นต้องหลบหลีก และ climbingCrowd สำหรับ Swarm บางประเภท
+6. Execution Trace: Spawn Objects → Register Appropriate Simulation Systems → Tick Dispatch → Physics/Crowd Processing → Rendering
+7. Limits & Failure Modes: การ Spawn Object จำนวนมากไม่จำเป็นต้องล้มเหลวทันที แต่อาจทำให้ Frame Time สูง, Collision Pairs เพิ่ม หรือ Continuation Budget หมด
+8. Verification: Expected: ประสิทธิภาพลดลงตามจำนวนวัตถุและระบบที่ใช้งาน; Actual: ข้อมูลข้างต้นมาจากคู่มือ ยังไม่ได้รัน Load Test เพื่อวัด Scaling บนอุปกรณ์ปัจจุบัน
+9. Disclosure Status: Published Constraints Documented; Global Object Hard Limit Undisclosed
+10. Research Gaps: Maximum World Entities, Component Counts, Memory per Object, Entity Pool Capacity และ Device-specific Scaling Curves
+050 — Lifecycle Test ครอบคลุม Spawn, Update และ Destruction
+1. Direct Answer: สามารถออกแบบชุดทดสอบ Lifecycle ของ Weave โดยใช้ SpawnObject(), OnPreSpawn, OnSpawned, Update, Destroy() และ OnDestroy เพื่อยืนยันลำดับและความปลอดภัยของ Object Lifecycle
+คู่มือ additional_notes ยังเปิดเผยพฤติกรรมสำคัญเพิ่มเติมว่า Destroy() จะจบ Function Body ปัจจุบัน แต่ Caller สามารถทำงานต่อใน Frame เดียวกันได้ อีกทั้ง Object Slots ถูกนำกลับมาใช้ผ่าน Engine Pooling
+2. Architecture: ควรทดสอบแยกเป็นวงจร Creation → Initialization → Active Update → Destruction → Reference Validation → Respawn
+3. Source Evidence: events, event_list, saved_objects, additional_notes และ API Signatures ของ SpawnObject / Destroy
+4. API Contract:
+โดย OnPreSpawn, OnSpawned, Update และ OnDestroy เป็น Built-in Events
+5. Working Example: ตัวอย่างสำหรับใช้สร้าง Isolated Lifecycle Test World:
+นี่เป็น Test Fixture ที่เขียนขึ้นจาก API และ Syntax ที่มีเอกสารรองรับ ยังไม่ได้ Compile หรือ Playtest ในรอบนี้ จึงไม่อ้างว่าเป็น Working Example ที่ตรวจผ่านแล้ว
+6. Execution Trace — Expected:
+ช่วง
+	Expected Event
+	ผลที่ต้องตรวจ
+	Scene Load
+	MANAGER_SPAWNED
+	Manager เริ่มทำงาน
+	Spawn Request
+	SpawnObject()
+	คืน Object Reference
+	Next Tick
+	ENTITY_PRESPAWN
+	เรียกก่อน OnSpawned
+	Spawn Phase
+	ENTITY_SPAWNED
+	Initialization ทำงาน
+	Active Runtime
+	Update
+	Ticks เพิ่มขึ้น
+	เมื่อ Ticks = 3
+	ENTITY_DESTROY_REQUEST
+	เรียก Destroy
+	Destruction
+	ENTITY_DESTROYED
+	OnDestroy ทำงาน
+	หลัง Despawn
+	Exists() = false
+	ไม่ควรเรียก Members บน Object ที่ไม่มีอยู่
+	7. Limits & Failure Modes: การเรียก Method บน Object ที่ไม่มีอยู่หรือถูก Despawn แล้วเป็น Runtime Error ตามคู่มือ การเก็บ Reference ข้าม Wait() ต้องตรวจ Exists() ใหม่หลังกลับมาทำงาน ส่วนการเรียก Destroy() ซ้ำก่อน Queued Despawn ถูกประมวลผลเป็นกรณีที่คู่มืออนุญาต
+8. Verification
+Expected: Lifecycle Logs ปรากฏตามข้อกำหนด และไม่มี Unexpected Runtime Error
+Actual: Not Run — ไม่มีผล Compiler หรือ Runtime Test ของ Fixture นี้ในรอบปัจจุบัน
+9. Disclosure Status: Public Lifecycle Behavior Documented; Fixture Not Verified; Internal Cleanup/Pooling Algorithm Undisclosed
+10. Research Gaps: Destruction Event Timing, Reference Generation Safety, Object Slot Reuse, Continuation Cancellation และ Parent–Child Cleanup Under Destruction
+________________
+
+
+TRR-05 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	041
+	Scene Graph / World Registry
+	Public API Documented; Internals Undisclosed
+	042
+	Object Types
+	Documented
+	043
+	Object Identity / References
+	Partially Documented
+	044
+	Spawn / Destroy / Cleanup
+	Partially Documented
+	045
+	Parent–Child Transforms
+	Documented
+	046
+	Scene Loading / Transitions
+	Partially Documented
+	047
+	Saved Templates / Prefabs
+	Documented
+	048
+	Tags / Spatial Queries
+	Documented
+	049
+	Object Limits / Scaling
+	Partially Documented
+	050
+	Lifecycle Test
+	Test Designed; Not Run
+	ข้อเท็จจริงสำคัญที่ยืนยันได้
+Oriverse รองรับ Typed Object Categories, Runtime Spawn จาก Saved Templates, Attachment Hierarchies, Tag-indexed Queries, Scene References และ Object Pooling พร้อมข้อจำกัดที่ประกาศ เช่น 64 Tags ต่อ World และ Attachment Depth สูงสุด 16 ระดับ
+นอกจากนี้ SpawnObject() คืน Reference ก่อน Spawn Events ทำงาน โดย Spawn Events ถูกจัดการใน Tick ถัดไป และ Destroy() มีผลต่อการจบ Function Body ปัจจุบันตามคู่มือ
+ข้อเสนอสำหรับ KHOSAN Studio
+จากการศึกษานี้ ผมเสนอให้ KHOSAN Game Runtime มี Entity Registry ที่กำหนด Entity ID พร้อม Generation Counter, Scene/Prefab Registry, Transform Hierarchy, Spatial Index, Deferred Destruction และ Lifecycle Event Contract อย่างชัดเจน รวมถึงชุดทดสอบ Object Slot Reuse เพื่อป้องกัน Stale Handles
+ทั้งหมดนี้เป็น ข้อเสนอทางสถาปัตยกรรมสำหรับระบบของเราเอง ไม่ใช่การอ้างว่า Oriverse ใช้โครงสร้างเดียวกันภายใน
+สถานะ TRR-05: Documentation Research Completed / Lifecycle Test Execution Pending.
+ไม่มีการแก้ไขหรือ Publish เกม Oriverse ระหว่างการศึกษานี้ ขณะตรวจสอบ Editor ยังใช้ Build 05Oct26-23:23 ซึ่งควร Reload ก่อนดำเนินการทดสอบเชิงปฏิบัติการครั้งถัดไป
+หมวดวิจัยถัดไปคือ 06 — Physics, Collision & Movement (ข้อ 051–060) ซึ่งสามารถตรวจได้ลึกขึ้นด้วย Physics and Movement API, Collision Behaviour และชุด Simulation Test ที่ใช้วัดผลจริง
+________________
+
+

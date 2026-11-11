@@ -1,0 +1,272 @@
+Oriverse / Weave Technical Research Record — TRR-08
+หมวด 08: State, Persistence & Save System | คำถาม 071–080 | 8 ตุลาคม 2569
+ผมตรวจสอบเอกสารผ่าน Oriverse โดยตรง ได้แก่ weave_coding → persistent_state_v1, inventory, multiplayer_guidance, example_html_game_saves, example_persistent_rpg และ multi_stage_projects รวมทั้งตรวจ Signature ของ Save APIs ผ่านรายการ Built-in Functions
+ข้อค้นพบสำคัญ: Oriverse มีระบบ Persistence ทั้งระดับ World, Player, Inventory, Stage และ Personal Save โดยแยกข้อมูลที่บันทึกถาวรออกจาก Runtime State ชัดเจน มีการตรวจ Compatibility เมื่ออัปเดตเกม และมีเครื่องมือจัดการ Save Conflict แต่ยังไม่เปิดเผย Binary Save Format, Database Schema, Transaction Isolation หรือ Cloud Synchronization Protocol ทั้งหมด
+Oriverse Persistence Architecture — โครงสร้างเชิงหน้าที่
+ผังนี้อธิบายความรับผิดชอบที่เอกสารกล่าวถึง ไม่ใช่การเปิดเผยโครงสร้าง Database หรือ Storage Engine ภายใน
+071 — State ของ World และ Player ถูกจัดเก็บแยกกันอย่างไร?
+1. Direct Answer: Oriverse ให้ประกาศข้อมูลถาวรด้วย @persist var ภายใน Class โดย State ของ Player อยู่บน #class player แต่ละ Instance ขณะที่ Shared World State อยู่บน Scene Objects/Manager Objects ที่มี Class ของตนเอง
+คู่มือระบุว่า Hosted Worlds จะคืนค่า Tagged Player Fields ตาม User Identity ก่อน Initialization และคืนค่าของผู้เล่นที่ไม่ได้อยู่ในโลกเมื่อผู้เล่นกลับเข้ามา
+2. Architecture: Player State เป็นข้อมูลประจำ PlayerObject ส่วน Shared State เป็นข้อมูลของ Objects ที่ผู้เล่นทุกคนใช้ร่วมกัน โดยมี Persistence Layer จัดการการคืนค่าตามชนิดและเจ้าของข้อมูล
+3. Source Evidence: persistent_state_v1, multiplayer_guidance, example_persistent_rpg
+4. API Contract:
+รองรับ Class-scope Fields ที่มีชนิดข้อมูลตามข้อกำหนด Persistence และต้องรักษาชื่อ/ชนิดของ Fields เพื่อ Compatibility
+5. Working Example: ตัวอย่างจาก example_persistent_rpg:
+6. Execution Trace — Expected: Load Hosted World → Restore Player Fields by Identity → Initialize PlayerObject → Restore Shared Camp State → Gameplay Continues
+7. Limits & Failure Modes: ไม่ควรเก็บ Coins ของผู้เล่นหลายคนใน Shared Manager Scalar เพราะทุกคนจะอ้างถึงค่าเดียวกัน และไม่ควร Reset @persist Fields ใน OnSpawned โดยไม่มีเงื่อนไข
+8. Verification: Expected: Player A/B มี Coins แยกกันและ Shared Camp State ตรงกัน; Actual: ตัวอย่างมีเอกสารรับรอง แต่ยังไม่ได้รันทดสอบ Save/Reload ของสองผู้เล่นในรอบนี้
+9. Disclosure Status: Documented; Multi-user Restore Test Not Verified
+10. Research Gaps: Identity Binding Internals, Storage Namespace, Shared-state Consistency Model และ Concurrent Save Coordination
+072 — Save Format และ Serialization Schema เป็นอย่างไร?
+1. Direct Answer: เอกสารเปิดเผยประเภทข้อมูลที่ Persistence รองรับ แต่ไม่ได้เปิดเผย Binary Format, JSON Schema, Storage Table Structure หรือ Serialization Algorithm ภายใน
+2. Architecture: Persistence เก็บเฉพาะข้อมูลที่ประกาศตามกฎ เช่น @persist, @persistInventory และ @persistSpawned ขณะที่ข้อมูล Runtime บางประเภทต้องสร้างกลับขึ้นมาใหม่หลัง Load
+3. Source Evidence: persistent_state_v1
+4. API Contract: ประเภทข้อมูลที่คู่มือระบุว่ารองรับ ได้แก่:
+Data Type
+	Persistence
+	Number, Bool, Text
+	รองรับ
+	Vector, Position
+	รองรับ
+	WorldTarget, ZoneTarget, Destination
+	รองรับ
+	List ของชนิดข้างต้น
+	รองรับ
+	List<struct>
+	รองรับเมื่อ Struct ไม่มี Object Fields
+	`Map<Number, Number\
+	Bool\
+	Object Reference ทั่วไป
+	ไม่อยู่ในรายการที่ @persist รองรับ
+	Persistent Container มีเพดาน 4,096 Entries ต่อ Variable
+5. Working Example:
+6. Execution Trace: Collect Tagged Fields → Serialize Eligible Values → Save → Load → Validate Compatibility → Restore Values เป็นภาพรวมเชิงหน้าที่
+7. Limits & Failure Modes: หาก Persistent Container เกิน 4,096 Entries คู่มือระบุว่าระบบแจ้งข้อผิดพลาดขณะ Save และไม่บันทึก Variable ที่ใหญ่เกินเกณฑ์นั้น
+8. Verification: Expected: Supported Types คืนค่าได้หลัง Reload; Actual: Not Run สำหรับ Serialization Round-trip ในรอบนี้
+9. Disclosure Status: Supported Types Documented; Serialization Schema/Format Undisclosed
+10. Research Gaps: Binary Encoding, Compression, Checksums, Endianness, Atomic Write Strategy, Schema IDs และ Backward Compatibility Details
+073 — บันทึกและกู้คืน Object References อย่างไร?
+1. Direct Answer: คู่มือระบุว่า Scene Objects ถูก Rehydrate โดยอาศัยชื่อ Object และ @persistSpawned สามารถทำให้ Runtime-spawned Instances บางประเภทถูกสร้างกลับได้ แต่ไม่รองรับการ Persist Object References ทั่วไปผ่าน @persist เหมือน Primitive Values
+2. Architecture: การ Restore แยกเป็น Scene Object Name Matching และการสร้าง Spawned Instances กลับจาก Saved Templates พร้อม Transform และ Tagged Fields
+3. Source Evidence: persistent_state_v1
+4. API Contract:
+ใช้เป็น Standalone Declaration ภายใน Class ตามข้อกำหนด คู่มือระบุว่าการ Restore Runtime-spawned Instances ครอบคลุม Saved Template, Position, Rotation, Size และ Tagged Variables
+5. Working Example: สำหรับ Object ที่ถูก Destroy แล้วต้องคงสถานะไว้หลัง Load คู่มือแนะนำการเก็บสถานะเชิงตรรกะ เช่น:
+6. Execution Trace — Expected: Save Tagged State → Reload World → Recreate Scene Objects by Name → Restore Fields → Reapply World State จาก Fields
+7. Limits & Failure Modes: Destroyed Scene Objects จะปรากฏใหม่เมื่อ Load หากไม่ได้ใช้ Persistent Flag ควบคุมผลลัพธ์ และ @persistSpawned ไม่รองรับ Crowd Instances หรือ Multi-object Templates ตามคู่มือ
+8. Verification: Expected: ประตูยังคงสถานะเปิดหลัง Reload หากมี Flag ที่ Persist; Actual: Not Run
+9. Disclosure Status: Scene Object Rehydration Documented; Raw Reference Serialization Undisclosed
+10. Research Gaps: Object Handle Remapping, Stable Entity IDs, Cross-stage References, Reference Graph Restoration และ Dangling Reference Handling
+074 — Save Slots, Checkpoints และ Autosave ทำงานอย่างไร?
+1. Direct Answer: Oriverse มีระบบ Working Save หรือ Continue, Named Checkpoints, Overwrite/Delete, New Game และ Load โดยผ่าน Built-in Save APIs และมี UI Binding สำหรับแสดงรายการ Save Slots
+เอกสารระบุว่า Native Project Saving เป็น Automatic แต่ไม่ควรตีความว่า Gameplay Autosave มีช่วงเวลาและ Trigger ที่แน่นอนโดยอัตโนมัติ เพราะยังไม่มีรายละเอียดครบถ้วนของ Gameplay Autosave Policy
+2. Architecture: Game Save Requests ส่งกลับ Request Handle แล้วรอ GameSaveResult หรือ World Lifecycle Event ที่สัมพันธ์กับการ Load/New Game
+3. Source Evidence: example_html_game_saves, persistent_state_v1, html_ui
+4. API Contract:
+Request APIs คืนค่า Handle ที่เป็นบวกเมื่อคำขอได้รับการรับเข้า หรือ 0 เมื่อไม่สามารถรับคำขอได้
+5. Working Example: จาก example_html_game_saves:
+6. Execution Trace — Expected: User Requests Save → API Returns Handle → Storage Operation → GameSaveResult Reports Outcome
+7. Limits & Failure Modes: ผล saved_on_device ยืนยันเพียงว่าบันทึกบน Device แล้ว ไม่ใช่ยืนยัน Cloud Sync เสร็จสิ้น และการ Load/New Game สำเร็จใช้ OnWorldReady ของ World ใหม่แทนการรับ Success Result แบบเดียวกับ Save
+8. Verification: Expected: Named Save ปรากฏใน Save Slots และ Load ได้; Actual: มีตัวอย่างทางการ แต่ยังไม่ได้ทดสอบ Save UI ในรอบนี้
+9. Disclosure Status: Save APIs Documented; Gameplay Autosave Timing Undisclosed
+10. Research Gaps: Autosave Policy, Maximum Save Slots, Storage Quotas, Retention, Atomicity และ Save Request Timeout Behavior
+075 — Schema Migration ระหว่างเกมเวอร์ชันต่างกันทำงานอย่างไร?
+1. Direct Answer: Oriverse มี Compatibility Validation เมื่ออัปเดต World โดยระบบ Keep progress ปฏิเสธการเปลี่ยนแปลงที่อาจทำให้ข้อมูลเดิมไม่สามารถ Restore ได้อย่างถูกต้อง
+2. Architecture: เมื่อเปลี่ยน Source ระบบเปรียบเทียบ Persistent Schema เก่ากับ Schema ใหม่ และตัดสินว่าสามารถนำ Save เดิมมาใช้ต่อได้หรือไม่
+3. Source Evidence: persistent_state_v1
+4. API Contract: คู่มือระบุว่า Keep progress จะ Reject กรณี Removed/Retyped Persistent Fields และ Missing Inventory Items โดย Fields ใหม่จะเริ่มจาก Default Values
+Named Test Saves สามารถมี Strict/Compatible Migration Policy ของตนเองได้
+5. Working Example:
+เวอร์ชันก่อน:
+เวอร์ชันใหม่:
+ตามกฎที่เผยแพร่ Fields ใหม่จะเริ่มจากค่า Default แต่การเปลี่ยนชื่อ Level หรือเปลี่ยนชนิดอาจถูก Reject
+6. Execution Trace — Expected: Source Update → Schema Compatibility Check → Compatible: Restore + Initialize New Fields; Incompatible: Reject Before Replacement
+7. Limits & Failure Modes: การลบ Item Definitions ที่ Save เดิมอ้างอิง หรือการเปลี่ยน TileGrid/Terrain Baseline ที่ไม่สามารถตรวจยืนยัน อาจทำให้ Keep progress ถูกปฏิเสธ
+8. Verification: Expected: Adding Field ผ่าน ส่วน Remove/Retype Field ถูก Reject; Actual: Documented, ยังไม่ได้รันทดสอบ Migration Matrix
+9. Disclosure Status: Compatibility Rules Documented; Internal Migration Algorithm Undisclosed
+10. Research Gaps: Schema Versioning, Field Renaming Support, Explicit Migration Scripts, Rollback Policy และ Cross-version Save Compatibility
+076 — State Persistence รองรับ Multiplayer หรือไม่?
+1. Direct Answer: รองรับตามคู่มือ Hosted Worlds สามารถบันทึก Tagged Player Progress ตาม Oriverse Account และ Shared Progress ใน Hosted Service
+อย่างไรก็ตาม ระบบ Personal Save APIs มีข้อจำกัดว่าใช้กับ Single-player Local Play และไม่ควรนำมาใช้สรุปว่า Multiplayer Session รองรับการ Load Personal Checkpoint ร่วมกันได้
+2. Architecture: Multiplayer Simulation ใช้ Shared Deterministic State ส่วน Persistence มีขอบเขตแยก Per-player Progress และ Shared Hosted World Progress
+3. Source Evidence: persistent_state_v1, multiplayer_guidance
+4. API Contract: @persist สำหรับ Player และ Scene Object Fields; Hosted State ถูก Restore ตาม User Identity ในกรณี Player Fields
+5. Working Example:
+6. Execution Trace — Expected: Player Joins Hosted World → Load Account-linked Progress → Join Shared Simulation → World Progress ถูกใช้งานร่วมกัน
+7. Limits & Failure Modes: Hosted Worlds ไม่จำลองต่อเมื่อไม่มีผู้เล่นอยู่ในโลกตามคู่มือ ดังนั้นไม่ควรสมมติว่า Timer หรือ Economy Processes ทำงานต่อระหว่าง World ว่าง
+8. Verification: Expected: Player Rejoin แล้วคืนค่า Coins และ Level ของตน พร้อม Shared World Progress; Actual: Not Run สำหรับ Hosted Multiplayer Save/Restore
+9. Disclosure Status: Hosted Multiplayer Persistence Documented; Concurrent Save Consistency Undisclosed
+10. Research Gaps: Save Ownership, Shared-state Commit Ordering, Disconnect During Save, Multi-user Conflict Resolution และ Persistence Across Sessions
+077 — Inventory และ Economy Transactions มีความปลอดภัยอย่างไร?
+1. Direct Answer: Weave2 มี Engine Inventory API ที่ทำงานภายใน Deterministic Simulation พร้อม Operation Contracts สำหรับเพิ่ม ลบ และย้าย Items
+แต่ยังไม่พบหลักฐานยืนยันว่า Inventory Transactions มี Database-level Atomicity, Isolation, Durable Bilateral Trade หรือ Anti-dupe Protection ในระดับที่เทียบกับ MMO Server
+2. Architecture: CreateInventory() สร้าง Container ที่เป็นของ Calling Object และจัดการ Slot/Stack ผ่าน Built-in Operations
+3. Source Evidence: inventory, example_persistent_rpg, persistent_state_v1
+4. API Contract:
+API
+	พฤติกรรม
+	CreateInventory(Slots)
+	สร้าง Container 1–128 Slots
+	AddItem(item, n)
+	คืนจำนวนที่ใส่ไม่สำเร็จ
+	RemoveItem(item, n)
+	Bool แบบ Exact-or-nothing
+	CountOf(item)
+	จำนวน Item ใน Inventory
+	MoveSlot(from, otherInv, to)
+	Swap/Merge ตาม Stack Limit
+	SetAt(slot, item, n)
+	กำหนด Slot โดยคืน Bool
+	5. Working Example: จาก example_persistent_rpg:
+6. Execution Trace — Expected: Check Item Availability → Remove Exactly 3 → On Success Add Coins → Update State
+7. Limits & Failure Modes: AddItem() อาจใส่ได้บางส่วนและคืน Overflow จึงต้องตรวจ Return Value ก่อนให้ Reward เพิ่มเติม ข้อจำกัด Stack และ Inventory Slot Capacity ต้องบังคับใช้ทุกครั้ง
+8. Verification: Expected: RemoveItem ไม่ลบบางส่วนเมื่อจำนวนไม่พอ; Actual: Documented, ยังไม่ได้ทดสอบ Inventory Transaction Matrix
+9. Disclosure Status: Inventory Operation Contracts Documented; Durable Transaction/Anti-dupe Guarantees Undisclosed
+10. Research Gaps: Atomic Trade Commit, Reservation Locks, Concurrent Mutations, Durable Receipts, Idempotency และ Audit Trails
+078 — Conflict Resolution และ Optimistic Concurrency มีหรือไม่?
+1. Direct Answer: Oriverse มี API สำหรับแก้ Save Conflicts โดยเลือกหนึ่งในเวอร์ชันที่ขัดแย้งกัน และรักษาอีกเวอร์ชันไว้เป็น Recovery Save แต่ไม่พบเอกสารเปิดเผย Version Vector, ETag, CAS หรือ Optimistic Concurrency Algorithm
+2. Architecture: Save Conflict เป็นขั้นตอนของ Persistence Layer ที่ผู้เล่นเลือกเวอร์ชันผ่าน Save UI โดยไม่ต้องโหลดเวอร์ชันนั้นทันที
+3. Source Evidence: persistent_state_v1, example_html_game_saves
+4. API Contract:
+5. Working Example: จาก example_html_game_saves:
+6. Execution Trace — Expected: Conflict Detected → User Selects Version → Resolve Request → resolution_queued → Local Choice Saved → Cloud Sync Pending
+7. Limits & Failure Modes: resolution_queued ไม่หมายความว่า Cloud Sync หรือ Server-side Conflict Resolution เสร็จสิ้นแล้ว
+8. Verification: Expected: ผู้ใช้เลือกเวอร์ชันหนึ่งและอีกเวอร์ชันยังคงอยู่; Actual: Documented, ไม่ได้สร้าง Conflict Fixture เพื่อทดสอบจริง
+9. Disclosure Status: Save Conflict Resolution Documented; Optimistic Concurrency Internals Undisclosed
+10. Research Gaps: Conflict Detection Metadata, Version Vectors, Merge Rules, Race Handling และ Conflict Recovery Audit
+079 — ข้อมูลอยู่ที่ Client, Server หรือ Cloud ในกรณีใด?
+1. Direct Answer: ตำแหน่งจัดเก็บข้อมูลขึ้นกับโหมดการใช้งาน โดย Oriverse แยก Browser/Device Saves, Hosted World Progress และ Cloud Sync สำหรับ Published Games ที่ Signed-in
+2. Architecture: Runtime State อยู่ใน Simulation ส่วน Persistence Service จัดเก็บข้อมูลที่ประกาศไว้ เมื่อมี Save/Load Requests ระบบจะประสานกับ Storage Destination ตาม Session Context
+3. Source Evidence: persistent_state_v1
+4. API Contract และ Storage Matrix:
+โหมด
+	ที่จัดเก็บตามคู่มือ
+	หมายเหตุ
+	Unhosted Browser
+	Session-local Progress
+	อาจอยู่ได้เพียง Open Session
+	Personal Save
+	Device-local
+	ขึ้นกับการเปิดใช้ Personal Saves
+	Hosted World
+	Oriverse Service
+	Player + Shared Progress
+	Signed-in Published Game
+	Device + Background Cloud Sync
+	Local Completion ไม่ยืนยัน Cloud Commit
+	Editor Test / Draft
+	Isolated Storage
+	ไม่ควรปะปนกับ Live Saves
+	Native Project Saving
+	Automatic Project Save
+	แยกจาก Gameplay Checkpoint
+	5. Working Example: ผู้เล่นกด Save แล้วได้รับ saved_on_device จาก GameSaveResult จากนั้น Cloud Sync อาจดำเนินการต่อเบื้องหลัง
+6. Execution Trace — Expected: Local Save Request → Device Completion → Background Cloud Sync → Remote Storage Update
+7. Limits & Failure Modes: หากออกจากเกมทันทีหลัง Device Save อาจยังไม่มีหลักฐานว่า Cloud Sync สำเร็จ และ Browser-only Progress อาจสูญหายเมื่อ Session สิ้นสุดหากไม่ใช้ Personal Saves
+8. Verification: Expected: Hosted Progress Restore ตาม Account และ Local Save อยู่บน Device; Actual: Documented, ยังไม่ได้รันทดสอบ Cross-device Restore
+9. Disclosure Status: Storage Destinations Documented; Physical Infrastructure/Cloud Database Undisclosed
+10. Research Gaps: Data Center Regions, Encryption, Retention Policy, Backup Strategy, Replication, Sync Latency และ Cloud Recovery SLA
+080 — Recovery Tests สำหรับ Crash, Reload และ Corrupted Save
+1. Direct Answer: ควรสร้าง Persistence Recovery Suite ที่ทดสอบ Save/Load, World Reload, Schema Migration, Inventory Restore, Conflict Resolution และ Failure Recovery แยกจากกัน
+อย่างไรก็ตาม เครื่องมือ Oriverse ที่ตรวจสอบยังไม่มี API ที่ยืนยันได้สำหรับ Inject Corrupted Save Bytes หรือจำลอง Storage Crash โดยตรง จึงต้องแยก Black-box Tests ออกจาก Fault-injection Tests
+2. Architecture: Test Harness ควรเก็บ Initial State → Mutate State → Save → Simulate Failure/Reload → Restore → Compare Expected Values
+3. Source Evidence: persistent_state_v1, example_html_game_saves, example_persistent_rpg
+4. API Contract: ใช้ RequestGameCheckpoint, RequestCreateGameSave, RequestLoadGameSave, RequestResolveGameSave, GameSaveResult, OnWorldReady, @persist และ @persistInventory
+5. Working Example: ตัวอย่าง Persistent State Fixture:
+ตัวอย่างนี้เป็น Fixture สำหรับทดสอบ State Restore ยังไม่ได้ Compile/Playtest แยกในรอบปัจจุบัน
+6. Execution Trace — Expected: Initial Coins 10 → EarnReward → Coins 15 / Completed true → Save → Reload → Restore Coins 15 / Completed true
+7. Limits & Failure Modes: กรณี Corrupted Save Bytes, Disk Full, Cloud Timeout และ Interrupted Atomic Commit ยังไม่มี Tool Contract ยืนยันให้จำลองโดยตรงผ่าน Weave
+8. Verification — Proposed Recovery Test Matrix
+Test ID
+	Scenario
+	Expected
+	SAVE-01
+	Persist Number/Bool
+	คืนค่าครบหลัง Reload
+	SAVE-02
+	Persist Player State
+	คืนค่าตาม User Identity
+	SAVE-03
+	Persist Inventory
+	Items และ Counts ตรง
+	SAVE-04
+	Runtime Spawn Restore
+	Restore เฉพาะ Eligible Instances
+	SAVE-05
+	Destroyed Scene Object
+	Reappears; Persistent Flag Reapplied
+	SAVE-06
+	Add New Persistent Field
+	Initialize Default
+	SAVE-07
+	Remove/Retype Field
+	Compatibility Reject
+	SAVE-08
+	Missing Inventory Item
+	Compatibility Reject
+	SAVE-09
+	Named Checkpoint
+	Create/Load Correct
+	SAVE-10
+	Resolve Save Conflict
+	Preserve Recovery Version
+	SAVE-11
+	Device Save vs Cloud Sync
+	Report Completion Separately
+	SAVE-12
+	Corrupted Save / Crash
+	Safe Failure/Recovery — ต้องมี Fault Injection
+	Actual Result: Not Run ทั้ง 12 กรณี เนื่องจากรอบนี้เป็น Documentation Research ไม่ใช่การรัน Persistence Test Suite
+9. Disclosure Status: Recovery Rules Partially Documented; Fault-injection Tests Not Verified
+10. Research Gaps: Corruption Detection, Checksum Verification, Transactional Save, Crash Consistency, Backup/Restore และ Disaster Recovery
+________________
+
+
+TRR-08 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	071
+	World vs Player State
+	Documented
+	072
+	Save Format / Serialization
+	Supported Types Documented; Format Undisclosed
+	073
+	Object Reference Restore
+	Partially Documented
+	074
+	Save Slots / Checkpoints
+	Documented; Autosave Timing Undisclosed
+	075
+	Schema Migration
+	Documented; Internals Undisclosed
+	076
+	Multiplayer Persistence
+	Documented; Concurrency Not Verified
+	077
+	Inventory Transactions
+	API Contracts Documented; Durability Undisclosed
+	078
+	Conflict Resolution
+	Documented; OCC Internals Undisclosed
+	079
+	Client / Server / Cloud Storage
+	Partially Documented
+	080
+	Recovery Tests
+	Designed / Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Weave รองรับ Persistent Fields, Inventory Persistence, Runtime-spawned Object Restoration ในขอบเขตที่กำหนด, Personal Save Slots, Checkpoints และ Save Conflict Resolution มีการตรวจ Compatibility เมื่ออัปเดต World และ Hosted Games สามารถบันทึก Progress แยกตาม Account รวมถึง Shared Progress ได้
+จุดสำคัญคือ Device Save Completion ไม่เท่ากับ Cloud Sync Completion และการ Restore Save ไม่ได้หมายความว่า Runtime Object References ทุกชนิดสามารถ Serialize/Restore ได้โดยอัตโนมัติ
+สิ่งที่ยังไม่เปิดเผย
+Binary Save Format, Storage Schema, Object Reference Remapping, Save Transaction Isolation, Optimistic Concurrency Implementation, Cloud Sync Protocol, Encryption, Backup/Restore และ Crash Recovery Guarantees
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ผมเสนอให้ KHOSAN Persistence Architecture แยกเป็น World State Store, Player State Store, Inventory/Economy Ledger และ Save/Checkpoint Service โดยกำหนด Versioned Schemas, Stable Entity IDs, Atomic Writes, Optimistic Concurrency, Idempotent Operations, Durable Receipts และ Automated Recovery Tests อย่างชัดเจน
+โดยเฉพาะ Inventory/Economy หากเกี่ยวข้องกับการซื้อขายหรือเงินจริง ควรใช้ Server-authoritative Durable Transactions ไม่ควรพึ่งพาเพียง Deterministic Inventory Operations ภายใน Game Simulation
+สถานะ TRR-08: Documentation Research Completed / Persistence Recovery Suite Not Executed.
+ไม่มีการเปลี่ยนแปลงหรือ Publish Oriverse World ในรอบนี้ และ Editor ยังคงใช้ Build 05Oct26-23:23 ซึ่งควร Reload ก่อนการทดสอบ Persistence บน Build ปัจจุบัน
+หมวดวิจัยถัดไปคือ 09 — Procedural Mesh & Asset Generation (ข้อ 081–090) ซึ่งจะศึกษากระบวนการสร้าง Mesh, Topology, UV, Materials และ Asset Baking ของ Weave โดยตรง
+________________
+
+

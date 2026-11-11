@@ -1,0 +1,315 @@
+TRR-19 — Assets, Export & Interoperability
+Oriverse / Weave Technical Research Protocol | หมวด 19 | คำถาม 181–190 | 9 ตุลาคม 2569
+ผมตรวจสอบคู่มือและเครื่องมือ Oriverse โดยตรง โดยเฉพาะ asset_vocabulary, weave_coding → asset_aliases, mesh_dsl_usage, multi_stage_projects, saved_objects และ library_capture_status
+ข้อค้นพบสำคัญ: Oriverse มีระบบจัดเก็บและนำกลับมาใช้ซ้ำสำหรับ Procedural Mesh, Material และ Animation Clip พร้อม Asset IDs, Content Digests, Dependencies และ Storage Status แต่ ยังไม่มีหลักฐานเพียงพอที่จะยืนยันว่ามีระบบ Export เกมและ Assets ทั้งหมดไปเป็น GLB, glTF, FBX หรือ Unity/Godot Project อย่างสมบูรณ์
+ระหว่างตรวจสอบพบการเปลี่ยนแปลงสำคัญของ API: เครื่องมือ mesh_library_search และ clip_library_search ตอบกลับว่าเลิกใช้แล้ว และให้เปลี่ยนไปใช้ find_library_assets กับ read_library_asset แต่เครื่องมือใหม่ยังไม่ปรากฏเป็น Callable Definition ในเซสชันนี้ ดังนั้นจะไม่กล่าวอ้างว่าได้ทดสอบ Library Search รุ่นใหม่สำเร็จ
+181 — Oriverse Asset Library จัดเก็บ Mesh, Material และ Clips อย่างไร?
+1. Direct Answer: Oriverse มี Shared Asset Library สำหรับเก็บ Procedural Mesh Source พร้อม Dependencies, Material Source และ Animation Clip Source พร้อมข้อมูล Rig/Target Compatibility การ Save เป็นการเก็บ Candidate ไม่ใช่การอนุมัติว่า Asset นั้นผ่าน Quality Review แล้ว
+2. Architecture: Author Asset → Save Source + Dependencies → Generate Asset Identity/Digest → Queue/Store in Library → Search/Inspect → Import into Pending World
+3. Source Evidence: Tool Contracts ของ save_mesh_asset, save_material_asset, save_clip_asset, import_material_asset, import_clip_asset และผลจริงจาก library_capture_status
+4. API Contract:
+เครื่องมือรายงาน Storage State เช่น shared, queued for retry หรือ session-only
+5. Working Example — Asset Definitions ที่เอกสารรองรับ:
+สามารถอ้างใน Scene ด้วย model = "mesh.VillageCrate" ตัวอย่างนี้เป็น Documented Syntax Pattern ยังไม่ได้ Compile ในรอบนี้
+6. Execution Trace — Observed: ตรวจสถานะ Library → พบ Batch สำเร็จ 2/2 Roots → VillageHouse เป็น Mesh Shared Asset → ClayWall เป็น Material Shared Asset
+Library Capture — Existing Batch (Stored)
+Completed roots
+2 / 2
+Confirmed shared assets
+2
+________________
+
+
+VillageHouse — Procedural Mesh
+mesh_a55c06ea3a914e75...
+ClayWall — Material
+material_04f2f5f45c6e2600...
+ผลตรวจจากบัญชีที่เชื่อมต่อ ไม่ใช่การทดสอบการ Save Asset ใหม่
+7. Limits & Failure Modes: สถานะ queued ยังไม่ได้ยืนยัน Shared Storage และ Library Candidate อาจยังไม่มี Review Evidence สำหรับ Look/Use Case ที่ต้องการ
+8. Verification: Expected: Library Status แสดง Asset Identity และสถานะการเก็บ; Actual: PASS สำหรับการอ่าน Existing Batch; New Asset Save Not Run
+9. Disclosure Status: Library Capture Documented + Experimentally Verified; Internal Storage Schema Undisclosed
+10. Research Gaps: Database Layout, Blob Format, Compression, Deduplication Window, Garbage Collection และ Long-term Retention
+182 — Asset Identifiers, Revisions และ Provenance มีโครงสร้างอย่างไร?
+1. Direct Answer: ผลตรวจจริงแสดง Asset IDs ที่ขึ้นต้นด้วยชนิดของ Asset และตามด้วย Hex Digest เช่น mesh_... และ material_... อีกทั้งมี digest, job_id, batch_id, parent_asset_id และ Review Receipt แต่ยังไม่พบ Contract ที่รับรองว่าโครงสร้าง ID เป็น Immutable Content-addressed Identifier ทุกกรณี
+2. Architecture: Source Artifact → Asset ID/Digest → Storage Receipt → Optional Parent/Review Relationship → Import/Use in World
+3. Source Evidence: library_capture_status; Tool Contracts ของ save_mesh_asset, save_clip_asset, rate_asset
+4. API Contract: ข้อมูลที่ตรวจพบประกอบด้วย:
+Field
+	บทบาทที่มีหลักฐาน
+	asset_id
+	Identity ของ Asset
+	digest
+	Fingerprint ของข้อมูลที่เก็บ
+	job_id
+	Identity ของ Storage/Review Job
+	batch_id
+	กลุ่มการจัดเก็บ
+	parent_asset_id
+	ความสัมพันธ์ Parent เมื่อมี
+	storage_state
+	สถานะ Shared/Queued/Session
+	already_exists
+	Storage Receipt รายงานการมีข้อมูลเดิม
+	review
+	ข้อมูลผลประเมินแยกจาก Storage
+	5. Working Example — รูปแบบที่สังเกตได้จริง:
+6. Execution Trace — Observed: Library Capture Job → Storage Receipt → Digest/Asset ID → Shared State → Review Records แยกต่างหาก
+7. Limits & Failure Modes: Hash ของ Source, Digest ของ Stored Asset และ Snapshot Token ไม่ควรถูกถือว่าเป็นค่าชนิดเดียวกัน แม้ทั้งหมดใช้ตรวจความสัมพันธ์กับข้อมูล
+8. Verification: Expected: Asset ที่เก็บมี Identity และ Receipt; Actual: PASS สำหรับ Existing Mesh/Material; Asset Revision Lineage Test Not Run
+9. Disclosure Status: Identity/Receipt Fields Experimentally Verified; Canonical Hash Algorithm/Revision Model Undisclosed
+10. Research Gaps: Hash Canonicalization, Semantic Versioning, Provenance Chain, Author Attribution, Signature Verification และ Content Integrity Across Imports
+183 — รองรับ Import GLB, glTF, FBX หรือ Formats ใดบ้าง?
+1. Direct Answer: คู่มือยืนยันว่า Oriverse รองรับการใช้งาน Marketplace Models ที่มี Geometry และ PBR Materials และกล่าวถึง Imported GLB โดยตรง รวมถึงสามารถ Import Images และ Editable Library Assets ได้ แต่ยังไม่พบ Public Generic File Import API ที่รับ GLB, glTF หรือ FBX จากไฟล์ใดก็ได้ผ่าน MCP
+2. Architecture: Marketplace Model References แตกต่างจาก Editable Procedural Library Source ส่วน Images ที่ Import เข้า Project จะถูกแปลงเป็น PNG และอ้างด้วย projimg Handle
+3. Source Evidence: inspect_model, inspect_rig, import_image, use_mesh_asset; mesh_dsl_usage
+4. API Contract:
+inspect_model รับ Marketplace Model URLs สูงสุด 8 รายการ และคืน Geometry/LOD/Submesh/Animation Metadata; import_image รับภาพจาก HTTPS/Attachment แล้ว Normalize เป็น PNG
+5. Working Example — Marketplace Model Reference:
+model.Creator.AssetName เป็น Placeholder เท่านั้น ไม่ใช่ชื่อ Asset ที่ตรวจพบจริง จึงไม่ถือว่า Compile-tested
+6. Execution Trace — Expected: Resolve Marketplace Asset URL → Load Model/Materials/Clips → Bind Scene Object → Render
+7. Limits & Failure Modes: FBX Import, Generic .gltf Upload, Arbitrary .glb File Upload และ Direct Blender File Import ยังไม่มี Public Tool Contract ที่ยืนยันได้
+8. Verification: Expected: Marketplace Models ที่ถูกต้องโหลด Geometry ได้; Actual: ตรวจสัญญาเครื่องมือแล้ว แต่ไม่ได้ Import GLB/FBX ใหม่
+9. Disclosure Status: Marketplace Model/GLB Usage Documented; Generic GLB/glTF/FBX Import Not Verified
+10. Research Gaps: Supported Extensions, Importer Version, glTF Extensions, Skinning/Animation Compatibility, Coordinate Conversion และ Material Fidelity
+184 — Export Geometry และ Materials เป็นไฟล์มาตรฐานใด?
+1. Direct Answer: จากเครื่องมือ 53 รายการที่เปิดให้ใช้ ไม่พบ Export Tool ที่ระบุว่าจะเขียน Procedural Mesh/Material เป็น .glb, .gltf, .fbx, .obj, .usd หรือ .usdz โดยตรง
+สิ่งที่ยืนยันได้คือการ Save Editable Source ลง Shared Library และการสร้าง World Source เป็นข้อความ Weave
+2. Architecture: Procedural Mesh/Texture Source ถูกประมวลผลเพื่อใช้ใน Oriverse Renderer แต่ยังไม่มี Published File Export Boundary ที่ตรวจได้จาก Public Tools
+3. Source Evidence: Tool Inventory, save_mesh_asset, save_material_asset, preview_mesh, inspect_mesh
+4. API Contract: ไม่มี Verified ExportMesh, ExportMaterial, ExportGLB หรือ ExportFBX Tool Signature ในเซสชันนี้
+5. Working Example: ไม่มีตัวอย่าง Export เป็นไฟล์มาตรฐานที่ผ่านการทดสอบ จึงไม่สร้างชื่อ API สมมติขึ้นมา
+6. Execution Trace: Weave Source → Procedural Bake เป็นพฤติกรรมที่มีเอกสาร ส่วน Bake → Standard 3D File Export เป็น Undisclosed
+7. Limits & Failure Modes: Mesh Preview หรือ Inspect Metadata ไม่เท่ากับ Downloadable Mesh File และ Asset ID ไม่ใช่ Binary Export Artifact
+8. Verification: Expected: Export Tool ควรคืน File/URL พร้อม Geometry/Material Data; Actual: No Export Tool Identified ในเซสชันนี้
+9. Disclosure Status: Standard-format Geometry/Material Export Undisclosed / Not Verified
+10. Research Gaps: GLB Export, Mesh Topology Preservation, UV/Normal/Tangent Export, PBR Packing, Animation Export และ Blender/Unity/Godot Compatibility
+185 — สามารถ Export Weave Source และ Dependencies ทั้งหมดได้หรือไม่?
+1. Direct Answer: ยืนยันได้ว่า Oriverse สามารถส่ง World Source เป็นข้อความ Weave และมีเครื่องมืออ่าน Source ปัจจุบันแบบ Read-only อีกทั้งการเผยแพร่ผ่าน publish_game ใช้ไฟล์ world_description.weave แต่ยังไม่พบเครื่องมือที่รับประกันการ Export Complete Dependency Bundle พร้อม Assets ทุกประเภทเป็นไฟล์ดาวน์โหลดชุดเดียว
+2. Architecture: World ประกอบด้วย Weave Source, Local Definitions, Asset Aliases, Marketplace References, Project Images และ Dependencies ของ Mesh/Material/Animation บางประเภท
+3. Source Evidence: multi_stage_projects, asset_aliases, sync_pending_world_from_current, publish_game, save_mesh_asset
+4. API Contract: sync_pending_world_from_current({source:"live", preview:true}) คืน World Source แบบ Read-only โดยจำกัด 400 บรรทัดหรือ 32 KB; pending_world_read_sections อ่าน Source เป็นช่วง และ publish_game รับ Full Weave Source เป็น world_text
+5. Working Example — Source ที่ตรวจสอบจริง:
+ตัวอย่างนี้ดึงจาก Live World Source จริง ไม่ใช่ Source ที่สร้างขึ้นใหม่
+6. Execution Trace — Observed: เรียก Live Source Preview → ได้ Weave Source 181 บรรทัด ขนาด 9,654 Bytes → Pending Draft ไม่ถูกแก้ไข → ตรวจพบ Local Mesh, Texture และ Gameplay/Scene Declarations
+7. Limits & Failure Modes: Source Export ไม่ได้ครอบคลุม Marketplace Binary Assets, Image Attachments หรือ Build Artifacts โดยอัตโนมัติ และการย้าย Source โดยไม่มี Dependencies อาจทำให้ Missing Asset References
+8. Verification: Expected: อ่าน Source ปัจจุบันโดยไม่แก้ Draft ได้; Actual: PASS สำหรับ Read-only Source Retrieval; Full Dependency Bundle Not Verified
+9. Disclosure Status: Weave Source Retrieval Experimentally Verified; Full Portable Source+Asset Export Undisclosed
+10. Research Gaps: Dependency Manifest, Asset Lockfile, Portable Bundle Format, Project Image Export, Offline Dependency Resolution และ Rebuild Reproducibility
+186 — ย้ายเกมไป Unity, Godot หรือ Custom WebGPU Engine ได้เพียงใด?
+1. Direct Answer: สามารถนำ แนวคิด Gameplay, World Specification และ Weave Source ไปใช้เป็นข้อมูลอ้างอิงในการ Port ได้ แต่ไม่สามารถรับรองว่า Unity, Godot หรือ Custom WebGPU Engine จะ Compile หรือ Execute Weave ได้โดยตรง
+เนื่องจากยังไม่มี Verified Weave Runtime Port, Official Converter หรือ Binary Asset Export Pipeline ที่ครอบคลุม
+2. Architecture: การ Port ต้องแยก Source Translation, Scene Graph Conversion, Asset Geometry/Materials, Animation, Physics, UI, Persistence และ Multiplayer Semantics เพราะ Engine แต่ละตัวมี Runtime Contracts ต่างกัน
+3. Source Evidence: weave_coding → weave_language, mesh_dsl_usage, multi_stage_projects, asset_aliases และ Tool Inventory ที่ตรวจพบ
+4. API Contract: ไม่มี Verified ExportUnityProject, ExportGodotProject, ExportWebGPUScene หรือ Cross-engine Runtime API
+5. Working Example — Proposed Translation Mapping:
+Oriverse
+	Unity
+	Godot
+	Custom WebGPU
+	object
+	GameObject
+	Node3D
+	Entity/Scene Node
+	#class
+	C# Component
+	GDScript/C#
+	ECS/Script Runtime
+	#mesh
+	Mesh
+	ArrayMesh
+	Vertex/Index Buffers
+	#texture
+	PBR Texture Maps
+	StandardMaterial3D
+	Material Textures
+	screenCanvas
+	UI Toolkit/uGUI
+	Control Nodes
+	HTML/Custom UI
+	#clip
+	AnimationClip
+	AnimationPlayer
+	Skeleton/Clip System
+	ตารางนี้เป็น ข้อเสนอ Conversion Mapping ของ KHOSAN ไม่ใช่ Official Oriverse Converter
+6. Execution Trace — Proposed: Parse Weave → Build Portable Game IR → Convert Assets/Scene → Translate Gameplay → Recreate Physics/UI/Networking → Compile Target Engine → Regression Test
+7. Limits & Failure Modes: Deterministic Lockstep, Physics Resolution, Timing Semantics, Inventory Handles, Input Events และ UI Bindings ไม่สามารถแปลงเป็นระบบอื่นโดยอัตโนมัติจากการ Mapping ชื่อ Components เพียงอย่างเดียว
+8. Verification: Expected: เกมที่ Port มี Behavior/Appearance ตรงกับต้นฉบับ; Actual: Not Run สำหรับ Unity/Godot/WebGPU Ports
+9. Disclosure Status: Conceptual Portability Inferred; Automated Cross-engine Export Not Verified
+10. Research Gaps: Weave Parser Reuse, Game IR Schema, Material/Animation Conversion, Physics Equivalence, Network Determinism และ Target-engine Acceptance Tests
+187 — Asset Conversion และ Interoperability APIs
+1. Direct Answer: Oriverse มี API สำหรับนำ Editable Library Assets เข้าสู่ Pending World พร้อม Dependencies และตรวจ Rig Compatibility แต่ยังไม่มี Public Contract ที่ระบุการแปลง Arbitrary 3D Files จาก/ไปมาตรฐานภายนอกอย่างครบถ้วน
+2. Architecture: Asset Library → Read Exact Asset ID → Validate Target/Snapshot → Import Source and Dependencies → Resolve Naming Collisions → Revalidate Pending World
+3. Source Evidence: use_mesh_asset, import_material_asset, import_clip_asset, inspect_model, inspect_rig, import_image
+4. API Contract:
+import_clip_asset มี dry_run สำหรับตรวจ Rig Compatibility โดยไม่แก้ Draft และอาจคืน adaptation_required เมื่อ Bind Rig ไม่ตรงกัน
+5. Working Example — Read-only Compatibility Check:
+เป็นตัวอย่าง Call Pattern ตาม Schema ยังไม่ได้รันกับ Asset ID จริง
+6. Execution Trace — Expected: Resolve Asset → Check Dependencies → Verify Rig/Target → Check Snapshot → Import Editable Source หรือ Reject with Compatibility Error
+7. Limits & Failure Modes: Stale expected_snapshot ทำให้ Import ถูกปฏิเสธ และ Name Collision อาจทำให้ Asset ถูกตั้งชื่อใหม่ จึงต้องใช้ชื่อจริงจาก Tool Response
+นอกจากนี้เครื่องมือค้นหา Library รุ่นเดิมที่ทดสอบในรอบนี้คืน INVALID_ARGUMENT พร้อมข้อความให้เปลี่ยนไปใช้ find_library_assets และ read_library_asset จึงยังไม่สามารถรับรอง Workflow การค้นหาแบบเดิมได้
+8. Verification: Expected: Imported Asset พร้อม Dependencies และ Rig Compatibility ถูกต้อง; Actual: Tool Contracts ได้รับการตรวจ แต่ Import Round-trip Not Run; Legacy Library Search FAILED/REPLACED
+9. Disclosure Status: Source-level Library Import Documented; Current Search Migration Observed; Generic File Conversion Undisclosed
+10. Research Gaps: New Library Tool Schemas, Importer Versioning, External File Conversion, Material Fidelity, Animation Retargeting และ Dependency Conflict Resolution
+188 — License ของ Generated Assets และ Library Assets เป็นอย่างไร?
+1. Direct Answer: จากคู่มือและ Tool Contracts ที่ตรวจในรอบนี้ ยังไม่พบข้อกำหนดสิทธิ์ใช้งานที่เพียงพอ สำหรับสรุปว่า Generated Assets, Shared Library Assets หรือ Marketplace Assets สามารถนำไปใช้เชิงพาณิชย์ แจกจ่ายต่อ ดัดแปลง หรือ Export ไปใช้ใน Engine อื่นได้โดยไม่มีข้อจำกัด
+ต้องแยก ความสามารถทางเทคนิคในการเข้าถึง Asset ออกจาก สิทธิ์ตามสัญญาอนุญาต อย่างชัดเจน
+2. Architecture: ระบบมี Asset Library, Asset Identity, Storage Receipts และ Review Evidence แต่ยังไม่พบ License Metadata Schema หรือ License Enforcement Contract ที่ครบถ้วนในผลตรวจครั้งนี้
+3. Source Evidence: asset_vocabulary, asset_aliases; Tool Contracts ของ save_mesh_asset, save_material_asset, save_clip_asset, rate_asset, share_game และ publish_game
+4. API Contract: Tool Responses ที่ตรวจพบมี asset_id, digest, storage_state, parent_asset_id และ Review Metadata แต่ไม่พบ Field ที่รับรอง License เช่น license_id, commercial_use_allowed, redistribution_allowed หรือ attribution_required
+5. Working Example — Proposed License Manifest สำหรับ KHOSAN:
+นี่เป็น Schema ที่เสนอให้ KHOSAN ออกแบบเอง ไม่ใช่ Oriverse License API
+6. Execution Trace — Proposed: Select Asset → Retrieve Terms/Provenance → Check License → Record Usage Scope → Approve or Block Export
+7. Limits & Failure Modes: Asset ที่อยู่ในสถานะ shared ไม่ได้หมายความว่าเป็น Public Domain และการอนุญาตให้เล่นเกมผ่าน share_game ไม่ได้พิสูจน์สิทธิ์ในการแจกจ่าย Asset Binary แยกต่างหาก
+8. Verification: Expected: ได้ License Terms จากเจ้าของสิทธิ์หรือเอกสารทางการและบันทึก Usage Rights; Actual: Not Verified สำหรับเงื่อนไขสิทธิ์รายประเภท
+9. Disclosure Status: Asset Storage/Sharing Capabilities Documented; License Grants/Restrictions Undisclosed / Not Verified
+10. Research Gaps: Oriverse Terms of Service, Generated Content Ownership, Marketplace Creator Licenses, Attribution, Redistribution, Commercial Use และ External-engine Rights
+189 — รองรับ Offline Builds และ Self-hosted Runtime หรือไม่?
+1. Direct Answer: Oriverse รองรับการทำงานผ่าน Editor, การ Share เกม และการ Publish Public Playable Project แต่ยังไม่พบเครื่องมือหรือคู่มือที่ยืนยันว่า สามารถ Build Runtime แบบ Standalone สำหรับนำไปติดตั้งบน Server ของตนเอง หรือใช้งานแบบ Offline โดยไม่พึ่งพาบริการ Oriverse ได้อย่างครบถ้วน
+2. Architecture: Public Delivery Paths ที่ยืนยันได้คือการเสนอ World ให้ Editor โหลด การแชร์เกมผ่าน Oriverse และการเผยแพร่เป็น Oriverse Project ส่วน Offline Packaging และ Dedicated Server Deployment ไม่ได้มี Tool Contract ที่ตรวจพบ
+3. Source Evidence: submit_pending_world, share_game, show_game, publish_game, request_project_save
+4. API Contract:
+share_game คืน Public Play Link ที่มีอายุประมาณ 30 วัน ส่วน publish_game สร้างหรืออัปเดต Public Playable Project และคืน Permanent Project Page URL
+5. Working Example — ตัวอย่าง Delivery Contract:
+เป็นตัวอย่างสัญญาการเรียกเท่านั้น ไม่ได้ Publish จริง และไม่ได้เป็น Self-hosted Build
+6. Execution Trace — Expected: Complete Weave Source → Validate/Publish → Upload World File → Receive Oriverse Project URL → Users Open Hosted Game
+7. Limits & Failure Modes: การ Publish ไปยัง Oriverse ไม่เท่ากับการได้รับ Runtime Binary, Dedicated Server Software หรือสิทธิ์ติดตั้ง Engine ด้วยตนเอง และ Browser Cache ไม่ใช่หลักฐานว่าเกมสามารถใช้งาน Offline ได้อย่างสมบูรณ์
+8. Verification: Expected: หากรองรับ Self-host ควรมี Runtime Package, Installation Procedure และ Deployment Contract; Actual: ไม่พบสิ่งเหล่านี้ใน Public Tools ที่ตรวจสอบ และไม่ได้รัน Offline Test
+9. Disclosure Status: Hosted Publishing Documented; Offline Build/Self-hosted Runtime Undisclosed / Not Verified
+10. Research Gaps: Runtime Redistribution, Dedicated Server Binary, Container Images, Offline Asset Resolution, Authentication Dependencies, Licensing และ Infrastructure Requirements
+190 — Export/Import Round-trip Test ที่ตรวจความครบถ้วนของข้อมูล
+1. Direct Answer: สามารถออกแบบ Round-trip Test ได้สองระดับ ได้แก่
+* Oriverse-native Source Round-trip: ตรวจ Weave Source และ Dependencies ที่นำออกมาแล้วนำกลับเข้า Oriverse
+* Cross-engine Round-trip: Export Geometry/Materials/Animations เป็นไฟล์มาตรฐาน แล้ว Import กลับหรือย้ายไป Unity/Godot/WebGPU Engine
+ระดับแรกมีเครื่องมือบางส่วนรองรับ แต่ระดับที่สองยังขาด Verified Export API จึงไม่สามารถรัน End-to-end Test อย่างสมบูรณ์ได้ในรอบนี้
+2. Architecture:
+เป็น Test Architecture ที่เสนอสำหรับ KHOSAN ไม่ใช่ Pipeline Export ของ Oriverse ที่ได้รับการยืนยันแล้ว
+3. Source Evidence: sync_pending_world_from_current, pending_world_read_sections, inspect_mesh, preview_texture, inspect_clip, import_material_asset, use_mesh_asset, import_clip_asset, run_pending_world, playtest
+4. API Contract: ใช้ Original Source Revision/Snapshot เป็น Baseline, Asset IDs/Digests เป็นตัวตรวจ Dependency Identity และใช้ Geometry/Material/Animation Inspectors ตรวจความต่างหลัง Import โดยไม่ถือว่า Digest ที่ต่างกันเพียงอย่างเดียวพิสูจน์ความเสียหายเชิงภาพหรือ Gameplay
+5. Working Example — KHOSAN Round-trip Test Specification:
+TestWalkClip เป็น Test Dependency ที่เสนอ ยังไม่ได้ยืนยันว่ามีอยู่ใน World ปัจจุบัน
+6. Execution Trace — Observed และ Proposed:
+Step
+	Operation
+	Actual Result
+	1
+	Read Live Source
+	PASS — 181 Lines / 9,654 Bytes
+	2
+	Inspect Existing Library Capture
+	PASS — 2 Shared Assets
+	3
+	Query Legacy Mesh/Clip Library Tools
+	FAILED — Tools Replaced
+	4
+	Discover Replacement Tool Definitions
+	ไม่พบในเซสชัน
+	5
+	Export Standard-format Files
+	Not Available / Not Run
+	6
+	Import into Isolated World
+	Not Run
+	7
+	Compare Mesh/Material/Animation
+	Not Run
+	8
+	Compile/Playtest Imported World
+	Not Run
+	9
+	Verify Source and Gameplay Equivalence
+	Not Verified
+	7. Limits & Failure Modes: Source-only Round-trip อาจไม่ครอบคลุม Binary Dependencies, Marketplace Assets และ Project Images ส่วน Binary Export/Import อาจสูญเสีย Material Semantics, Rig Bindings, Coordinate Conventions และ Deterministic Gameplay Rules
+8. Verification — Acceptance Matrix:
+Test ID
+	Expected Result
+	Actual Result
+	RT-01 Source Retrieval
+	ได้ Source เดิมครบ
+	PASS สำหรับ Live Preview
+	RT-02 Dependency Enumeration
+	ครบทุกชนิด
+	Partial
+	RT-03 Mesh Export
+	Standard File Generated
+	Not Verified
+	RT-04 Material Export
+	PBR Properties Preserved
+	Not Verified
+	RT-05 Clip Export
+	Skeleton/Animation Preserved
+	Not Verified
+	RT-06 Native Re-import
+	Compile Successfully
+	Not Run
+	RT-07 Cross-engine Import
+	Geometry/Materials Loaded
+	Not Run
+	RT-08 Source Equivalence
+	Same Source/Expected Semantics
+	Not Run
+	RT-09 Visual Equivalence
+	No Unaccepted Differences
+	Not Run
+	RT-10 Gameplay Equivalence
+	Invariants Pass
+	Not Run
+	9. Disclosure Status: Source Retrieval/Existing Library Metadata Experimentally Verified; Complete Export/Import Round-trip Not Verified
+10. Research Gaps: Full Export Toolchain, Asset Manifest, External Format Conversion, License Validation, Re-import Automation และ Cross-engine Gameplay Regression
+________________
+
+
+TRR-19 — Consolidated Technical Research Record
+ข้อ
+	หัวข้อ
+	Disclosure Status
+	181
+	Asset Library Storage
+	Documented + Status Verified
+	182
+	Identity/Revision/Provenance
+	Partially Verified; Internals Undisclosed
+	183
+	GLB/glTF/FBX Import
+	Marketplace GLB Documented; Generic Import Not Verified
+	184
+	Standard-format Export
+	Undisclosed / Not Verified
+	185
+	Weave Source & Dependencies
+	Source Verified; Complete Bundle Not Verified
+	186
+	Unity/Godot/WebGPU Portability
+	Proposed Mapping; Not Tested
+	187
+	Conversion/Interoperability APIs
+	Library Import Documented; Search Tool Migration Observed
+	188
+	Asset Licensing
+	Undisclosed / Not Verified
+	189
+	Offline/Self-hosted Runtime
+	Undisclosed / Not Verified
+	190
+	Round-trip Validation
+	Partial Read-only Tests; End-to-end Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse รองรับการจัดเก็บ Editable Mesh, Material และ Clip Sources พร้อม Dependencies ผ่าน Shared Asset Library และมี Asset Identity, Digest, Storage State และ Review Metadata
+สามารถอ่าน World Source ปัจจุบันโดยไม่แก้ไข Draft ได้ และมี Hosted Publishing ผ่าน share_game กับ publish_game
+แต่ยังไม่พบหลักฐานรับรองการ Export 3D Assets เป็นไฟล์มาตรฐานโดยตรง หรือ Runtime ที่นำไป Self-host ได้
+ข้อมูลที่ยังไม่เปิดเผย
+Standard 3D Export Formats, Generic FBX/glTF Import, Full Dependency Bundle Export, Licensing/Redistribution Terms, Offline Runtime Packaging และ Binary Compatibility กับ Unity/Godot
+นอกจากนี้ API ค้นหา Library มีการเปลี่ยนแปลงจริง โดย Tool ที่ถูกแทนที่ยังปรากฏใน Connector Definition แต่ใช้งานไม่ได้ ควรตรวจ Capability Discovery ใหม่ก่อนสร้าง Automation ที่พึ่งพา Library Search
+ข้อเสนอทางวิศวกรรมสำหรับ KHOSAN AI Game Studio
+ผมเสนอให้ KHOSAN พัฒนา Portable Asset & Project Interoperability Layer ที่มีห้าส่วนสำคัญ:
+1. Asset Manifest & Provenance Registry เก็บ Source, Asset Identity, Dependencies, License และ Version
+2. Portable Game IR แปลง Weave Semantics เป็นโครงสร้างกลางโดยไม่ผูกกับ Engine
+3. glTF/GLB Export Pipeline สำหรับ Geometry, PBR Materials, Rig และ Animation เมื่อมีสิทธิ์และข้อมูล Source เพียงพอ
+4. Target Engine Adapters สำหรับ Unity, Godot และ Custom WebGPU Runtime
+5. Round-trip Verification Harness ตรวจ Hashes, Geometry, Materials, Animation, Visual และ Gameplay Invariants
+ทั้งหมดเป็นข้อเสนอสำหรับ KHOSAN Studio ไม่ใช่การยืนยันว่า Oriverse มี Export Pipeline ภายในเหมือนกัน
+สถานะ TRR-19: Documentation Research Completed / Live Source Read-only Retrieval PASS / Shared Asset Storage Inspection PASS / Legacy Library Search Replacement Observed / Standard Export & Round-trip Not Verified.
+ไม่มีการ Stage, Patch, Import, Submit หรือ Publish World ในรอบนี้ จึงไม่เปลี่ยนแปลง World ปัจจุบัน
+หมวดถัดไปคือ 20 — Security, Licensing & Deployment (ข้อ 191–200) เพื่อศึกษาความปลอดภัยของ Runtime, Sandboxing, Asset Rights, Deployment Boundaries และความเป็นไปได้ในการนำเทคโนโลยีไปสร้าง Game Studio ที่ควบคุมเองได้
+________________
+
+

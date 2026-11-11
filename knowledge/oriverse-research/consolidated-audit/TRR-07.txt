@@ -1,0 +1,230 @@
+Oriverse / Weave Technical Research Record — TRR-07
+หมวด 07: Multiplayer, Lockstep & Rollback | คำถาม 061–070 | 8 ตุลาคม 2569
+ผมเชื่อมต่อ Oriverse และตรวจคู่มือโดยตรง ได้แก่ weave_coding → multiplayer_guidance, frame_and_scheduling_model, events, event_list, persistent_state_v1 และ world_rules
+ผลสำคัญคือ Oriverse ระบุชัดเจนว่า Multiplayer ใช้ Deterministic Lockstep พร้อม Client Prediction และ Rollback ไม่ใช่ระบบที่ส่ง Object State ทุกตัวเป็นหลัก (Object Replication) แต่คู่มือยังไม่เปิดเผยรายละเอียด Packet Format, Input Sequencing Protocol, Snapshot Encoding, State Hash Algorithm และ Network Security Implementation
+รายงานนี้จึงแยกสามระดับหลักฐาน: สิ่งที่คู่มือระบุโดยตรง, สิ่งที่อนุมานได้เชิงสถาปัตยกรรม และสิ่งที่ยังไม่ได้รับการเปิดเผย
+Oriverse Multiplayer — โมเดลเชิงแนวคิด
+<svg viewBox="0 0 340 288" width="100%" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="145" height="60" rx="8" fill="#64748b" fill-opacity=".12" stroke="currentColor" stroke-opacity=".2" /><rect x="185" y="8" width="145" height="60" rx="8" fill="#64748b" fill-opacity=".12" stroke="currentColor" stroke-opacity=".2" /><text x="22" y="28" font-size="12" font-weight="700" fill="currentColor">PLAYER A</text><text x="22" y="44" font-size="10.5" fill="currentColor">Input + Local View</text><text x="197" y="28" font-size="12" font-weight="700" fill="currentColor">PLAYER B</text><text x="197" y="44" font-size="10.5" fill="currentColor">Input + Local View</text><path d="M82 68v29h88 M258 68v29h-88v18" stroke="currentColor" fill="none" stroke-opacity=".6" stroke-width="1.5" /><rect x="10" y="116" width="320" height="60" rx="8" fill="#2563eb" fill-opacity=".13" stroke="currentColor" stroke-opacity=".2" /><text x="22" y="136" font-size="12" font-weight="700" fill="currentColor">SHARED INPUT / DETERMINISTIC SIM</text><text x="22" y="153" font-size="10.5" fill="currentColor">Same World + Inputs → Same Simulation State</text><text x="22" y="167" font-size="10" fill="currentColor">Prediction / Rollback support</text><path d="M170 176v19m-4 -5 4 5 4 -5" stroke="currentColor" fill="none" stroke-opacity=".6" /><rect x="10" y="199" width="320" height="70" rx="8" fill="#0d9488" fill-opacity=".12" stroke="currentColor" stroke-opacity=".2" /><text x="22" y="219" font-size="12" font-weight="700" fill="currentColor">WORLD STATE + VIEWER-SPECIFIC OUTPUT</text><text x="22" y="237" font-size="10.5" fill="currentColor">Shared gameplay state</text><text x="22" y="252" font-size="10.5" fill="currentColor">Per-player camera, UI, input perspective</text></svg>
+ภาพนี้อธิบายหลักการตามคู่มือ ไม่ระบุ Network Topology หรือ Authority Protocol ที่ยังไม่เปิดเผย
+061 — Deterministic Lockstep ทำงานอย่างไรโดยละเอียด?
+1. Direct Answer: คู่มือระบุว่าผู้เข้าร่วมใช้ World, Weave Code และ Inputs ที่สอดคล้องกันเพื่อให้ Simulation State ได้ผลตรงกัน โดย Gameplay Logic เปลี่ยน Shared Simulation State ตามปกติ ผู้พัฒนาไม่ต้องเขียน Per-object Replication เอง
+2. Architecture: แต่ละ Client/Server ประมวลผล World และ Input Stream ที่สัมพันธ์กัน ส่วนความแตกต่างเฉพาะ Viewer ได้แก่ PlayerObject ที่เป็นของตนเอง Camera, Input และ UI Ownership
+3. Source Evidence: multiplayer_guidance → Core model
+4. API Contract: #class player ถูกผูกให้ทุก PlayerObject; GetPlayerIndex() ใช้แยกผู้เล่น; GetAllPlayers() ใช้อ่านผู้เล่นที่มีอยู่; SetPlayerOwnerIndex() ใช้กำหนดเจ้าของ UI
+5. Working Example: ตัวอย่าง Player-specific State ตามคู่มือ:
+6. Execution Trace — Expected: Player A Join → สร้าง PlayerObject A → Player B Join → สร้าง PlayerObject B → Inputs ถูกประมวลผลผ่าน Simulation → Shared State เปลี่ยนตาม Logic เดียวกัน
+7. Limits & Failure Modes: การเก็บ Coins ของผู้เล่นทุกคนไว้ใน Manager Field เดียวจะทำให้กลายเป็น Shared Value ไม่ใช่ Per-player State และห้ามพึ่งพาลำดับ OnSpawned ข้าม Objects
+8. Verification: Expected: เมื่อผู้เล่นสองคนมี State แยกกัน การแก้ Coins ของ A ไม่กระทบ Coins ของ B; Actual: คู่มือรองรับรูปแบบดังกล่าว แต่ยังไม่ได้รัน Isolated Test ในรอบนี้
+9. Disclosure Status: Documented สำหรับ Core Multiplayer Model; Internal Lockstep Protocol Undisclosed
+10. Research Gaps: Input Barrier Policy, Lockstep Window, Authority Election, Deterministic State Schema และ Replay Protocol
+062 — Input Packets ถูกจัดลำดับและกระจายอย่างไร?
+1. Direct Answer: คู่มือเปิดเผยว่า Input Events ของผู้เล่นถูกประมวลผลใน Deterministic Simulation และมี Per-player Input Variants แต่ยังไม่ระบุ Packet Header, Sequence Number, Acknowledgment, Reliable/Unreliable Channels หรือ Input Distribution Algorithm
+2. Architecture: Input ของผู้เล่นเข้าสู่ Simulation ผ่าน Keyboard, Mouse และ Action Events โดยใน Weave สามารถเลือก Events ที่ผูกกับผู้เล่นเจ้าของ Object หรือ Events ที่ Broadcast ได้
+3. Source Evidence: multiplayer_guidance → Per-player input; events, event_list
+4. API Contract:
+การใช้ Event ที่ไม่มี ByThisPlayer อาจส่งให้ Handler ของหลาย Instances ทำงานตามคู่มือ
+5. Working Example:
+6. Execution Trace — Expected: Local Input → Input Event → Player-specific Handler → State Mutation → Deterministic Simulation
+นี่ไม่ใช่ Packet-level Trace
+7. Limits & Failure Modes: หากใช้ Broadcast Input ใน #class player โดยไม่กรอง Event.Presser อาจทำให้ Action เดียวถูกประมวลผลหลายครั้งเมื่อมีผู้เล่นหลายคน
+8. Verification: Expected: กด E โดย Player A แล้ว Handler ที่ผูกกับ A ตอบสนอง; Actual: Not Run
+9. Disclosure Status: Input Event Semantics Documented; Packet Ordering/Distribution Undisclosed
+10. Research Gaps: Wire Protocol, Input Framing, Sequence IDs, Resend Policy, Deduplication และ Tick Assignment
+063 — Client Prediction คำนวณสถานะล่วงหน้าอย่างไร?
+1. Direct Answer: คู่มือระบุชัดว่าใช้ Client Prediction และอธิบายบางเงื่อนไขของ Deterministic Randomness แต่ยังไม่เปิดเผย Prediction Horizon, Local Input Buffer หรือ Correction Policy
+2. Architecture: ตามแนวคิด Client Prediction ผู้เล่นสามารถเห็นผลตอบสนองก่อนกระบวนการยืนยันข้อมูลครบถ้วน แต่ไม่สามารถสรุปขั้นตอนภายในของ Oriverse จากหลักการทั่วไปนี้เพียงอย่างเดียว
+3. Source Evidence: multiplayer_guidance → Core model, Determinism caveats
+4. API Contract: คู่มือระบุว่า RandomNumber และ RandomPosition* ใช้ Deterministic Seeding โดยสำหรับ Player Input Events จะผูก Seed กับ Input Edge เพื่อให้ Predicted Result สอดคล้องกับ Final Result
+5. Working Example:
+6. Execution Trace — Expected: Player Input E → Local Predicted State เพิ่ม Actions → Deterministic Simulation ประมวลผล Input → State สอดคล้องกัน
+7. Limits & Failure Modes: คู่มือระบุว่า RandomChancePercent นอก Input Events ให้ผล false ระหว่าง Client Prediction จึงไม่ควรใช้กับ Combat Logic ที่ต้องตอบสนองทันที
+8. Verification: Expected: Predict และ Final State ตรงกันเมื่อ Inputs เหมือนกัน; Actual: Not Run สำหรับ Prediction Test
+9. Disclosure Status: Client Prediction Existence Documented; Prediction Implementation Undisclosed
+10. Research Gaps: Prediction Buffer, Rollback Trigger, Client Correction, Reconciliation Rules และ Visual Smoothing
+064 — Rollback เก็บ Snapshot และ Replay Simulation อย่างไร?
+1. Direct Answer: คู่มือยืนยันว่ามี Rollback และระบุว่าวัตถุจำนวนมากเพิ่มต้นทุนของ Rollback State แต่ไม่เปิดเผย Snapshot Format, Snapshot Interval, Memory Compression หรือ Replay Algorithm
+2. Architecture: Rollback ต้องอาศัยสถานะ Simulation ที่สามารถกลับไปยังจุดก่อนหน้าและประมวลผลต่อได้ แต่ยังไม่มีหลักฐานว่า Oriverse ใช้ Full Snapshots, Delta Snapshots หรือ State Journaling แบบใด
+3. Source Evidence: multiplayer_guidance → Core model; frame_and_scheduling_model → Dense pickup/particle fields
+4. API Contract: ไม่มี Public Snapshot/Restore API สำหรับ Rollback ภายในที่ยืนยันได้จากเอกสารที่ตรวจสอบ
+5. Working Example: ไม่มีตัวอย่าง Raw Rollback Snapshot ที่เปิดเผย จึงไม่สร้างตัวอย่าง Binary Snapshot ขึ้นมาเอง
+6. Execution Trace: เป็นไปได้ในเชิงแนวคิดว่า Late Input/Correction → Restore Prior State → Replay Inputs → Corrected Present State แต่ขั้นตอนจริงของ Oriverse ยัง Undisclosed
+7. Limits & Failure Modes: การสร้างวัตถุเกมที่ต้องมี State จำนวนมาก เช่น Pickups หลายพันชิ้น อาจเพิ่ม Rollback Memory และ Simulation Cost
+8. Verification: Expected: เกมรักษาความสอดคล้องหลัง Correction; Actual: Not Run และไม่มี Snapshot Trace
+9. Disclosure Status: Rollback Support Documented; Snapshot/Replay Implementation Undisclosed
+10. Research Gaps: Snapshot Granularity, Serialization, Rollback Window, Replay Cost และ Rollback Metrics
+065 — State Hash และ Desynchronization Detection ทำงานอย่างไร?
+1. Direct Answer: คู่มือ Oriverse ระบุว่า Simulation State สามารถตรวจสอบความสอดคล้องกันได้ และอธิบายระบบ Deterministic Lockstep แต่ยังไม่เปิดเผย State Hash Algorithm, Hash Coverage, Comparison Frequency หรือขั้นตอน Recovery เมื่อพบ Desynchronization
+2. Architecture: ในระดับหลักการ State Hash สามารถใช้ตรวจว่าผู้เล่นจำลองสถานะเดียวกันหรือไม่ แต่ยังไม่มีหลักฐานยืนยันว่า Oriverse ใช้ Hash Tree, Per-tick Checksum หรือกลไกใดโดยเฉพาะ
+3. Source Evidence: multiplayer_guidance → Core model ซึ่งระบุว่า Simulation State ตรวจสอบความสอดคล้องกันได้ รวมถึง Determinism caveats
+4. API Contract: ยังไม่พบ Public API ที่ยืนยันได้สำหรับ GetStateHash, CompareStateHash หรือการอ่าน Desync Reports โดยตรง ชื่อเหล่านี้เป็นตัวอย่างความสามารถที่ต้องค้นเพิ่มเติม ไม่ใช่ API ของ Oriverse ที่ตรวจพบ
+5. Working Example: สามารถใช้ Weave นับค่า State ที่คาดว่าจะเท่ากัน เช่นจำนวนครั้งที่ผู้เล่นใช้ประตู แล้วเปรียบเทียบ Logs ระหว่างการจำลอง แต่ไม่ถือว่าเทียบเท่าการตรวจ Hash ทั้ง World
+6. Execution Trace: Not Disclosed สำหรับ State Hash Generation, Exchange, Comparison และ Recovery
+7. Limits & Failure Modes: ความผิดพลาดจาก Object Spawn Ordering, Randomness หรือ Gameplay Logic ที่อาศัยข้อมูลนอก Deterministic Simulation อาจทำให้ผลลัพธ์ต่างกันได้ แต่ยังไม่มีข้อมูลยืนยันว่า Oriverse จัดการแต่ละกรณีอย่างไร
+8. Verification: Expected: State เดียวกันควรให้ผลการตรวจความสอดคล้องตรงกัน; Actual: Not Run เพราะยังไม่มี State Hash Inspector ที่ตรวจพบ
+9. Disclosure Status: Deterministic State Verification Partially Documented; State Hash Implementation Undisclosed
+10. Research Gaps: Hash Function, Serialized State Schema, Validation Interval, Divergence Localization, Recovery Policy และ Replay Evidence
+066 — Join, Leave, Reconnect และ Late Join จัดการอย่างไร?
+1. Direct Answer: หัวข้อนี้มีรายละเอียดจากคู่มือค่อนข้างชัดเจน Oriverse สร้าง PlayerObject สำหรับผู้เล่นที่เข้าร่วม เมื่อหลุดการเชื่อมต่อจะยังเก็บ PlayerObject ไว้ประมาณ 90 วินาทีเพื่อเปิดโอกาสให้ Reconnect และเมื่อกลับมาในระยะเวลาดังกล่าวจะใช้ PlayerObject เดิม
+ถ้ากลับมาหลังหมด Grace Period จะถือเป็น Fresh Spawn
+2. Architecture: Player Join → Spawn PlayerObject → OnSpawned → Disconnect → OnPlayerLeft → Reconnect Grace → OnPlayerReconnected หรือ OnDestroy
+3. Source Evidence: multiplayer_guidance → Players/teams; events → OnPlayerLeft/OnPlayerReconnected
+4. API Contract:
+สำหรับ Session Discovery มี API ที่ตรวจสอบ Signature ได้ ได้แก่:
+5. Working Example: ตัวอย่างสำหรับบันทึก Lifecycle ของผู้เล่น:
+6. Execution Trace — Expected:
+Event
+	สถานะ
+	Player Join
+	สร้าง PlayerObject
+	Disconnect
+	IsConnected() = false
+	Grace Period
+	PlayerObject ยังอยู่
+	Rejoin ภายใน Grace
+	OnPlayerReconnected
+	Grace Expired
+	OnDestroy
+	Join หลังหมด Grace
+	Fresh PlayerObject และ OnSpawned
+	7. Limits & Failure Modes: ห้ามใช้ Exists() แทน IsConnected() เพื่อตัดสินว่าผู้เล่นยังออนไลน์ เพราะ PlayerObject อาจยังอยู่ระหว่าง Grace Period และห้ามใช้ Display Name เป็น Unique Key
+8. Verification: Expected: Reconnect ภายใน Grace Period ต้องรักษา PlayerObject เดิม ส่วนหลัง Grace Period ต้อง Spawn ใหม่; Actual: Documented, ยังไม่ได้ทดสอบ Leave/Rejoin Matrix จริงในรอบนี้
+9. Disclosure Status: Lifecycle Contract Documented; Late-join Snapshot/State Transfer Mechanism Undisclosed
+10. Research Gaps: Join Synchronization, Initial State Transfer, Replay Catch-up, Identity Token Validation, Late-join Latency และ Session Migration
+067 — Server Authority และ Validation Boundary อยู่ตรงไหน?
+1. Direct Answer: Oriverse ระบุว่า Client และ Server ประมวลผล Shared Deterministic Simulation แต่ไม่ได้เปิดเผยรูปแบบ Server Authority หรือ Trust Boundary อย่างละเอียด
+ข้อควรระวังคือ การมี Server อยู่ในระบบไม่เพียงพอที่จะสรุปว่า Server ตรวจสอบทุก Gameplay Action แบบ Authoritative Server Architecture
+2. Architecture: คู่มือยืนยันว่า Session Discovery เป็นบริการแยกจาก Gameplay Simulation โดย ListSessions() และ JoinSession() ไม่ได้สร้าง Replication Endpoint หรือเปลี่ยน Simulation Authority
+3. Source Evidence: multiplayer_guidance → Core model, Session APIs
+4. API Contract:
+API เหล่านี้ใช้กับ Session Visibility/Discovery ไม่ใช่การกำหนดสิทธิ์แก้ Shared State
+5. Working Example: ผู้เล่นสองคนสามารถแก้ Shared World State ผ่าน Weave Gameplay Logic ได้ตามกฎที่ผู้พัฒนาเขียน แต่ตัวอย่างนี้ไม่ใช่หลักฐานว่ามี Server-side Authorization สำหรับทุก Action
+6. Execution Trace: Session Discovery → Join → Shared Deterministic Simulation โดยขั้นตอน Input Authentication และ Authority Verification ยังไม่เปิดเผย
+7. Limits & Failure Modes: ไม่ควรใช้ UI Visibility หรือ Per-player Render Visibility เป็น Security Boundary เพราะคู่มือระบุว่า Private Rendering ไม่ได้ทำให้ข้อมูล Simulation เป็นความลับ
+8. Verification: Expected: การแก้ข้อมูลที่ไม่มีสิทธิ์ควรถูกปฏิเสธโดย Security Boundary; Actual: Not Run และยังไม่มี API Contract ยืนยันจุดบังคับใช้สิทธิ์ดังกล่าว
+9. Disclosure Status: Shared Simulation Model Documented; Server Authority / Validation Boundary Undisclosed
+10. Research Gaps: Trust Model, Authoritative Input Validation, Anti-cheat Architecture, Host Permissions, State Ownership และ Secure Session Authentication
+068 — Packet Loss, Latency, Jitter และ Cheating จัดการอย่างไร?
+1. Direct Answer: คู่มือยืนยันว่าระบบมี Prediction และ Rollback ซึ่งเกี่ยวข้องกับการตอบสนองต่อข้อมูลที่มาถึงไม่พร้อมกัน แต่ไม่มีรายละเอียดการจัดการ Packet Loss, Jitter Buffer, Retransmission, Congestion Control หรือ Anti-cheat
+2. Architecture: ระบบเกมที่ใช้ Deterministic Lockstep จำเป็นต้องควบคุมความสอดคล้องของ Input Stream แต่ไม่สามารถยืนยันว่าภายใน Oriverse ใช้ Reliable UDP, WebRTC DataChannel, WebSocket หรือ Transport แบบใด
+3. Source Evidence: multiplayer_guidance → Core model, Determinism caveats
+4. API Contract: ไม่พบ Public Network Impairment Controls หรือ Packet-level Telemetry API ในเอกสารที่ตรวจสอบ
+5. Working Example: ไม่มี Working Example ระดับ Transport ที่ยืนยันได้จาก Weave API การใช้ playtest กับผู้เล่นจำลองทดสอบ Gameplay Events ได้ แต่ไม่ได้พิสูจน์การทำงานภายใต้ Packet Loss ของเครือข่ายจริง
+6. Execution Trace: Undisclosed สำหรับ Packet Delivery, Acknowledgment, Loss Recovery และ Anti-cheat Enforcement
+7. Limits & Failure Modes: Packet Loss สูงอาจทำให้ Input ล่าช้า แต่ระดับความรุนแรง ผลกระทบต่อ Frame Time และเงื่อนไข Disconnect ของ Oriverse ยังไม่ทราบ
+8. Verification: Expected: เกมควรรักษาความสอดคล้องของ State ภายใต้ Network Impairment ที่ระบบรองรับ; Actual: Not Run
+9. Disclosure Status: Prediction/Rollback Documented; Network Transport/Resilience/Security Undisclosed
+10. Research Gaps: Network Protocol, RTT Measurement, Jitter Buffer, Resend Policy, Congestion Control, Lag Compensation และ Anti-cheat Validation
+069 — รองรับผู้เล่นพร้อมกันสูงสุดเท่าไร?
+1. Direct Answer: การตรวจสอบ API SpawnAIPlayer(Name: Text) -> Object พบข้อกำหนดว่า มี Hard Cap 64 Players รวม Bots และการ SpawnAIPlayer เมื่อถึง Cap จะเกิด Error
+อย่างไรก็ตาม ข้อมูลนี้ยังไม่เท่ากับการรับรองว่าเกมสามารถรองรับ 64 ผู้เล่นจริงผ่านอินเทอร์เน็ตพร้อมกัน ด้วย FPS และ Latency ตามเป้าหมายที่กำหนด
+2. Architecture: Players และ AI Players ต่างเป็น PlayerObject ใน Simulation โดย Bots สามารถใช้ #class player, Physics และ Animations ได้เช่นเดียวกัน แต่ไม่มี Human Viewer, Camera หรือ UI
+3. Source Evidence: weave_coding → built_in_function_list → SpawnAIPlayer, multiplayer_guidance → AI players
+4. API Contract:
+ข้อจำกัดที่ระบุ: 64 Players รวม AI Players
+5. Working Example:
+6. Execution Trace — Expected: Spawn Bot → Allocate PlayerObject → Execute #class player/OnSpawned → Bot เข้าสู่ GetAllPlayers() → ใช้ AI Input APIs ควบคุมได้
+7. Limits & Failure Modes: การสร้าง PlayerObjects จำนวนมากเพิ่ม Physics, Animation, Script และ Rollback Costs ซึ่งขึ้นกับความซับซ้อนของแต่ละเกม
+8. Verification: Expected: จำนวน PlayerObjects รวม Bots ไม่เกิน 64 ตาม API Contract; Actual: ยังไม่ได้ทดสอบการชน Cap หรือ Capacity Benchmark จริง
+9. Disclosure Status: 64-player Object Cap Documented; Concurrent Internet-player Performance Not Verified
+10. Research Gaps: Maximum Real Clients per Session, Recommended Player Count, Server Resource Budget, Bandwidth per Client, Rollback Window Scaling และ Hardware-specific Performance
+070 — Multiplayer Test Matrix และ Network Impairment Benchmarks
+1. Direct Answer: สามารถออกแบบชุดทดสอบ Multiplayer ของ Oriverse โดยแบ่งเป็นสองระดับ ได้แก่ Deterministic Simulation Tests และ Real Network Impairment Tests ซึ่งต้องใช้หลักฐานต่างกัน
+2. Architecture: ระดับแรกใช้ playtest กับ Mock Seats เพื่อทดสอบ Join/Leave/Rejoin และ State Behavior ส่วนระดับที่สองต้องใช้ผู้เล่นจริงหลายอุปกรณ์และการควบคุมคุณภาพเครือข่ายจากภายนอก
+3. Source Evidence: multiplayer_guidance, events, event_list และ Tool Contract ของ playtest
+4. API Contract: เครื่องมือ playtest รองรับ players ตั้งแต่ 1–8 และ Scripted Actions เช่น leave, rejoin, disconnect เพื่อทดสอบ Player Lifecycle ผ่าน Text Simulation
+5. Working Example: ชุดคำสั่งทดลองเชิงแนวคิด:
+ตัวอย่างนี้เป็น Test Configuration ไม่ใช่ผล Tool Call ที่รันแล้ว
+6. Execution Trace — Expected: Two-player Spawn → Player Inputs → Shared State Mutation → Player 1 Disconnect → OnPlayerLeft → Rejoin → OnPlayerReconnected → State Validation
+7. Limits & Failure Modes: Multi-seat Text Simulation ไม่ได้จำลอง Packet Loss หรือ RTT ของเครือข่ายจริง และผลการรัน Mock Players ไม่สามารถใช้รับรอง Performance ของ Public Multiplayer Session โดยตรง
+8. Verification — Proposed Acceptance Matrix
+Test ID
+	Scenario
+	สิ่งที่ต้องวัด
+	MP-01
+	2-player Join
+	Spawn ถูกต้อง
+	MP-02
+	2-player Input Isolation
+	ไม่เกิด Cross-player Action
+	MP-03
+	Shared Door State
+	State ตรงกัน
+	MP-04
+	Private HUD
+	ผู้เล่นเห็นเฉพาะ HUD ของตน
+	MP-05
+	Disconnect / Reconnect
+	รักษา Object Identity
+	MP-06
+	Rejoin หลัง Grace
+	Fresh Spawn
+	MP-07
+	Late Join
+	State Catch-up ถูกต้อง
+	MP-08
+	50 ms RTT
+	Input Delay / Rollback
+	MP-09
+	150 ms RTT + 30 ms Jitter
+	Responsiveness / Correction
+	MP-10
+	1% Packet Loss
+	Recovery / State Consistency
+	MP-11
+	5% Packet Loss
+	Error Rate / Disconnects
+	MP-12
+	2–64 Players Scaling
+	FPS / CPU / Memory / Bandwidth
+	Actual Result: Not Run สำหรับ Matrix นี้ทั้งหมด ค่า RTT, Jitter และ Packet Loss ในตารางเป็น เงื่อนไขทดลองที่เสนอ ไม่ใช่ผลการวัดหรือค่าความทนทานที่ Oriverse รับรอง
+9. Disclosure Status: Simulation Test Tooling Documented; Network Impairment Benchmark Not Verified
+10. Research Gaps: Real Network Test Harness, Packet Capture, Rollback Telemetry, State Hash Reporting, Desync Reproduction และ Cross-device Load Testing
+________________
+
+
+TRR-07 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	061
+	Deterministic Lockstep
+	Documented; Internal Protocol Undisclosed
+	062
+	Input Packets
+	Event API Documented; Wire Protocol Undisclosed
+	063
+	Client Prediction
+	Documented; Algorithm Undisclosed
+	064
+	Rollback
+	Documented; Snapshot/Replay Undisclosed
+	065
+	State Hash / Desync
+	Partially Documented
+	066
+	Join/Leave/Reconnect
+	Documented; Late-join Transfer Undisclosed
+	067
+	Server Authority
+	Undisclosed
+	068
+	Packet Loss / Latency / Cheating
+	Undisclosed / Not Verified
+	069
+	Player Capacity
+	64-player Object Cap Documented
+	070
+	Test Matrix
+	Designed / Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse ใช้ Deterministic Lockstep พร้อม Prediction/Rollback โดย Gameplay State ถูกจำลองร่วมกัน ระบบมี Per-player Input/UI Ownership, Reconnect Grace Period ประมาณ 90 วินาที และ Hard Cap 64 PlayerObjects รวม Bots ตาม API ที่ตรวจสอบ
+การซ่อนวัตถุเฉพาะ Viewer ไม่ถือเป็นการปกป้องข้อมูล Simulation และ Session Discovery APIs ไม่ใช่การควบคุม Server Authority
+รายละเอียดที่ยังไม่เปิดเผย
+Wire Protocol, Transport Selection, Input Sequencing, Prediction Buffers, Snapshot Format, State Hash Algorithm, Desync Recovery, Anti-cheat Controls และ Concurrent-player Performance ภายใต้เครือข่ายจริง
+ข้อเสนอสำหรับ KHOSAN Studio
+หากจะนำหลักการนี้มาใช้สร้าง Multiplayer Runtime ของ KHOSAN Studio ควรกำหนด Input Protocol, Server-side Validation Boundary, Deterministic State Serialization, Rollback Buffer, State Hash Verification และ Network Impairment QA เป็นข้อกำหนดแยกกัน และไม่ควรถือว่า Determinism เพียงอย่างเดียวทดแทนการป้องกันโกงได้
+สถานะ TRR-07: Documentation Research Completed / Multiplayer Network Benchmark Not Executed.
+ไม่มีการแก้ไขหรือ Publish World ในรอบนี้ และ Oriverse ยังรายงาน Editor Build 05Oct26-23:23 ซึ่งควร Reload ก่อนทำการทดสอบ Multiplayer จริงบน Build ปัจจุบัน
+________________
+
+

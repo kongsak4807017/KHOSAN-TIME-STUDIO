@@ -67,6 +67,25 @@ Use progressive disclosure:
 
 Workers receive self-contained tasks. Do not rely on another agent's private chat history.
 
+## Native 3D Harness (reference-driven geometry / scenes)
+
+For 3D production tasks, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md` and the **source review** in `knowledge/oriverse-research/harness-blueprint/README.md`. The user-supplied Google Doc is archived as research, **not** an executable tool specification or proof of proprietary internals.
+
+- Use phase-specific maker roles; preserve the approved reference, coordinate/units contract, asset and task identifiers, source revision and locked invariants.
+- **No fabricated QA:** do not copy historical sample code that returns `passed: True` while the independent VLM call is a TODO. Unsupported adapters, unrendered images, and unexecuted checks must be `BLOCKED` or `NOT VERIFIED`.
+- Distinct QA and independent reviewer identities/sessions are required; their receipts must bind hashes of the actual current reference and render output. A checkbox does not authenticate identity.
+- Before claiming a 3D asset accepted, invoke the project-scoped local verifier `node tools/harness-3d/cli.mjs verify <project-root> <evidence-json>` and store its result. An LLM's verdict is not a substitute for measurement or a binary-file check.
+- Final artistic acceptance, release and publishing still require the **authenticated human approval** defined by the project governance. The current CLI verifies Ed25519 reviewer and human-approval receipt signatures against independently provisioned public trust keys; only a trusted Studio approval/checker service holding protected private keys can issue genuine receipts. It does not prove the actual VLM/human action occurred unless the issuer performed that work.
+- Do not assume all geometry types are validated: the initial native layout linter supports **only bounded Z-up/cm boxes** and fails closed on unsupported anchors/CSG/rigging. Do not claim full production support from its unit tests.
+
+## Part 7 Differential Patch Policy (research integration)
+
+When a 3D task requires incremental repair, load `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md` and use the bounded `tools/ugir-geometry-linter/hard_lock_enforcer.py` only for supported Z-up/cm AABB scenes. The developer's sample `hard_lock_enforcer.py` and HMAC `verify_evidence_gate.py` must **not** be used verbatim: the latter has a hardcoded default signing secret and can sign self-declared review results. Freeze source revision and verified node coordinates; patch only measured failing axes and rerun geometry tests. **Do not claim that this rule is enforced across Studio/DevSpace until a trusted dispatcher with OS-level permission isolation is integrated and tested.** The existing `tools/harness-3d/gate.mjs` provides distinct signed review/human receipts for asset acceptance, but not the missing native tool authorization layer.
+
+## Signed 3D gateway usage (Nov 2026)
+
+For supported project-scoped 3D geometry work, load `docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md`. LLM/DevSpace makers may propose signed `create_geometry` / `patch_failing_layout_nodes` actions but are **not permitted to declare acceptance**, mutate protected source, or sign for Controller, Checker, Renderer, Reviewer or Human. Calls to the trusted gateway must carry a signed, short-lived command with exact project/task, expected version, and non-replayed nonce. Only `trusted-gateway.mjs` can promote the signed finite-state task under a dedicated OS service identity. On Windows the separate-account/NTFS ACL and key-issuer service setup is a **mandatory deployment prerequisite**; code-only tests do not prove the current developer account is restricted. Never run `gateway-daemon.mjs` as an unrestricted Maker. Real image critique and signed human service receipts remain independent human/backend acceptance gates. Run `npm run verify:gateway` and inspect GitHub `trusted-gateway-and-evidence` CI before acceptance.
+
 ## Definition of Done
 A work item is Done only when:
 1. acceptance criteria are satisfied,

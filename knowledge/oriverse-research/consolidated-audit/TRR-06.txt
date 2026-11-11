@@ -1,0 +1,266 @@
+Oriverse / Weave Technical Research Record — TRR-06
+หมวด 06: Physics, Collision & Movement | ข้อ 051–060 | 8 ตุลาคม 2569
+ผมตรวจเอกสาร Oriverse โดยตรง ได้แก่ weave_coding → object_types, dynamic_physics_and_movement, kinematic_physics_and_movement, movement_laws, events, world_description_information และ frame_and_scheduling_model พร้อมค้นหา API Signatures ของ Jump, Gravity, Overlap Filtering, Physics Velocity และ Spatial Queries
+ข้อค้นพบหลัก: Weave แยกระบบ Dynamic Physics, Kinematic Movement, Character Controller และ Crowd Avoidance ออกจากกัน โดยแต่ละประเภทมีกฎการเคลื่อนที่ต่างกัน แต่เอกสารที่ตรวจสอบไม่ได้เปิดเผย Broadphase Algorithm, Narrowphase Solver หรือรายละเอียด Floating/Fixed-point Physics Implementation ทั้งหมด
+Physics & Movement Architecture — ตามพฤติกรรมที่มีเอกสารรองรับ
+แผนภาพเชิงหน้าที่ ไม่ใช่โครงสร้าง Physics Engine ภายในที่ยืนยันจาก Source Code
+051 — Physics Engine ใช้แนวทางใด และรองรับ Body ประเภทใด?
+1. Direct Answer: Oriverse รองรับ Static Objects, Dynamic Physics Bodies, Kinematic Objects, Player Character Controllers และ Crowd Bodies ซึ่งมีการประมวลผลแตกต่างกัน
+2. Architecture: object เริ่มเป็น Static WorldObject; physics เริ่มเป็น Dynamic Body; เมื่อเรียก Kinematic Movement บน WorldObject ระบบสามารถเปลี่ยนให้ทำงานเป็น Kinematic ได้ ส่วน PlayerObject เริ่มเป็น Kinematic พร้อม Gravity
+3. Source Evidence: object_types, dynamic_physics_and_movement, kinematic_physics_and_movement
+4. API Contract:
+Body Type
+	Declaration
+	Behavior
+	Static
+	object
+	Collidable โดยค่าเริ่มต้น
+	Dynamic
+	physics
+	Force/Velocity Integration, Gravity
+	Kinematic
+	object + Movement API
+	Script-controlled Motion
+	Player
+	Built-in PlayerObject
+	Kinematic + Character Gravity
+	Crowd
+	crowd
+	Collision Avoidance
+	Climbing Crowd
+	climbingCrowd
+	Deterministic Climbing Crowd Step
+	Display
+	display
+	Visual-only, ไม่มี Collision
+	5. Working Example:
+6. Execution Trace — Expected: Spawn → Register Body → Apply Gravity/Velocity → Collision Resolution → Update Transform
+7. Limits & Failure Modes: Dynamic Bodies ไม่มี Mass/Friction/Bounciness Tuning APIs ตามคู่มือที่ตรวจสอบ จึงไม่เหมาะเป็นระบบหลักสำหรับการเคลื่อนไหวที่ต้องปรับสมรรถนะอย่างละเอียด
+8. Verification: Expected: FallingBox เคลื่อนลงตาม Gravity และสัมผัสพื้น; Actual: ยังไม่ได้รัน Fixture นี้โดยตรง
+9. Disclosure Status: Body Types Documented; Internal Physics Solver Undisclosed
+10. Research Gaps: Integration Algorithm, Solver Type, Iterations, Contact Constraints และ Internal Body Storage
+052 — Broadphase และ Narrowphase Collision ทำงานอย่างไร?
+1. Direct Answer: ยังไม่พบเอกสารเปิดเผยว่า Collision Broadphase ใช้ Sweep-and-Prune, Spatial Hash, BVH หรือวิธีอื่น รวมถึงไม่พบรายละเอียด Narrowphase เช่น SAT, GJK หรือ EPA
+2. Architecture: จากพฤติกรรมที่เปิดเผย Engine ต้องตรวจคู่ Object ที่อาจชนกัน แล้วประเมิน Contacts/Overlaps แต่ไม่สามารถยืนยัน Algorithm ภายในได้
+3. Source Evidence: frame_and_scheduling_model, object_types
+4. API Contract: ไม่มี Broadphase/Narrowphase Configuration API ที่ยืนยันได้จากเอกสารชุดนี้
+5. Working Example: ใช้ Collidable Cubes หลายขนาดและตำแหน่งเพื่อเปรียบเทียบจำนวน Contacts ได้ แต่ไม่ได้ให้ข้อมูลโดยตรงว่าใช้ Algorithm ใด
+6. Execution Trace: Candidate Collision Pairs → Collision Evaluation → Contact/Overlap Results เป็นโมเดลเชิงแนวคิด ไม่ใช่ Trace ภายใน
+7. Limits & Failure Modes: จำนวน Collidable Objects มากทำให้ Collision Pair Processing มีต้นทุนสูง คู่มือเตือนว่า Regular Colliding Objects จำนวนประมาณ 500 ตัวอาจเริ่มเกิด Bottleneck
+8. Verification: Expected: Object ที่ทับซ้อนกันเกิด Contact; Actual: Not Run สำหรับ Broadphase/Narrowphase Benchmark
+9. Disclosure Status: Collision Behavior Documented; Algorithms Undisclosed
+10. Research Gaps: Pair Generation, Contact Manifold, Convex Solver, CCD และ Broadphase Profiling
+053 — Collision Shapes และ Mesh Collision รองรับแบบใด?
+1. Direct Answer: Oriverse ใช้ Collision Box เป็นค่าปริยายสำหรับ Models หลายประเภท และรองรับ collision = mesh สำหรับ Static/Kinematic Meshes บางกรณี
+2. Architecture: Scene Declaration กำหนด Model และ Collision Mode โดย Geometry ที่ Render และ Geometry ที่ใช้ Collision อาจไม่เหมือนกัน
+3. Source Evidence: world_description_information, kinematic_physics_and_movement
+4. API Contract:
+Setting
+	พฤติกรรม
+	ค่าเริ่มต้นของ Object
+	Box/AABB Collision สำหรับหลาย Model
+	collision = mesh
+	ใช้ Mesh Geometry สำหรับ Collision
+	collision = off
+	ปิด Collision
+	SetCanCollide(false)
+	ปิด Collision ใน Runtime
+	5. Working Example:
+ต้องมี #mesh Bridge หรือ Model Reference ที่มีอยู่จริงก่อนตัวอย่างนี้จึงจะ Compile/Load ได้
+6. Execution Trace — Expected: Load Model → Resolve Collision Mode → Register Collider → Evaluate Collisions
+7. Limits & Failure Modes: cone และ wedge ใช้ Box Collision ตามคู่มือ; Animated/Skinned Models ยังใช้ Box Collision และ collision = mesh ที่ให้ Gravity หรือ PreventOverlap อาจกลับไปใช้ Box Collision
+8. Verification: Expected: Bridge ที่ใช้ Mesh Collision สามารถสร้าง Walkable Surface ตาม Geometry ได้; Actual: ยังไม่ได้สร้าง Bridge Test Fixture
+9. Disclosure Status: Documented
+10. Research Gaps: Mesh Collider Data Structure, Triangle Collision Algorithm, Convexity Requirements และ Runtime Collider Rebuild Cost
+054 — Character Controller จัดการ Gravity, Jump และ Slopes อย่างไร?
+1. Direct Answer: PlayerObject เป็น Kinematic Character ที่มี Gravity โดยค่าเริ่มต้น การกระโดดใช้ Jump() และการเคลื่อนที่แนวดิ่งจาก Continuous Movement ถูกละเลยในขณะที่ Character Gravity เปิดอยู่
+2. Architecture: Character Controller จัดการ Horizontal Movement ร่วมกับ Gravity และ Jump ซึ่งควบคุม Vertical Velocity
+3. Source Evidence: kinematic_physics_and_movement, frame_and_scheduling_model
+4. API Contract:
+5. Working Example:
+การเปิด Default Controls ทำให้ผู้เล่นใช้ WASD และ Jump ตาม Built-in Player Controls
+6. Execution Trace — Expected: Player Input → Character Movement/Jump → Gravity Integration → Ground Collision → Position Update
+7. Limits & Failure Modes: Gravity Characters สามารถก้าวผ่านพื้นต่างระดับได้สูงสุดประมาณ 45 cm และจำกัดเพิ่มเติมที่ 1/4 ของความสูง Body สำหรับ NPC ขนาดเล็ก ส่วนระดับสูงกว่านั้นต้องใช้ Ramp หรือ Jump
+8. Verification: Expected: ผู้เล่นเดิน ก้าวขึ้น Step ภายในข้อจำกัด และ Jump ได้; Actual: Built-in Movement เคยใช้ได้ใน Benchmark แต่ไม่ได้ทดสอบ Step Height Matrix
+9. Disclosure Status: Documented; Slope Algorithm Undisclosed
+10. Research Gaps: Maximum Slope Angle, Ground Snap Logic, Coyote Time, Step Solver และ Character Collision Shape Internals
+055 — Kinematic กับ Dynamic Movement แตกต่างกันอย่างไร?
+1. Direct Answer: Kinematic Objects ถูกขับเคลื่อนด้วยคำสั่ง Movement ของ Script ส่วน Dynamic Bodies เคลื่อนที่ผ่าน Physics Velocity, Impulse และ Gravity โดยมีชุด API สำหรับการเคลื่อนที่ต่างกัน
+2. Architecture: object เริ่มเป็น Static Body และสามารถกลายเป็น Kinematic เมื่อเรียก Movement API ขณะที่ physics เริ่มเป็น Dynamic Body
+3. Source Evidence: dynamic_physics_and_movement, kinematic_physics_and_movement
+4. API Contract:
+Kinematic
+	Dynamic
+	MoveInDirectionContinuously
+	SetPhysicsVelocity
+	MoveWithVelocityContinuously
+	AddPhysicsVelocity
+	MoveTowardContinuous
+	AddPhysicsSpeed
+	MoveToArriveIn
+	SetPhysicsSpeed
+	SetPosition ในกรณีที่รองรับ
+	AddImpulse
+	TeleportTo สำหรับย้ายทันที
+	JumpInDirection
+	ตัวอย่าง Signature ที่ตรวจจากคู่มือ:
+5. Working Example:
+6. Execution Trace — Expected: Update ส่ง Continuous Motion → Physics Step นำไปใช้ → Platform เคลื่อนที่ใน Frame นั้น
+7. Limits & Failure Modes: การเรียก Dynamic-only Functions เช่น JumpInDirection บน Kinematic Player ทำให้เกิด Runtime Error ตามคู่มือ และการใช้ Kinematic Position Setters บน Force-affected Dynamic Bodies อาจขัดกับ Physics Integration
+8. Verification: Expected: Kinematic Platform เคลื่อนที่ด้วย Script ส่วน Dynamic Body ตอบสนองต่อ Impulse; Actual: Not Run สำหรับตัวอย่างนี้
+9. Disclosure Status: Documented
+10. Research Gaps: การเปลี่ยน Body Mode ระหว่าง Runtime, Velocity Preservation, Collision Resolution ของ Moving Platforms และ Solver Differences
+056 — Continuous Movement มี Overwrite Rules อย่างไร?
+1. Direct Answer: Weave กำหนดให้หนึ่ง Object มี Continuous Translation ที่นำไปใช้ได้หนึ่งรายการต่อ Frame และ Continuous Rotation หนึ่งรายการต่อ Frame หากเรียกซ้ำ คำสั่งล่าสุดจะเป็นตัวที่มีผล
+2. Architecture: Script Calls ส่ง Movement Requests ใน Event Phase ก่อนนำไปประมวลผลใน Physics Phase
+3. Source Evidence: movement_laws, frame_and_scheduling_model
+4. API Contract: ฟังก์ชันที่ลงท้าย Continuous หรือ Continuously เป็น Single-frame Commands ต้องเรียกทุก Frame ที่ต้องการให้เคลื่อนที่
+5. Working Example:
+6. Execution Trace — Expected: First Motion Request → Second Motion Request Overwrites First → Physics Applies Second Request
+7. Limits & Failure Modes: การใช้หลาย Movement Calls ใน Frame เดียวโดยคาดหวังว่า Velocity จะรวมกันเป็นความเข้าใจผิด ต้องคำนวณ Composite Velocity แล้วส่งเพียงคำสั่งเดียว
+TeleportTo* มีลำดับความสำคัญเหนือ Continuous Movement ภายใน Frame เดียวกัน
+8. Verification: Expected: Object เคลื่อนตามคำสั่งล่าสุด; Actual: Documented, ยังไม่ได้ทดสอบ Movement Conflict แยก
+9. Disclosure Status: Documented
+10. Research Gaps: Internal Movement Request Buffer, Rotation/Translation Conflict Resolution และ Handling ของ Commands จากหลาย Event Handlers
+057 — Contact, Trigger และ Region Events มีลำดับอย่างไร?
+1. Direct Answer: คู่มือระบุว่า Contacts และ Region Tests ถูกคำนวณจาก Post-physics Transforms กล่าวคือหลังนำ Movement/Physics ไปใช้แล้ว แต่ไม่ได้เปิดเผยลำดับการ Dispatch ของ Contact Events ทุกชนิดอย่างละเอียด
+2. Architecture: Script/Event Dispatch → Physics/Motion → Contact/Region Evaluation
+3. Source Evidence: frame_and_scheduling_model, events
+4. API Contract: Events ที่มีเอกสารรองรับ ได้แก่:
+Event
+	ข้อมูล
+	Touched
+	Event.TouchedObject, Event.TouchedPosition, Event.TouchedNormal
+	TouchEnded
+	Event.TouchedObject
+	EnterRegion
+	Object, Position, Normal
+	ExitRegion
+	Event.TouchedObject
+	5. Working Example:
+6. Execution Trace — Expected: Object Movement → Collision/Overlap Test → Contact State Changes → Relevant Event Delivery
+7. Limits & Failure Modes: DisplayObject ไม่มี Collision Events และ RegionObject ใช้ตรวจ Overlap โดยไม่ทำหน้าที่เป็น Solid Collider
+8. Verification: Expected: เมื่อวัตถุเริ่มสัมผัสเกิด Touched และเมื่อเลิกสัมผัสเกิด TouchEnded; Actual: Not Run ในรอบนี้
+9. Disclosure Status: Event Availability และ Post-physics Evaluation Documented; Exact Dispatch Ordering Undisclosed
+10. Research Gaps: Contact Persistence, Trigger Ordering, Multiple-contact Priorities, Event Deduplication และ Collision Enter/Stay/Exit Semantics ทั้งหมด
+058 — Physics Determinism ระหว่างอุปกรณ์ต่างกันรับประกันอย่างไร?
+1. Direct Answer: Oriverse ระบุว่าระบบ Multiplayer ใช้ Deterministic Lockstep พร้อม Client Prediction และ Rollback และ Weave ใช้ตัวเลขแบบ Deterministic 48.16 Fixed-point
+อย่างไรก็ตาม ยังไม่มีหลักฐานเพียงพอที่จะรับรอง Physics Bitwise Determinism ทุกกรณีระหว่าง Windows, macOS, iOS, Android และ Web Browsers ต่างรุ่น
+2. Architecture: ใน Deterministic Lockstep ผู้เข้าร่วมใช้ World และ Inputs ที่สอดคล้องกันเพื่อจำลองสถานะร่วมกัน แทนการส่ง Object Transform ทุกตัวเป็นหลัก
+3. Source Evidence: weave_language, multiplayer_guidance, object_types
+4. API Contract: ตัวเลข Weave ใช้ 48.16 Fixed-point; Multiplayer Sim State ถูกกำหนดให้ทำงานอย่างสอดคล้องกันตามเอกสาร
+5. Working Example: เกมที่ใช้ Input Sequence เดียวกันและ World Version เดียวกันสามารถนำมาทดสอบเปรียบเทียบ Final State ได้
+6. Execution Trace — Expected: Identical Source + Identical Inputs → Deterministic Simulation → Matching State Results
+7. Limits & Failure Modes: การใช้ Random หรือ Raw-time-dependent Logic โดยไม่รักษากฎ Determinism อาจทำให้ผลการจำลองไม่ตรงกัน และเอกสารยังไม่เปิดเผย Physics State Hash Implementation
+8. Verification: Expected: State Hash เท่ากันระหว่างอุปกรณ์เมื่อมี Inputs และ Conditions เหมือนกัน; Actual: Not Run สำหรับ Cross-device Determinism
+9. Disclosure Status: Lockstep Model Documented; Cross-device Physics Bitwise Guarantee Not Verified
+10. Research Gaps: Physics Solver Numeric Representation, Cross-platform Test Matrix, State Hash Protocol, Rollback Correction และ Floating-point Interoperability
+059 — Collision Layers, Filters และ Overlap Queries
+1. Direct Answer: Weave รองรับการเปิด/ปิด Collision และเลือกไม่ให้ Character Overlap Resolution ตอบสนองต่อ Objects ที่ติด Tag บางประเภทได้ แต่ยังไม่พบ Physics Layer Matrix แบบเต็มที่ประกาศผ่าน Public API
+2. Architecture: สามารถควบคุมการชนผ่าน Object Collision Mode และ Character-specific Overlap Rules โดยระบบ Tags ทำหน้าที่เป็นเงื่อนไขสำหรับ Query และบางกรณีสำหรับการกรอง Collision
+3. Source Evidence: kinematic_physics_and_movement, world_description_information, tags และ API Lookup
+4. API Contract:
+5. Working Example:
+6. Execution Trace — Expected: Player Movement → Check Overlap Rules → Skip Character Separation สำหรับ Objects ที่มี Tag.Enemy → ยังสามารถรับ Touched/Region Events ตามข้อกำหนด
+7. Limits & Failure Modes: การปิด SetCharacterPreventOverlap บน Character ที่ยังเปิด Gravity อาจทำให้ตกทะลุพื้น คู่มือแนะนำใช้ SetCharacterOverlapIgnoreTag แทนเมื่อต้องการเดินทะลุศัตรูบางประเภท
+8. Verification: Expected: Player เดินผ่าน Objects ที่ Tag ตรงกับ Ignore Rule ได้ โดย Ground Support ยังทำงาน; Actual: Not Run
+9. Disclosure Status: Tag-based Character Filtering Documented; Full Collision Layer Matrix Undisclosed
+10. Research Gaps: Collision Layer Count, Pairwise Layer Masks, Trigger Filtering, Physics Query Filters และ Per-player Collision Rules
+060 — Test Cases สำหรับพื้นลาด บันได ประตู และ Moving Platform
+1. Direct Answer: สามารถออกแบบ Physics Acceptance Suite โดยแยกกรณีทดสอบเป็น Ramp Traversal, Step Height, Door Collision และ Moving Platform Support
+เพื่อไม่ให้การทดสอบกระทบ World ปัจจุบัน ควรสร้าง Isolated Test World แยกต่างหาก
+2. Architecture: Test Harness ควรสร้าง Geometry ด้วย Scene Declarations แล้วใช้ Scripted Inputs พร้อมตรวจ Position, Contact Events, Ground Support และ Unexpected Physics Errors
+3. Source Evidence: kinematic_physics_and_movement, movement_laws, world_description_information, events
+4. API Contract: ใช้ object, physics, MoveInDirectionContinuously, Jump, SetCanCollide, Touched, EnterRegion และ API ของ Position/Velocity ที่คู่มือรองรับ
+5. Working Example: ตัวอย่าง Ramp Geometry จากคู่มือ:
+ตัวอย่างนี้เป็น Test Fixture สำหรับฉากเรขาคณิต ยังไม่ใช่ชุดทดสอบอัตโนมัติที่ผ่าน Compiler และ Playtest
+6. Execution Trace — Expected: Player Spawn → Movement Input → Physics Step → Contact Resolution → Position Update → Evaluate Test Result
+7. Limits & Failure Modes: การวาง Ramp ผิด Pivot หรือให้ Box Colliders ทับซ้อนกันอาจทำให้ผลทดสอบผิดพลาด ต้องตรวจ Geometry Setup ก่อนทดสอบ Movement
+8. Verification — Proposed Test Matrix
+Test ID
+	Scenario
+	Expected
+	PHY-01
+	เดินบนพื้นราบ
+	Player ไม่ทะลุพื้น
+	PHY-02
+	เดินขึ้น Ramp 18°
+	เดินขึ้นได้ตาม Character Controller
+	PHY-03
+	Step สูง 40 cm
+	Auto-step ได้สำหรับ Player ตามข้อจำกัด
+	PHY-04
+	Step สูง 60 cm
+	ไม่ Auto-step โดยไม่มี Ramp/Jump
+	PHY-05
+	กระโดดข้าม Step
+	Jump ช่วยผ่านสิ่งกีดขวาง
+	PHY-06
+	ประตูปิด Collision On
+	Player ไม่เดินทะลุ
+	PHY-07
+	ประตูเปิด Collision Off
+	Player เดินผ่านได้
+	PHY-08
+	Kinematic Platform เคลื่อนที่
+	Platform Movement ทำงานตาม Script
+	PHY-09
+	Player ยืนบน Moving Platform
+	ตรวจ Ground Support และ Ride Behavior
+	PHY-10
+	Teleport และ Movement ใน Frame เดียว
+	Teleport มีลำดับความสำคัญ
+	Actual Result: Not Run ทุกกรณีในตาราง เนื่องจากยังไม่มีการ Compile/Playtest ของ Isolated Physics Suite นี้
+9. Disclosure Status: Test Design Derived from Documented APIs; Runtime Acceptance Not Verified
+10. Research Gaps: Ramp Slope Limits, Moving Platform Passenger Behavior, Collision Toggle Timing, Physics Substeps และ Cross-device Reproducibility
+________________
+
+
+TRR-06 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	051
+	Physics Body Types
+	Documented
+	052
+	Broadphase/Narrowphase
+	Undisclosed
+	053
+	Collision Shapes/Mesh
+	Documented
+	054
+	Character Controller
+	Partially Documented
+	055
+	Kinematic/Dynamic
+	Documented
+	056
+	Continuous Movement Rules
+	Documented
+	057
+	Contacts/Regions
+	Partially Documented
+	058
+	Cross-device Determinism
+	Partially Documented / Not Verified
+	059
+	Collision Filters/Queries
+	Partially Documented
+	060
+	Physics Test Suite
+	Designed / Not Run
+	ข้อเท็จจริงที่ยืนยันได้
+Oriverse มี Body Categories และ Movement APIs ที่แยกตามพฤติกรรมชัดเจน ใช้ Box Collision เป็นค่าเริ่มต้นในหลายกรณี รองรับ Mesh Collision สำหรับ Static/Kinematic Objects บางประเภท และมี Character Controller ที่จัดการ Gravity, Jump และ Step Height
+กฎการเคลื่อนที่สำคัญคือ Continuous Movement ต้องเรียกทุก Frame, คำสั่งล่าสุดเป็นตัวที่มีผล และ Teleport มีลำดับความสำคัญเหนือ Continuous Movement
+ข้อมูลที่ยังไม่เปิดเผย
+Physics Broadphase/Narrowphase Algorithms, Solver Internals, Fixed-step Physics Configuration, Full Collision Layer Matrix, Cross-device Physics Reproducibility และ Moving Platform Passenger Semantics
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+หากนำผลวิจัยนี้มาออกแบบ KHOSAN Runtime ควรกำหนด Physics Contract แยก Static, Dynamic, Kinematic และ Character Controllers พร้อม Collision Layers, Contact Events, Determinism Tests และ Automated Physics Acceptance Suite ที่วัดผลซ้ำได้
+สิ่งเหล่านี้เป็นข้อเสนอในการสร้างระบบของเราเอง ไม่ใช่การอ้างว่า Oriverse ใช้ Implementation ภายในเหมือนกัน
+สถานะ TRR-06: Documentation Research Completed / Physics Acceptance Suite Not Executed.
+ไม่มีการแก้ไขหรือ Publish World ที่เปิดอยู่ระหว่างการศึกษานี้ และ Oriverse ยังคงรายงาน Editor Build 05Oct26-23:23 ซึ่งควร Reload ก่อนเริ่มการทดสอบ Physics จริงครั้งถัดไป
+หมวดต่อไปคือ 07 — Multiplayer, Lockstep & Rollback (ข้อ 061–070) ซึ่งควรศึกษาร่วมกับ Deterministic Simulation, Input Ordering, State Synchronization และ Rollback Recovery เพื่อใช้วางสถาปัตยกรรม Multiplayer ของ KHOSAN Studio
+________________
+
+

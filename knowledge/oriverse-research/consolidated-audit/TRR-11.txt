@@ -1,0 +1,310 @@
+Oriverse / Weave Technical Research Record — TRR-11
+หมวด 11: Terrain, World Generation & Streaming | ข้อ 101–110 | 8 ตุลาคม 2569
+ผมตรวจคู่มือ Oriverse โดยตรง ได้แก่ terrain_generation, weave_coding → terrain_generation, procedural_generation, procedural_generation_batches และ field_maps
+ข้อค้นพบสำคัญ: Oriverse มีระบบ Terrain สองรูปแบบที่ต่างกันอย่างมีนัยสำคัญ ได้แก่ Procedural Terrain Recipe สำหรับโลกเปิด และ Bounded Heightfield สำหรับงานที่ต้องประมวลผลข้อมูลความสูงเป็น Grid เช่น Drainage, Erosion และการวางถนน
+ไม่ควรสรุปว่าสองระบบนี้มีข้อจำกัดด้าน World Size, Collision หรือการบันทึกสถานะเหมือนกัน
+ภาพรวมสถาปัตยกรรม Terrain
+<svg viewBox="0 0 340 300" width="100%" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="324" height="40" rx="8" stroke="currentColor" stroke-opacity=".2" fill="#64748b" fill-opacity=".12" /><text x="20" y="25" font-size="12" font-weight="700" fill="currentColor">Weave Terrain Authoring</text><text x="20" y="40" font-size="10" fill="currentColor">Recipe / Grid operations / Hybrid</text><path d="M170 48v18M86 66H254M86 66v18M254 66v18" stroke="currentColor" fill="none" stroke-opacity=".6" /><rect x="8" y="84" width="157" height="95" rx="8" stroke="currentColor" stroke-opacity=".2" fill="#2563eb" fill-opacity=".12" /><text x="18" y="103" font-size="11.5" font-weight="700" fill="currentColor">RECIPE</text><text x="18" y="120" font-size="10" fill="currentColor">#terrain + Features</text><text x="18" y="136" font-size="10" fill="currentColor">Procedural evaluation</text><text x="18" y="152" font-size="10" fill="currentColor">Sparse runtime edits</text><text x="18" y="168" font-size="10" fill="currentColor">Open ground</text><rect x="175" y="84" width="157" height="95" rx="8" stroke="currentColor" stroke-opacity=".2" fill="#0d9488" fill-opacity=".12" /><text x="185" y="103" font-size="11.5" font-weight="700" fill="currentColor">HEIGHTFIELD</text><text x="185" y="120" font-size="10" fill="currentColor">TerrainHeights*</text><text x="185" y="136" font-size="10" fill="currentColor">Bounded sample grid</text><text x="185" y="152" font-size="10" fill="currentColor">Erosion / Drainage</text><text x="185" y="168" font-size="10" fill="currentColor">Quantized heights</text><path d="M86 179v20h84M254 179v20h-84v18" stroke="currentColor" fill="none" stroke-opacity=".6" /><rect x="8" y="217" width="324" height="73" rx="8" stroke="currentColor" stroke-opacity=".2" fill="#64748b" fill-opacity=".1" /><text x="20" y="237" font-size="11.5" font-weight="700" fill="currentColor">Terrain Runtime</text><text x="20" y="254" font-size="10" fill="currentColor">Ground queries / Collision / Rendering</text><text x="20" y="269" font-size="10" fill="currentColor">Terrain materials / Vegetation / Water</text><text x="20" y="283" font-size="10" fill="currentColor">Implementation details differ by representation</text></svg>
+ผังนี้แสดงการแบ่งหน้าที่ตามคู่มือ ไม่ใช่แผนภาพระบบหน่วยความจำหรือ Streaming Engine ภายใน
+101 — #terrain ประกอบ Heightfield จากสูตรและ Features อย่างไร?
+1. Direct Answer: #terrain Name ... #end เป็น Procedural Recipe ที่นิยาม Relief, Erosion, Noise, Landforms และ Sparse Features แล้วสร้าง Terrain ด้วย SpawnTerrainRecipe(...) โดยคู่มือระบุว่า Recipe ถูกประเมินจากโปรแกรมแบบ Fixed-point ไม่ต้องสร้าง Height Raster ทั้งโลกเก็บไว้ใน Simulation State
+2. Architecture: Terrain ประกอบด้วย Base Landform, Named Features, Erosion, Noise/Channel Modifiers และ Gameplay Flattening ตามลำดับการประมวลผลที่คู่มือกำหนด
+3. Source Evidence: weave_coding → terrain_generation, terrain_generation → Recipes
+4. API Contract: ตัวอย่าง Recipe Keys:
+Parameter
+	Default ที่คู่มือระบุ
+	mound_size_m
+	300 m
+	mound_height_m
+	300 m
+	mound_octaves
+	3
+	mound_gain
+	0.3
+	mound_seed
+	11
+	gully_depth_m
+	7.2 m
+	gully_size_m
+	115 m
+	erosion
+	ori
+	water_m
+	0
+	5. Working Example — รูปแบบจากคู่มือ:
+ตัวอย่างนี้เป็น Definition ที่อ้างอิงจากคู่มือ ยังไม่ได้ Compile/Playtest แยกในรอบนี้
+6. Execution Trace: อ่าน Recipe → สร้าง Base Relief → รวม Features → ประเมิน Erosion และ Surface Modifiers → ใช้ Gameplay Flats/Carves → Query/Render Terrain
+7. Limits & Failure Modes: Recipe รองรับสูงสุด 256 Features, 2,048 Points และ 256 Polygon Rings หลังขยาย Basic Rows โดย Invalid Topology หรือ Reference จะเกิด Error
+8. Verification: Expected: Recipe ให้ Terrain ตาม Parameters; Actual: Documented, ยังไม่ได้รัน Fixture แยก
+9. Disclosure Status: Documented; Internal Terrain Evaluator Implementation Undisclosed
+10. Research Gaps: Evaluation Cache, Procedural Function Implementation, Terrain Query Performance และ Exact Display Tessellation
+102 — Noise, Erosion และ Terrain Feature Evaluation ทำงานอย่างไร?
+1. Direct Answer: Oriverse รองรับ Procedural Noise หลายประเภท รวมถึงระบบ Erosion ที่ชื่อ OriErosion และการประมวลผล Heightfield ผ่าน Functions กลุ่ม TerrainHeights*
+2. Architecture: สำหรับ Recipe: Base Noise/Landforms → Erosion → Channel/Detail → Flatten/Carve ตาม Authoring Rules ส่วน Heightfield ใช้ลำดับ Operation บน Grid ที่ผู้เขียนกำหนด
+3. Source Evidence: weave_coding → terrain_generation; terrain_generation → Heightfield workflow
+4. API Contract: Noise Functions ได้แก่ Hash2, ValueNoise2, Fbm2, Ridged2, Billow2, Voronoi2 ซึ่งเป็น Pure Deterministic Functions ตามคู่มือ
+Heightfield Operations ได้แก่ TerrainHeightsNoise, TerrainHeightsAddNoise, TerrainHeightsWarp, TerrainHeightsThermalErode, TerrainHeightsHydraulicErode, TerrainHeightsSmooth และ TerrainHeightsRemapCurve
+5. Working Example — จากคู่มือ:
+นี่เป็น Code Fragment สำหรับสร้างเนินทราย ไม่ใช่ World ที่ Compile ผ่านแล้ว
+6. Execution Trace: Initialize Height List → Generate Base Noise → Apply Smoothing/Erosion → Apply Remapping → Apply Final Gameplay Flats → Spawn Terrain
+7. Limits & Failure Modes: TerrainHeights* ทำงานบน List ขนาด SamplesX × SamplesY และ Error เมื่อขนาด List ผิด โดย Hydraulic Erosion เป็น Iterative CPU Operation ที่อาจมีต้นทุนสูง
+8. Verification: Expected: Noise สร้าง Relief, Erosion ทำให้ลักษณะภูมิประเทศเปลี่ยน; Actual: Not Run
+9. Disclosure Status: Public Operations Documented; Internal Erosion Equations Partially Undisclosed
+10. Research Gaps: OriErosion Mathematical Specification, Numerical Stability, Iteration Costs, Flow Accumulation และ Reproducibility Benchmarks
+103 — Terrain Collision ตรงกับ Rendered Terrain อย่างไร?
+1. Direct Answer: สำหรับ Procedural Recipe คู่มือระบุว่า Flatten และ Carve Effects มีผลทั้ง Collision และ Rendering อย่างสอดคล้องกันตลอดพื้นที่ที่รองรับ แต่กรณี Hybrid Heightfield มีข้อแตกต่าง คือ Display Extension สามารถแสดงภูมิประเทศไกลเกิน Bounded Collision Grid ได้
+2. Architecture: Recipe Terrain ใช้ Procedural Field สำหรับ Ground Evaluation ส่วน Bounded Heightfield ใช้ Quantized Grid และ Collision ที่สัมพันธ์กับ Grid ขนาดจำกัด
+3. Source Evidence: weave_coding → terrain_generation; terrain_generation → Hybrid Lane
+4. API Contract:
+GroundHeightAtXY คืน World Z ในหน่วยเซนติเมตรของ Ground/Static Collider สูงสุดที่พิกัด XY
+5. Working Example:
+6. Execution Trace: Query XY → Evaluate Terrain/Static Ground → Return Height → Spawn/Place Object at Surface
+7. Limits & Failure Modes: SetTerrainDisplayExtension(radiusM) ขยายเฉพาะภาพ Rendering โดยไม่ได้ขยาย Grid Collision หรือ Grid Edits ดังนั้นบริเวณที่มองเห็นอาจไม่ใช่บริเวณที่เดินหรือแก้ไขได้
+8. Verification: Expected: Terrain Recipe Ground Query ตรงกับพื้นหลังการ Flatten/Carve; Actual: คู่มือระบุ Contract ดังกล่าว แต่ยังไม่ได้ตรวจด้วย Ground Sample Matrix ในรอบนี้
+9. Disclosure Status: Public Collision/Display Semantics Documented; Exact Mesh-vs-Collider Error Bounds Undisclosed
+10. Research Gaps: Maximum Vertical Error, Collision Sampling Resolution, GPU Tessellation Differences และ Edge Behavior
+104 — Coordinate System และ Precision ของ Terrain
+1. Direct Answer: Weave ใช้ World Coordinates แบบ Z-up ในหน่วยเซนติเมตร ส่วน Terrain Recipe Feature Coordinates ใช้ Terrain-local Meters และ Bounded Heightfield ใช้ Cell Coordinates กับ Sample Heights ในหน่วยเซนติเมตร
+2. Architecture: Terrain Instance Transform แปลง Local Coordinates ไปเป็น World Coordinates ขณะที่ Heightfield จัดเก็บ Samples แบบ Row-major และมี Origin อยู่กึ่งกลาง Grid
+3. Source Evidence: weave_coding → terrain_generation, procedural_generation
+4. API Contract:
+ตำแหน่งของ Heightfield Cell:
+X=Px+(ix−Sx−12)CX=P_x+\left(i_x-\frac{S_x-1}{2}\right)C Y=Py+(iy−Sy−12)CY=P_y+\left(i_y-\frac{S_y-1}{2}\right)C
+โดย PP คือ Terrain Position, Sx,SyS_x,S_y คือจำนวน Samples และ CC คือ Cell Size (cm)
+ค่าความสูงของ Bounded Heightfield ถูก Quantize เป็น u16 โดยความละเอียดต่อระดับประมาณ:
+Δh=hmax⁡−hmin⁡65535\Delta h=\frac{h_{\max}-h_{\min}}{65535}
+5. Working Example: Heightfield ขนาด 257×257 ที่ Cell Size 200 cm มีระยะระหว่าง Sample แรกกับ Sample สุดท้ายเท่ากับ 512 m ต่อแกน ตามสูตรพิกัดจากคู่มือ
+6. Execution Trace: Grid Index → Convert to Local XY → Add Terrain Origin → Evaluate/Interpolate Height → Return World Position
+7. Limits & Failure Modes: ความสูงสุดโต่งเพียงจุดเดียวอาจขยาย Quantization Range ทำให้ Precision ของพื้นที่อื่นลดลง
+8. Verification: Expected: Coordinates และ Quantization ตรงตามสูตร; Actual: อ้างอิงคู่มือ ยังไม่ได้วัด Numeric Error จริง
+9. Disclosure Status: Documented
+10. Research Gaps: Interpolation Precision, Origin Shifting, Large-coordinate Numerical Stability และ Cross-platform Height Sampling
+105 — สร้างถนน แม่น้ำ และพื้นที่ราบด้วยวิธีใด?
+1. Direct Answer: Oriverse รองรับการปรับความสูงของพื้นเพื่อสร้างพื้นที่ก่อสร้าง ถนน และทางน้ำ ผ่านทั้ง Terrain Recipe และ Bounded Heightfield อีกทั้งมี #road_network สำหรับสร้างโครงสร้างถนนที่มีทางแยก ขอบทาง และเครื่องหมายจราจร
+2. Architecture: ควรแยก Terrain Shaping ออกจาก Road/Water Rendering เพราะการขุดร่องใน Terrain ไม่ได้สร้างน้ำหรือผิวถนนโดยอัตโนมัติ
+3. Source Evidence: weave_coding → terrain_generation, terrain_generation → Heightfield workflow, texture_dsl_usage → #road_network
+4. API Contract:
+การใช้งาน
+	Recipe Terrain
+	Heightfield
+	ลานอาคาร
+	flatten_disc, flatten_rect
+	TerrainHeightsFlattenDisc/Rect
+	ถนนระดับคงที่
+	carve_path หรือ Flats
+	TerrainHeightsFlattenPath
+	ถนนไต่ระดับ
+	Profile/Feature ที่กำหนดความสูง
+	TerrainHeightsGradePath
+	แม่น้ำ
+	channel, carve_path
+	TerrainHeightsCarvePath
+	แม่น้ำตามทางไหล
+	ไม่มี Contract ว่าคำนวณ Drainage ทั้งโลกโดยอัตโนมัติ
+	TerrainHeightsFlowPath
+	5. Working Example — Terrain Recipe:
+พิกัด Features เป็นเมตร ส่วนตัวอย่างนี้ยังไม่ได้ Compile แยก
+6. Execution Trace: Evaluate Base Terrain → Apply Landforms/Erosion → Flatten Village Pad → Carve Channel → Evaluate Ground Height/Collision
+7. Limits & Failure Modes: ต้องทำ Flattening หลัง Erosion หากใช้ Heightfield เพื่อไม่ให้ Erosion ทำลายพื้นที่ราบ ส่วนการสร้าง Water Surface ต้องใช้ระบบน้ำเพิ่มเติม
+8. Verification: Expected: ลานก่อสร้างราบและมีร่องน้ำตาม Path; Actual: Not Run
+9. Disclosure Status: Documented สำหรับ Terrain Operations; Runtime Traversal Not Verified
+10. Research Gaps: Road Intersection Meshing, Grade Limits, River Water Integration, Bridge/Culvert Support และ Runtime Navigation Rebuild
+106 — Vegetation Scattering และ Biome Rules
+1. Direct Answer: Oriverse รองรับ #forest, #scatter และ Terrain Grass ซึ่งวางพืชตาม Ground Height, Slope, Elevation Bands และ Mask Conditions ได้
+อย่างไรก็ตาม ยังไม่พบ Biome Graph Schema กลางที่บังคับให้ผู้พัฒนานิยาม Biome ทุกประเภทผ่านระบบเดียว
+2. Architecture: Terrain สร้าง Height/Slope Field → Forest/Scatter Recipe ใช้ Filtering Conditions → Engine วาง Vegetation Instances → Rendering ใช้ LOD/Culling ตามระบบที่รองรับ
+3. Source Evidence: weave_coding → forest_dsl_usage, scatter_dsl_usage, procedural_generation
+4. API Contract:
+#forest ใช้ species, spacing, density_pct, height_min_cm, height_max_cm และ slope_max_pct
+#scatter เพิ่มความสามารถ เช่น splat_mask_min_pct, splat_mask_max_pct, terrain_normal_align_pct และ shape
+5. Working Example — จากรูปแบบที่คู่มือรองรับ:
+ตัวอย่างนี้ต้องมี #tree Pine อยู่ใน World เดียวกันก่อน จึงไม่ถือว่าเป็น Standalone Program ที่ผ่าน Compiler แล้ว
+6. Execution Trace: Evaluate Terrain Height → Check Region Z Span → Check Slope/Elevation → Deterministic Placement → Create Display/Trunk Colliders ตามชนิด Vegetation
+7. Limits & Failure Modes: หนึ่ง Forest Region มีเพดาน 16,384 Trees และการกระจายต้นไม้มากเกินจะถูกลดจำนวนเพื่ออยู่ใน Budget
+8. Verification: Expected: ต้นไม้ไม่ถูกวางบนพื้นที่สูง/ลาดเกินเงื่อนไข; Actual: Not Run
+9. Disclosure Status: Forest/Scatter Filters Documented; Unified Biome System Undisclosed
+10. Research Gaps: Biome Transition Blending, Ecosystem State, Seasonal Changes, Climate Simulation และ Vegetation Memory Residency
+107 — Terrain LOD และ Chunk Streaming ทำงานอย่างไร?
+1. Direct Answer: เอกสารยืนยันว่า SpawnTerrainRecipe แสดง Terrain ได้ไกลโดยไม่ต้องมี Height Raster ทั้งโลก และมีค่าเริ่มต้นด้านระยะการแสดงผล 8 km แต่ยังไม่เปิดเผย Terrain Chunk Layout, Quadtree, Clipmap หรือ Streaming Algorithms
+2. Architecture: Recipe Terrain ประเมิน Ground Procedurally ส่วน Heightfield ใช้ Bounded Grid และสามารถขยาย Display ด้วย SetTerrainDisplayExtension ซึ่งไม่ได้ขยาย Collision
+3. Source Evidence: weave_coding → terrain_generation, terrain_generation → Lane choice, render_profiles
+4. API Contract: SetTerrainDisplayExtension(radiusM) ใช้ขยายระยะแสดงภาพใน Hybrid Terrain และ Rendering Profiles สามารถจำกัด Resolution/Quality ตาม Device
+5. Working Example: เอกสารระบุว่า SpawnTerrainRecipe เป็นเส้นทางที่รองรับ Seamless Open Terrain โดยไม่จำเป็นต้องสร้าง Terrain Chunks เองผ่าน Weave Code
+6. Execution Trace: Camera Position/Visible Region → Terrain Display Generation → Render Geometry ส่วน Chunk Scheduling ภายในยังไม่เปิดเผย
+7. Limits & Failure Modes: Display Extension ไม่ได้ให้ Collision หรือ Grid Edits นอกพื้นที่ Heightfield และไม่ได้รับประกันว่าจะมองเห็นภูมิประเทศ 8 km โดยไม่มีข้อจำกัดของ Camera/Fog
+8. Verification: Expected: Recipe Terrain มองเห็นต่อเนื่องถึงระยะที่กำหนด; Actual: Not Run สำหรับ LOD/Streaming Trace
+9. Disclosure Status: Open Terrain Display Behavior Documented; Chunk/LOD Algorithms Undisclosed
+10. Research Gaps: Chunk Size, LOD Error Metrics, Streaming Queue, GPU Upload, Cache Policies และ Memory Eviction
+108 — รองรับการแก้ Terrain ระหว่างเล่นหรือไม่?
+1. Direct Answer: รองรับโดยตรงสำหรับ Recipe Terrain ผ่าน TerrainDig() และ TerrainFlatten() โดยระบบใช้ Sparse Overlay เก็บการเปลี่ยนแปลง ไม่จำเป็นต้องสร้าง Base Terrain Recipe ใหม่ทั้งหมด
+เอกสารยืนยันว่าการแก้ไขมีผลต่อ Collision, Rendering และ Ground Queries อีกทั้งรองรับ Multiplayer Synchronization และ Rollback ตามข้อกำหนดที่เผยแพร่
+2. Architecture: Runtime Terrain Editing แยก Base Procedural Field ออกจาก Sparse Edit Overlay ซึ่งถูกสร้างเป็น Tiles เมื่อเกิดคำสั่งแก้ไข
+3. Source Evidence: weave_coding → terrain_generation → Runtime digging; Built-in API Lookup ของ TerrainDig, TerrainFlatten, GetTerrainEditVersion และ TerrainOverlayClear
+4. API Contract:
+Radius, Depth และ Height ใช้หน่วยเซนติเมตร โดย TerrainDig() และ TerrainFlatten() คืนจำนวน Cells ที่เปลี่ยนแปลง
+5. Working Example:
+ตัวอย่างนี้แสดง API ที่มีเอกสารรองรับ แต่ต้องผูก Class กับ Object ที่รับ Input ได้ และมี Recipe Terrain อยู่ใน World จึงจะทำงานครบถ้วน
+6. Execution Trace — Expected: Input E → TerrainDig → Update Sparse Overlay → Update Collision/Display/Queries → Increment Terrain Edit Version → Notify Terrain Edit Event
+7. Limits & Failure Modes: Overlay มีขนาด Tile ละ 32×32 Cells และจำกัด 1,024 Tiles หาก Budget หมด การแก้ไขใหม่อาจไม่เกิดผลและคืน 0 การเรียก TerrainDig ทุก Frame โดยไม่จำเป็นอาจทำให้ Terrain Lag หรือ Flicker
+8. Verification: Expected: Ground Height เปลี่ยนหลังการขุด และ Version เพิ่มขึ้น; Actual: Not Run สำหรับ Runtime Digging Test
+9. Disclosure Status: Documented; Internal Overlay Storage/Replication Implementation Undisclosed
+10. Research Gaps: Edit Propagation Latency, Overlay Compression, Collision Rebuild Cost, Persistence Round-trip, Multiplayer Conflict Resolution และ Maximum Edit Throughput
+109 — World Size และ Memory Limits เท่าไร?
+1. Direct Answer: ข้อจำกัดต้องแบ่งตามประเภท Terrain
+Resource
+	ข้อกำหนดจากคู่มือ
+	Recipe Terrain
+	ไม่มี Bounded Grid Size Cap แบบ Heightfield
+	Recipe Feature Coordinates
+	ประมาณ ±1,000,000 m
+	Recipe Elevations
+	ประมาณ ±10,000 m
+	Recipe Features
+	สูงสุด 256
+	Recipe Points
+	สูงสุด 2,048
+	Recipe Polygon Rings
+	สูงสุด 256
+	Bounded Heightfield
+	สูงสุด 513 Samples ต่อแกน
+	Recommended Heightfield
+	129–257 Samples ต่อแกน
+	Runtime Edit Overlay
+	สูงสุด 1,024 Tiles
+	Forest Region
+	สูงสุด 16,384 Trees
+	Scatter Binding
+	สูงสุด 16,384 Instances
+	World Scatter
+	สูงสุด 65,536 Instances และ 1,000,000 Expanded Vertices
+	2. Architecture: Recipe Terrain ใช้ Procedural Evaluation ลดความจำเป็นในการเก็บ Height Samples ทั้งโลก ส่วน Heightfield ใช้ Samples ที่จัดเก็บเป็น Lists และแปลงเป็น Quantized Terrain ตอน Spawn
+3. Source Evidence: weave_coding → terrain_generation, forest_dsl_usage, scatter_dsl_usage, terrain_generation
+4. API Contract: SpawnTerrainFromHeights รับ SamplesX และ SamplesY ตั้งแต่ 2–513 ต่อแกน ขณะที่ Recipe Terrain รองรับ SetTerrainDisplayExtension(RadiusM) เพื่อควบคุมระยะแสดงภาพ
+5. Working Example: Recipe Terrain ที่มีขนาดเชิงภูมิศาสตร์ 8 km สามารถใช้ Declaration เดิมและกำหนด Render Distance โดยไม่ต้องสร้าง Height Grid 8 km ใน Weave State
+6. Execution Trace: Evaluate Procedural Recipe → Compute Ground on Demand → Render Visible Terrain; สำหรับ Heightfield จะสร้าง Sample Grid ก่อน Spawn
+7. Limits & Failure Modes: ไม่มีหลักฐานเพียงพอให้กำหนดค่าคงที่ของ VRAM ต่อ Terrain Kilometer, Collision Memory ต่อ Tile หรือ Terrain Chunk Cache Capacity
+8. Verification: Expected: Recipe สามารถ Query พื้นที่ขนาดใหญ่ภายใน Coordinate Limits; Actual: เอกสารระบุความสามารถ แต่ยังไม่ได้ทดสอบ World Boundaries หรือ Memory Allocation จริง
+9. Disclosure Status: Public Limits Documented; Exact CPU/VRAM Memory Model Undisclosed
+10. Research Gaps: Resident Terrain Tile Count, GPU Geometry Cache, CPU Memory per Region, World Origin Precision และ Device-specific Memory Budgets
+110 — Benchmark ของโลกขนาด 1, 4 และ 8 กิโลเมตร
+1. Direct Answer: Oriverse มี Terrain Recipe ที่เหมาะสำหรับพื้นที่ขนาดกิโลเมตร และเอกสารระบุระยะการแสดง Terrain เริ่มต้น 8 km แต่ ยังไม่มีผล Benchmark ที่ยืนยันได้สำหรับพื้นที่ทดสอบ 1, 4 และ 8 km ภายใต้เงื่อนไข Hardware, Resolution และ Scene Complexity เดียวกัน
+จึงไม่สามารถรายงาน FPS, Frame Time, CPU Memory หรือ VRAM ของแต่ละขนาดเป็นตัวเลขจริงได้ในรอบนี้
+2. Architecture: ควร Benchmark ด้วย Recipe Terrain ชุดเดียวกัน โดยเปลี่ยนขอบเขตการสำรวจและระยะการแสดงผล ขณะควบคุม Terrain Features, Vegetation Density, Camera Height และ Rendering Quality
+ต้องแยก World Extent ออกจาก Visible Distance: พื้นที่ทดสอบกว้าง 8 km ไม่ได้หมายความว่าต้องแสดง Terrain ทั้ง 8 km จากทุกตำแหน่งกล้อง
+3. Source Evidence: terrain_generation, weave_coding → terrain_generation, render_profiles และสัญญาของเครื่องมือ sample_ground, preview_terrain, playtest
+4. API Contract:
+SpawnTerrainRecipe มีข้อกำหนดว่าหนึ่ง World ใช้ Recipe Terrain หลักได้หนึ่ง Instance ตามคู่มือ
+5. Working Example — Benchmark Fixture ที่เสนอ
+เป็น Fixture จากรูปแบบ API ที่มีเอกสารรองรับ แต่ ยังไม่ได้ Compile หรือ Run ใน Isolated Benchmark World
+6. Execution Trace — Expected: Initialize World → Spawn Procedural Terrain → Validate Ground Samples → Move Camera/Player Across Test Route → Capture Frame/Resource Metrics → Compare Results
+7. Limits & Failure Modes: การทดสอบด้วย Browser Editor ที่ซ่อนแท็บอยู่ไม่เหมาะเป็นหลักฐาน GPU Rendering Performance เพราะ playtest อาจคืน Text Timeline แทน Render Capture และผลที่ได้อาจไม่สะท้อน Performance ของอุปกรณ์ปลายทาง
+8. Verification — Benchmark Protocol
+Test Matrix
+Test
+	ขนาดพื้นที่ทดสอบ
+	จำนวน Ground Samples
+	เป้าหมาย
+	TERR-1K
+	1 × 1 km
+	64 จุด
+	Baseline
+	TERR-4K
+	4 × 4 km
+	64 จุด
+	Medium World
+	TERR-8K
+	8 × 8 km
+	64 จุด
+	Large World
+	Metrics ที่ต้องเก็บ
+Metric
+	หน่วย
+	Actual Result
+	Frame Time P50/P95/P99
+	ms
+	Not Measured
+	GPU Frame Time
+	ms
+	Not Measured
+	CPU Simulation Time
+	ms
+	Not Measured
+	Terrain Load/Generation Time
+	ms
+	Not Measured
+	CPU Memory
+	MB
+	Not Measured
+	GPU Memory
+	MB
+	Not Measured
+	Ground Query Error
+	cm
+	Not Measured
+	Terrain Pop-in / LOD Transition
+	จำนวนเหตุการณ์
+	Not Measured
+	Camera Traversal Stutter
+	ms
+	Not Measured
+	Actual Result: Not Run สำหรับ Benchmark ทั้งสามขนาด
+ผมตรวจสอบ World ปัจจุบันแบบ Read-only แล้ว พบว่าเป็น KHOSAN–Oriverse Benchmark ซึ่งมี #terrain BenchmarkTerrain พร้อม noise และ flatten_rect รวมถึงบ้านและองค์ประกอบหมู่บ้าน แต่ไม่ใช่ Benchmark ที่กำหนดพื้นที่ 1, 4 และ 8 km อย่างเป็นระบบ จึงไม่สามารถนำผลการตรวจ World นี้ไปอ้างเป็นผลทดสอบขนาดพื้นที่ทั้งสามได้
+9. Disclosure Status: Large-scale Recipe Capability Documented; 1/4/8-km Performance Not Verified
+10. Research Gaps: อุปกรณ์ทดสอบที่กำหนดตายตัว, GPU Counters, CPU/VRAM Telemetry, Route-based Benchmark, Terrain LOD Diagnostics และ Performance Regression Automation
+________________
+
+
+TRR-11 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	101
+	Terrain Recipe Architecture
+	Documented
+	102
+	Noise & Erosion
+	Documented; Internals Partially Undisclosed
+	103
+	Terrain Collision/Rendering
+	Partially Documented
+	104
+	Coordinates & Precision
+	Documented
+	105
+	Roads, Rivers & Flats
+	Documented; Runtime Not Verified
+	106
+	Vegetation & Biomes
+	Placement Documented; Unified Biome Schema Undisclosed
+	107
+	LOD & Streaming
+	Display Behavior Documented; Internals Undisclosed
+	108
+	Runtime Terrain Editing
+	Documented; Not Experimentally Verified
+	109
+	World/Memory Limits
+	Published Limits Documented; Memory Model Undisclosed
+	110
+	1/4/8-km Benchmark
+	Test Designed; Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse รองรับ Terrain Recipe ที่ประเมินภูมิประเทศได้โดยไม่ต้องจัดเก็บ Height Raster ของโลกทั้งหมดใน Simulation State และรองรับ Heightfield แบบ Bounded Grid ที่ใช้ดำเนินการ Erosion, Drainage, Grading และ Mask Generation ได้
+ระบบยังรองรับ Named Terrain Features, Runtime Digging/Flattening, Forest/Scatter Filtering, Water Surfaces และ Terrain Queries
+ข้อมูลที่ยังไม่เปิดเผย
+Internal Terrain Streaming, Chunk Cache, LOD Selection Algorithm, GPU Terrain Memory Management, Collision-vs-Render Error Bounds และ Performance Scalability สำหรับพื้นที่ 1–8 km
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+สำหรับการสร้าง World Generation Engine ของ KHOSAN Studio ผมเสนอให้แยก:
+1. Procedural Terrain Evaluator สำหรับภูมิประเทศขนาดใหญ่
+2. Heightfield Processing Layer สำหรับ Drainage, Erosion, Road Grading และ Imported Elevation Data
+3. Sparse Terrain Edit Overlay สำหรับการแก้ไขระหว่างเล่น
+4. Biome & Vegetation Placement สำหรับระบบกระจายต้นไม้และ Props
+5. Terrain Rendering/LOD & Streaming สำหรับการบริหาร GPU Resources
+6. Terrain QA & Benchmark Harness สำหรับ Collision, Precision, Frame Time และ Memory
+นี่เป็นข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio ไม่ใช่การระบุว่า Oriverse ใช้ Internal Architecture ตามรายการนี้ทั้งหมด
+สถานะ TRR-11: Documentation Research Completed / Existing World Inspected Read-only / 1–4–8 km Benchmarks Not Executed.
+ไม่มีการเปลี่ยนแปลงหรือ Publish Oriverse World ในรอบนี้ และ Editor ยังรายงาน Build 05Oct26-23:23 ซึ่งควร Reload ก่อนเริ่มการทดลอง Performance ที่ต้องการผลเทียบเคียงได้จริง
+หมวดถัดไปคือ 12 — Asset Pipeline, Import, Export & Interoperability (ข้อ 111–120) เพื่อศึกษารูปแบบไฟล์ การนำเข้า Asset, การ Export Mesh/Animations และข้อจำกัดของการนำข้อมูลไปใช้กับ Game Engines อื่น
+________________
+
+

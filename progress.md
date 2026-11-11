@@ -1,5 +1,30 @@
 # KHOSAN TIME STUDIO Progress
 
+## 2026-11-11 — Signed six-hard-lock 3D gateway implementation
+- Added `tools/harness-3d/repair-protocol.mjs`: +Z/cm bounded AABB geometry diagnostics, frozen-node hashes, authorized failing axes only, source revision binding, no new/worsening regression.
+- Added `trusted-gateway.mjs` with distinct Ed25519 role signatures, trusted project root allowlist, short-lived signed tool requests, task version compare-and-swap, nonce anti-replay, server-signed durable state, immutable geometry snapshots and independent technical/review/human approval phases.
+- Added local-only `gateway-daemon.mjs` + `gateway-client.mjs` named-pipe/Unix IPC for DevSpace, and `gateway-sign.mjs` for Maker key-scoped commands. No arbitrary shell execution or privileged HTTP mutation API.
+- Added Studio read-only signed state endpoint and Project Detail panel; disabled by default, opt-in for loopback only.
+- Added PR/push GitHub Actions workflow `harness-gates.yml`: actual GitHub CI run 43003471960 at commit `3d63f278` passed 29/29 gateway tests (including positive signed human approval fixture), 17/17 signed artifact gate tests, 20/20 Python tests, source/workspace/harness/knowledge verification.
+- **Not production accepted:** target Windows DevSpace checkout `C:\KHOSAN\KHOSAN-TIME-STUDIO` was empty (no `.git`); no protected service identity/NTFS ACL, real Blender/Critic/Reviewer/Human issuer services or required GitHub branch protection were installed. All work stays on draft PR #22 and task status `verify`.
+
+
+## Part 7 Python 6 Hard Locks review — 11 November 2026
+- Read the latest `AI 3D harness` Google Doc revision (114,348 extracted characters; Part 7 adds 14,171 characters), archived exact text and verified GitHub readback.
+- Code-audited both supplied Python samples: dynamic tool masking is not server enforcement; original Differential Patch Lock silently ignores unknown IDs, accepts arbitrary patch fields and lacks revision/regression validation; source HMAC Gatekeeper has a hardcoded default secret, self-declared reviewer and numeric NaN risk.
+- Added bounded Python `tools/ugir-geometry-linter/hard_lock_enforcer.py` with source-bound immutable snapshots, per-axis repair restrictions, frozen-node consistency and no-new-defect/regression checks. **20/20 local unittest cases passed** (isolated Python environment).
+- Added source review `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md`, `studio/evidence/HARNESS-PART7-20261111.json`, registry/context/AGENTS policies and manual CI test step.
+- **Not complete:** No trusted Studio/DevSpace dispatcher automatically intercepts all writes/tool invocations; no authenticated independent critic or human signing service, target Windows GPU run or protected required GitHub check. Work item remains `verify` and PR #22 remains draft.
+
+
+## Research integration — 11 November 2026 (3D harness)
+- Preserved the complete 100,175-character extracted text of the user Google Doc `AI 3D harness` as supplemental reference research.
+- Found an actual QA defect in illustrative Python: `IsolatedVisualCritic` has TODO then returns `passed: True`; this must never be adopted as a passing independent critique.
+- Added KHOSAN-native bounded Z-up/cm layout linter, evidence/sha256 gate, CLI, explicit Y-up meter conversion, separate maker/checker and human approval metadata checks.
+- Ran 17 Node tests in isolated local container: PASS 17/17, including Ed25519 review/approval signature checks. Source file readback from GitHub matched all 9 generated files; browser/Blender/VLM/GPU acceptance is pending.
+- Draft PR #22 holds the archival/harness foundation; not merged. Work item TASK-3D-HARNESS-V1-001 remains verify.
+
+
 ## Current phase
 **DEPLOYABLE STUDIO BASELINE v0.2.0 — MULTI-PROJECT WORKSPACE**
 

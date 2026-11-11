@@ -27,4 +27,4 @@ Files marked `pending_verbatim_mirror` are known project source documents that m
 - [TRR-01–TRR-20 research category index](oriverse-research/README.md)
 - [Question coverage register (001–200)](oriverse-research/questions.md)
 
-**Status:** research index and question register only. Detailed ten-part answer transcripts are not yet fully mirrored into GitHub; see archive status. These are non-canonical technical references, not validated KHOSAN engineering decisions.
+**Status (11 Nov 2026):** The complete **user-consolidated Oriverse Capability Audit text** (452,573 characters) has been mirrored in 21 sections with 200/200 question headings. This is **not** a recovered verbatim set of the 200 original ChatGPT research messages, and it does not independently verify Oriverse internals. The archived first-party tool transcripts remain incomplete. See [archive index](oriverse-research/README.md), [manifest](oriverse-research/CONSOLIDATED-AUDIT-MANIFEST.json), and [16 reconstructed workflows](oriverse-research/workflows/WORKFLOWS-16.md). KHOSAN production remains independent; do not call Oriverse or require Weave runtime to use these references.

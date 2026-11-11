@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-3D-HARNESS-V1-001",
+  "date": "2026-11-11",
+  "scope": "Signed six-hard-lock gateway, local DevSpace named-pipe IPC and read-only Studio state status",
+  "implementation": {
+    "signed_protocol": "tools/harness-3d/trusted-gateway.mjs",
+    "differential_policy": "tools/harness-3d/repair-protocol.mjs",
+    "standalone_cli": "tools/harness-3d/gateway-cli.mjs",
+    "local_ipc_daemon": "tools/harness-3d/gateway-daemon.mjs",
+    "devspace_ipc_client": "tools/harness-3d/gateway-client.mjs",
+    "maker_signer": "tools/harness-3d/gateway-sign.mjs",
+    "automated_checks": ".github/workflows/harness-gates.yml",
+    "documentation": "docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md"
+  },
+  "github_ci": {
+    "repository": "kongsak4807017/KHOSAN-TIME-STUDIO",
+    "workflow_name": "KHOSAN Harness Security Checks",
+    "run_id": 43003471960,
+    "job_id": 130465047020,
+    "head_commit_sha": "3d63f2788479dc97642c0cacf4b4f95de3929e08",
+    "conclusion": "success",
+    "gateway_node_tests": {
+      "total": 29,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0
+    },
+    "artifact_gate_node_tests": {
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "python_patch_tests": {
+      "total": 20,
+      "passed": 20,
+      "failed": 0
+    },
+    "other_checks": "Source, workspace, harness, syntax and consolidated research archive passed",
+    "note": "Recorded success at earlier commit; subsequent policy/documentation changes must pass their own CI run as well."
+  },
+  "local_container": {
+    "runtime": "Node.js 22",
+    "gateway_tests": 29,
+    "passed": 28,
+    "failed": 0,
+    "skipped": 1,
+    "reason_for_skip": "positive human acceptance depends on existing gate.mjs imported only on GitHub checkout; GitHub CI ran and passed it"
+  },
+  "devspace_machine": {
+    "workspace": "C:\\KHOSAN\\KHOSAN-TIME-STUDIO",
+    "checkout_present": false,
+    "direct_target_windows_acceptance": "NOT_RUN"
+  },
+  "security_claims": {
+    "source_level": "PASS for the bounded protocol code paths exercised in synthetic fixtures",
+    "windows_acl_service_identity": "NOT_CONFIGURED",
+    "real_independent_vlm_with_fresh_context": "NOT_CONFIGURED",
+    "real_human_identity_approval_service": "NOT_CONFIGURED",
+    "real_blender_16view_rendering_and_camera_measurement": "NOT_VERIFIED",
+    "github_required_branch_protection": "NOT_CONFIGURED_OR_NOT_CONFIRMED",
+    "overall_production_status": "VERIFY_NOT_HUMAN_ACCEPTED"
+  },
+  "limits": [
+    "Only Z-up/cm axis-aligned boxes supported for automatic measured differential repair",
+    "Current Studio HTTP mutators for unrelated project features are not globally replaced by the trusted gateway",
+    "No authentic OS isolation was installed on the Windows device",
+    "A synthetic signed reviewer/human fixture cannot substitute for an authenticated reviewer or person in real production",
+    "Actions workflow is successful but required GitHub branch rules were not installed by this task."
+  ]
+}
