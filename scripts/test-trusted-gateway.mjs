@@ -5,7 +5,9 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {createHash,generateKeyPairSync,sign,randomUUID} from 'node:crypto';
 import {deflateSync} from 'node:zlib';
-import {executeTrustedCommand,authorizeCommand,envelopeBody,readTrustedStatus} from '../tools/harness-3d/trusted-gateway.mjs';
+import {executeTrustedCommand,authorizeCommand,envelopeBody,readTrustedStatus,signGatewayResponse,verifyGatewayResponse} from '../tools/harness-3d/trusted-gateway.mjs';
+import {startGatewayDaemon} from '../tools/harness-3d/gateway-daemon.mjs';
+import {callGateway} from '../tools/harness-3d/gateway-client.mjs';
 import {rendererReceiptPayload,reviewerReceiptPayload,humanApprovalPayload,EVIDENCE_SCHEMA} from '../tools/harness-3d/gate.mjs';
 
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -70,4 +72,25 @@ test('detects tampered state and source bytes',async()=>{
   const folder=path.join(f.root,'.khosan','harness3d','tasks','TASK-HOUSE-001');const state=JSON.parse(await readFile(path.join(folder,'state.json'),'utf8'));await writeFile(path.join(folder,state.source.filename),'{}');
   await assert.rejects(()=>readTrustedStatus({projectRoot:f.root,trust:f.trust,projectId:'game-001',taskId:'TASK-HOUSE-001'}),/modified without authorization/);
  }finally{await rm(f.root,{recursive:true,force:true})}
+});
+
+
+test('gateway response is signed by the pinned server key and tamper-evident',async()=>{
+ const f=await fixture();try{
+  const response=signGatewayResponse({ok:true,stage:'geometry_verified'},f.kp.server.privateKey);
+  assert.equal(verifyGatewayResponse(response,f.trust.server.public_key_pem),true);
+  assert.equal(verifyGatewayResponse({...response,stage:'human_accepted'},f.trust.server.public_key_pem),false);
+ }finally{await rm(f.root,{recursive:true,force:true})}
+});
+
+test('local IPC client rejects unsigned/tampered replies and accepts pinned signed reply',async()=>{
+ if(process.platform==='win32')return; // Windows named-pipe ACL is a separate OS provisioning gate.
+ const f=await fixture();const socket=path.join(f.root,'gateway.sock');let daemon;
+ try{
+  daemon=startGatewayDaemon({trust:f.trust,serverPrivateKey:f.kp.server.privateKey,socketPath:socket});
+  await new Promise((resolve,reject)=>{daemon.once('listening',resolve);daemon.once('error',reject)});
+  const req=command(f,'controller','open_task',null,{asset_id:'house-001'});
+  const response=await callGateway(socket,req,f.trust.server.public_key_pem);
+  assert.equal(response.ok,true);assert.equal(response.stage,'specified');assert.equal(verifyGatewayResponse(response,f.trust.server.public_key_pem),true);
+ }finally{if(daemon)await new Promise(resolve=>daemon.close(resolve));await rm(f.root,{recursive:true,force:true})}
 });
