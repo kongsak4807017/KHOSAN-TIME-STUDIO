@@ -16,6 +16,25 @@ github_references:
     url: https://github.com/kongsak4807017/img2threejs
     role: core_3d_reconstruction
 
+oriverse_weave_research:
+  status: consolidated_audit_archived_original_chat_transcripts_incomplete
+  source_title: Oriverse Capability Audit
+  source_provider: google_docs
+  source_document_id: 137S6eGaPtZhMYkTQh-kE0ZtctXTRmcj9459sHL-TwcQ
+  captured: '2026-11-11'
+  report_source_characters: 452573
+  consolidated_parts: 21
+  question_ids_present: 200
+  coverage_register: knowledge/oriverse-research/questions.md
+  audit_manifest: knowledge/oriverse-research/CONSOLIDATED-AUDIT-MANIFEST.json
+  canonical_archive: knowledge/oriverse-research/consolidated-audit/
+  interpretation_notes: knowledge/oriverse-research/supplemental/MCP-Pipeline-Interpretive-Notes.txt
+  diagram_reconstruction: knowledge/oriverse-research/workflows/WORKFLOWS-16.md
+  original_tool_transcripts: incomplete
+  original_diagram_svg_zip: not_mirrored_exact_binary
+  caveat: 'Consolidated user research is not first-party documentation or new verification of runtime internals.'
+  dependency_policy: 'Historical research only: KHOSAN native independent; no Oriverse connection required.'
+
 project_source_documents:
   - file: KHOSAN_Studio_Deployment_and_Operations_Manual.md
     status: pending_verbatim_mirror
