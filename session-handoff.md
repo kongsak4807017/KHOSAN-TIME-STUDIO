@@ -1,5 +1,13 @@
 # Session Handoff
 
+## Continuation: Part 7 six hard locks and Python review (11 Nov 2026)
+- Current new source: Google Doc `AI 3D harness`, 114,348 characters including Part 7. Exact archive readback verified on `docs/oriverse-weave-archive-20261111`.
+- Priority vulnerabilities in original Part 7 Python: hardcoded default HMAC secret, arbitrary/self-declared checker PASS, unknown patch targets silently ignored, arbitrary node field merge, no revision binding or real post-patch geometry regression check, no trusted gateway, no actual installed Git/CI enforcement.
+- New bounded Python differential policy: `tools/ugir-geometry-linter/hard_lock_enforcer.py`; tests `scripts/test_part7_hard_locks.py` (**20/20 PASS** on local isolated Python environment); security audit `docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md`.
+- Existing separate Ed25519 signed 3D acceptance gate remains in `tools/harness-3d/gate.mjs`. These modules are not yet orchestrated as a mandatory Studio API workflow.
+- Next: build trusted tool gateway/locked project-root writes, authentic critic and human signers, real GLB 16-view verification and protected required CI gate. Do not claim 100% LLM compliance from prompt or sample code.
+
+
 ## 2026-11-11 — AI 3D harness archival and verification foundation
 - Active documentation branch for current work: `docs/oriverse-weave-archive-20261111`, draft PR #22 to main; `main` not changed.
 - Read the connected `AI 3D harness` Google Doc and archived its complete extracted text, with source review distinguishing sample claims from verifiable implementation.
