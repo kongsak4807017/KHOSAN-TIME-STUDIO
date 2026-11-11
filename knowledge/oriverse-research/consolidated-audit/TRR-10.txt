@@ -1,0 +1,257 @@
+Oriverse / Weave Technical Research Record — TRR-10
+หมวด 10: Texture, Shader & Rendering | คำถาม 091–100 | 8 ตุลาคม 2569
+ผมตรวจคู่มือ Oriverse โดยตรง ได้แก่ texture_dsl, shader_dsl และ weave_coding หัวข้อ texture_dsl_usage, render_settings, render_profiles, adjuster_usage และ scene_authoring
+นอกจากนี้ ผมทดลองสร้าง Procedural PBR Texture ผ่าน preview_texture แบบ Inline Source โดยไม่แก้ไข World ปัจจุบัน ผลยืนยันว่า Texture Bake สำเร็จโดยไม่มี Error หรือ Warning ส่วนการตรวจ Render Pipeline ภายในจะจำกัดอยู่ที่ข้อมูลที่ Oriverse เปิดเผยจริง
+Texture Bake Experiment (PASS)
+Resolution
+128 × 128
+Bake time ที่รายงาน
+7 ms
+Nonfinite samples
+0
+ตรวจจาก Texture Inspector เท่านั้น ยังไม่ใช่ผล GPU Rendering หรือ Frame-time Benchmark
+091 — #texture สร้าง PBR Maps ด้วยขั้นตอนใด?
+1. Direct Answer: #texture เป็น Procedural Material DSL ที่ประเมิน Expression Graph และ Bake เป็น Texture Maps บน CPU เมื่อโหลด Asset ไม่ได้รัน Expression Graph ทุก Frame
+ผลลัพธ์หลักประกอบด้วย Albedo/Color, Normal และ ORM ซึ่งหมายถึง Ambient Occlusion, Roughness และ Metalness พร้อมข้อมูล Alpha หรือ Emission ตามเงื่อนไข
+2. Architecture:
+ผังระดับหน้าที่จากคู่มือ ไม่ใช่ Internal Render Graph
+3. Source Evidence: texture_dsl → Core syntax / Outputs; texture_dsl_usage
+4. API Contract: out.color เป็น vec3; out.normal เป็น Normal Vector; out.orm บรรจุ AO, Roughness, Metalness; out.alpha และ out.height เป็น Scalars โดย out.emission และ out.height ใช้ร่วมกันไม่ได้ในช่องที่กำหนดไว้
+5. Working Example — ผ่าน Texture Inspector จริง:
+6. Execution Trace: Parse Texture DSL → Evaluate Noise → Calculate Colors → Derive Normals → Pack ORM → Bake 128×128 Texture Maps
+7. Limits & Failure Modes: การเพิ่ม Resolution เป็นสองเท่าทำให้จำนวน Texels เพิ่ม 4 เท่า และการเว้น out.normal/out.orm อาจเกิด Warning พร้อมใช้ Default Maps
+8. Verification: Expected: Color, Normal, Roughness และ Metallic มีข้อมูลถูกต้อง Actual: PASS — Roughness มีค่า 0.85 ทุก Sample, Metallic เท่ากับ 0, 16,384 Texels ต่อ Channel และไม่มี Nonfinite Values
+9. Disclosure Status: Documented + Experimentally Verified
+10. Research Gaps: Internal Texture Encoding, Compression, Mipmap Generation, Cache Invalidation และ GPU Residency
+092 — Texture DSL รองรับ Functions, Noise และ Coordinate Mapping อะไรบ้าง?
+1. Direct Answer: Texture DSL รองรับ Expression-based Material Authoring มี Math, SDF, Noise, Pattern Generators, Filters, Image Sampling และ Color Processing
+2. Architecture: ระบบใช้ค่า uv และ Procedural Parameters เป็น Inputs แล้วคำนวณ Material Channels ผ่าน Expressions
+3. Source Evidence: texture_dsl → Built-ins
+4. API Contract:
+กลุ่ม
+	ตัวอย่าง Functions
+	Noise
+	noise.value, noise.fbm, noise.ridged, noise.white, noise.gaussian
+	Grunge
+	grunge.dirt, grunge.moisture, grunge.clouds, grunge.fibers
+	Patterns
+	pattern.brick, pattern.tile, pattern.voronoi, pattern.weave
+	SDF
+	sdf.circle, sdf.box, sdf.segment, sdf.arc, sdf.leaf
+	Filters
+	blur, dilate, erode, filter.edge_detect
+	Color
+	mix, blend, adjust.hsl, contrast, levels
+	Geometry-like masks
+	height.bevel, height.curvature, normal_from_height
+	Raster input
+	image, text, svg
+	5. Working Example: TRR10_TestStone ใช้ noise.fbm และ mix จริง โดยค่า Noise ถูกนำไปสร้างทั้ง Albedo และ Normal
+6. Execution Trace: Sample UV → Evaluate Noise → Blend Color → Output Channels
+7. Limits & Failure Modes: Texture DSL ไม่มี General-purpose Conditionals; ใช้ Masks และ Math แทน ส่วน for Loops ถูกจำกัดจำนวนครั้งในการ Unroll
+8. Verification: Expected: Noise Functions สร้าง Texture Values ได้; Actual: noise.fbm ผ่านการ Bake จริง แต่ไม่ได้ทดสอบทุก Function ในรายการ
+9. Disclosure Status: Documented / Partially Experimentally Verified
+10. Research Gaps: Procedural Graph Optimization, Noise Kernel Internals, GPU Bake Support และ Node-level Profiling
+093 — Triplanar, UV และ World-space Mapping ต่างกันอย่างไร?
+1. Direct Answer: Oriverse รองรับสาม Mapping Modes หลัก:
+Mapping
+	พฤติกรรม
+	triplanar
+	ฉาย Texture ตาม Object Space; ลวดลายเคลื่อน/หมุนตามวัตถุ
+	triplanar_world
+	ฉายตาม World Space เพื่อให้ลวดลายต่อเนื่องข้ามวัตถุ
+	uv
+	ใช้ UV Coordinates ที่มากับ Mesh
+	2. Architecture: Texture ที่ Bake แล้วถูก Sample ตาม Coordinate Mapping ที่ Material กำหนด
+3. Source Evidence: texture_dsl → Mapping; texture_dsl_usage
+4. API Contract:
+5. Working Example: TRR10_TestStone ใช้ mapping = triplanar และ tile_m = 1.0 ผ่าน Texture Bake จริง
+6. Execution Trace: Object/World/UV Coordinates → Texture Projection → Sample Baked Maps → Shade Surface
+7. Limits & Failure Modes: Triplanar Masonry Patterns อาจเกิดรอยต่อที่ไม่ตรงบนรูปทรงโค้ง ส่วน UV Mapping ต้องมี UV Charts ที่เหมาะสมจึงจะวางลวดลายตรงตำแหน่ง
+8. Verification: Expected: Triplanar Material Bake ได้; Actual: PASS สำหรับ Texture Declaration แต่ยังไม่ได้ทดสอบ Seam Continuity บนหลายวัตถุ
+9. Disclosure Status: Mapping Modes Documented; Visual Seam Tests Not Verified
+10. Research Gaps: Triplanar Blend Weights, Normal Blending, Derivative Sampling และ Texture-space Precision
+094 — #shader เชื่อม WGSL เข้ากับ Material Pipeline อย่างไร?
+1. Direct Answer: #shader ใช้ Raw WGSL ที่ถูกผนวกเข้ากับ Standard Lit Material ของ Engine โดยผู้เขียนสามารถปรับ Vertex Positions และ Surface Outputs ได้ ขณะที่ Lighting, Shadows, IBL, Fog, Cutout, LOD และ Motion Vectors ยังคงอยู่ภายใต้ความรับผิดชอบของ Engine
+2. Architecture: Shader แบ่งได้เป็น @module Helpers, @vertex Stage และ Fragment Body
+3. Source Evidence: shader_dsl → Structure
+4. API Contract: Vertex Stage ใช้ ctx.world_pos, ctx.normal, ctx.uv; Fragment Stage เขียน out.base_color, out.world_normal, out.orm และ out.emissive ตามชนิด Material
+5. Working Example — จากคู่มือ:
+6. Execution Trace: World Material → WGSL Injection → Vertex Deformation → Fragment Material Outputs → Engine Lighting/Postprocessing
+7. Limits & Failure Modes: Shader Compile ผิดแล้ว Material อาจกลับไปใช้ Default และ Browser WGSL Validator มีข้อจำกัดเข้มงวดกว่า Desktop ในบางกรณี
+8. Verification: Expected: Vertex Sway และ Color Gradient ทำงาน; Actual: Documented Example, ยังไม่ได้ Compile/Render Shader นี้ในรอบนี้
+9. Disclosure Status: Public Shader Hooks Documented; Internal Pipeline Assembly Undisclosed
+10. Research Gaps: Shader Compilation Pipeline, Pipeline Cache, Bind Group Layout และ Render-pass Integration
+095 — Rendering Pipeline เป็น Forward, Deferred หรือ Hybrid?
+1. Direct Answer: เอกสารและเครื่องมือ Oriverse แสดงหลักฐานว่า Engine มีทั้ง Deferred Rendering Path และ Forward/Transparent Path จึงกล่าวได้ว่ามีการใช้หลาย Rendering Paths แต่ยังไม่สามารถยืนยัน Internal Render Graph ทั้งหมดหรือจัดประเภทว่าเป็น Hybrid แบบใดอย่างเป็นทางการ
+2. Architecture: Deferred Path รองรับการตรวจ Material และ Lighting Components ผ่าน AOV Diagnostics ส่วน Water, Particles และ Forward/Transparent Materials มีเส้นทาง Render ที่ต่างออกไป
+3. Source Evidence: Tool Contract ของ playtest → debug_view/debug_views และ shader_dsl
+4. API Contract: playtest รองรับการเลือก debug_view เช่น albedo, normal, ao, roughness, metallic, direct, ambient, shadow และ local_lights
+5. Working Example: การเลือก debug_views: ["albedo", "normal", "roughness", "metallic"] เป็น Configuration สำหรับตรวจ Material Passes โดยไม่ต้องเขียน Shader ใหม่
+6. Execution Trace: Geometry/Material Processing → Lighting Evaluation → Transparent/Forward Rendering → Post-processing เป็นแผนภาพเชิงแนวคิด ไม่ใช่ลำดับ Pass จริงทุกขั้น
+7. Limits & Failure Modes: AOV Capture ข้าม Enhanced Lighting บางส่วนและใช้ Fast-path Lighting จึงไม่เหมาะสำหรับวัดคุณภาพ Lighting ขั้นสุดท้ายทุกระบบ
+8. Verification: Expected: AOV Views แสดงข้อมูลของ Deferred Path; Actual: เครื่องมือรองรับตามสัญญา แต่ยังไม่ได้รัน AOV Capture ในรอบนี้
+9. Disclosure Status: Deferred/Forward Paths Documented; Full Renderer Architecture Undisclosed
+10. Research Gaps: G-buffer Layout, Render Pass Ordering, Depth Prepass, Light Culling, Render Graph Scheduling และ Transparency Composition
+096 — Lighting, Shadow Mapping, AO และ Reflections
+1. Direct Answer: Oriverse รองรับ Sun Lighting, Sky Lighting, Local Shadows, Shadow Maps, SSAO, SSR, Volumetric Lighting และการปรับค่าผ่าน Global Rendering Settings
+2. Architecture: Engine จัดการ Lighting และ Shadows โดยตรง Material Shader Hooks ไม่ต้องเขียน Shadow Mapping เองสำหรับ Standard Lit Materials
+3. Source Evidence: shader_dsl; weave_coding → adjuster_usage, render_settings
+4. API Contract:
+ระบบ
+	API / Setting
+	ข้อกำหนด
+	Sun shadows
+	SetShadowResolution(Pixels: Number)
+	512–4096 หรือ Auto
+	Shadow range
+	SetShadowDistance
+	0–500 ตาม Adjuster
+	Shadow softness
+	SetShadowBlurRadius
+	0–20
+	SSAO
+	SetSsaoIntensity(Intensity01: Number)
+	0–1
+	SSR
+	SetSsrMode
+	Off / Low / High
+	Bloom
+	SetBloomIntensity(Intensity: Number)
+	0–2 ตาม Adjuster
+	Volumetric light
+	SetVolumetricLightIntensity
+	0–1000
+	5. Working Example:
+เป็นตัวอย่างตาม Syntax ของ Adjuster ซึ่งยังไม่ได้ Compile ทดสอบแยก
+6. Execution Trace: Scene Lights + Material Properties → Shadow/AO/Reflection Evaluation → Lighting Composition → Tone Mapping
+7. Limits & Failure Modes: Shadow Resolution ถูกจำกัดโดย Device Cap และการเปลี่ยน Resolution ทำให้มีการ Allocate Shadow Maps ใหม่ SSR และ AO เป็น Effects ที่อาจถูกลดคุณภาพเมื่อเครื่องทำงานหนัก
+8. Verification: Expected: ปรับ Knobs แล้วคุณภาพเงา/AO/Reflections เปลี่ยนตาม; Actual: Not Run
+9. Disclosure Status: Public Controls Documented; Internal Shadow/AO/SSR Algorithms Undisclosed
+10. Research Gaps: Cascaded Shadow Mapping, PCF Kernel, AO Sampling, SSR Raymarch Details และ Reflection Probe Integration
+097 — Transparency, Cutout, Emissive และ Post-processing
+1. Direct Answer: Oriverse รองรับ Alpha Cutout, Two-sided Cutout, Decals, Translucent Glass, Emissive Materials, Bloom และ Custom Screen Shaders
+2. Architecture: #texture รองรับ Render Modes ขณะที่ #shader สามารถเปลี่ยน Surface Outputs และใช้เป็น Fullscreen Effect หลัง Tone Mapping/Anti-aliasing ได้
+3. Source Evidence: texture_dsl → render_mode; shader_dsl → Screen shaders; scene_authoring
+4. API Contract:
+ส่วนการทำ Translucent Glass ใช้ Built-in Material เช่น GlassTransparent พร้อม Overrides เช่น opacity และ glassRoughness
+5. Working Example: ตัวอย่าง Screen Shader จากคู่มือ:
+6. Execution Trace: Render Scene → Apply Tone Mapping/AA → Invoke Fullscreen Shader → Output Final Color
+7. Limits & Failure Modes: Cutout เป็น Alpha-tested ไม่ใช่ Translucent Blending ส่วน GlassTransparent ไม่เหมาะกับผนังอาคารที่ไม่มี Interior Geometry เพราะจะเปิดเผยฉากว่างด้านหลัง
+8. Verification: Expected: Film Shader เพิ่ม Grain ในภาพ; Actual: Documented, ยังไม่ได้ Render ทดสอบ
+9. Disclosure Status: Public Material/Post-processing APIs Documented; Internal Compositing Undisclosed
+10. Research Gaps: Transparency Sorting, OIT, HDR Pipeline, Bloom Pyramid และ Post-process Pass Graph
+098 — Runtime Material Parameters เปลี่ยนได้เพียงใด?
+1. Direct Answer: Oriverse เปิดให้เปลี่ยน Material Parameters ผ่าน Weave Runtime โดยรองรับ 32 Scalar Parameters ต่อ Material และ Texture Parameter Slots ตาม Shader Contract
+2. Architecture: Material มี Runtime Parameter Storage ที่ WGSL Shader อ่านผ่าน mat.params4 ขณะที่ Weave Script ใช้ Built-in APIs เปลี่ยนค่า
+3. Source Evidence: shader_dsl → Runtime control; Built-in Functions SetMaterialParameterNumber, SetMaterialParameterTexture, SetAssetSubmeshMaterial
+4. API Contract:
+หมายเหตุ: คู่มือ Shader กล่าวถึง 16 Texture Slots (tex0..tex15) แต่รายการ Built-in Function ระบุช่วง Slot 0..16 ซึ่งอาจนับไม่ตรงกัน จึงต้องยืนยันขอบเขต Slot สูงสุดจาก Runtime ก่อนใช้งานจริง
+5. Working Example:
+ใน Shader ใช้ mat.params4[0].x อ่านค่าจาก Slot 0
+6. Execution Trace: Gameplay Event → Set Material Parameter → Shader Reads Parameter → Render Output Changes
+7. Limits & Failure Modes: Parameter Slots มีขอบเขตจำกัด และ Shader แต่ละตัวกำหนดความหมายของ Slot เอง ต้องอ่าน WGSL ก่อนเปลี่ยนค่า นอกจากนี้ Particle/Water Shader บางประเภทไม่รองรับ Texture Parameter Slots
+8. Verification: Expected: การเปลี่ยน Parameter ทำให้ Film Grain Intensity เปลี่ยน; Actual: Not Run
+9. Disclosure Status: Runtime Parameter Contract Documented; Slot-16 Boundary Not Verified
+10. Research Gaps: Material Instance Isolation, Parameter Update Cost, GPU Uniform Buffer Layout และ Concurrent Material Mutations
+099 — WebGPU และ Graphics Fallback แตกต่างกันอย่างไร?
+1. Direct Answer: Oriverse รองรับ Rendering บน Web และ Desktop แต่เอกสารที่ตรวจสอบยังไม่เปิดเผย Graphics Backend Matrix ครบทุกแพลตฟอร์ม เช่น WebGPU, WebGL, Vulkan, Metal หรือ DirectX ที่ใช้งานจริงในแต่ละอุปกรณ์
+อย่างไรก็ตาม คู่มือระบุว่า Browser WGSL Validation เข้มงวดกว่า Desktop ในบางกรณี และมีระบบ Adaptive Render Quality สำหรับอุปกรณ์ที่ประสิทธิภาพแตกต่างกัน
+2. Architecture: World Rendering Settings สามารถถูกปรับตาม Client Capabilities, Device Limits และ Local Quality Preferences
+3. Source Evidence: shader_dsl → Caveats; render_settings; render_profiles
+4. API Contract:
+และ:
+5. Working Example: ตัวอย่าง Render Profile ข้างต้นเป็น Syntax จากคู่มือ ใช้กำหนดเป้าหมาย Rendering สำหรับ Mobile
+6. Execution Trace — Expected: Detect Device → Apply World Render Profile → Respect Device Limits/Local Overrides → Adapt Quality Under Sustained Load
+7. Limits & Failure Modes: การกำหนด target_fps = 60 ไม่ได้การันตีว่าอุปกรณ์ทุกเครื่องจะได้ 60 FPS และ fallback_fps มีผลต่อ Rendering Target ไม่ใช่ Simulation Tick Rate
+8. Verification: Expected: Mobile ใช้ Rendering Resolution และ Texture Caps ตาม Profile เมื่ออยู่ภายใต้ข้อกำหนดอุปกรณ์; Actual: Not Run สำหรับ Cross-platform Benchmark
+9. Disclosure Status: Adaptive Quality Policy Documented; Complete Graphics Backend/Fallback Matrix Undisclosed
+10. Research Gaps: WebGPU Adapter Requirements, Browser Feature Detection, WebGL Fallback Availability, Shader Compatibility และ Device-specific Performance
+100 — Render Graph Documentation และ AOV Diagnostics
+1. Direct Answer: Oriverse เปิดเผย AOV Diagnostics สำหรับวิเคราะห์ Material และ Lighting แต่ไม่พบ Internal Render Graph Specification ที่แสดง Pass Dependencies, Resource Barriers และ Transient GPU Allocations ครบถ้วน
+2. Architecture: ผู้พัฒนาสามารถใช้ AOV Views แยกปัญหาจาก Geometry, Material Inputs, AO และ Lighting ได้ โดยไม่ต้องเดาจากภาพสุดท้ายเพียงอย่างเดียว
+3. Source Evidence: Tool Contract playtest → debug_view/debug_views; shader_dsl
+4. API Contract: AOV ที่เครื่องมือรองรับ ได้แก่:
+AOV
+	ใช้วิเคราะห์
+	albedo
+	Base Surface Color
+	normal
+	Surface Normal
+	ao
+	Material/Baked Ambient Occlusion
+	ssao
+	Screen-space Ambient Occlusion
+	ao_combined
+	Product ของ AO Terms
+	roughness
+	Surface Roughness
+	metallic
+	Metalness
+	emissive
+	Emission
+	direct
+	Direct Lighting
+	ambient
+	Ambient Lighting
+	local_lights
+	Local Lighting
+	shadow
+	Sun Shadow Mask
+	5. Working Example — Diagnostic Configuration:
+6. Execution Trace — Expected: Render Source Geometry → Generate Diagnostic Buffers → Read Back Selected AOV → Compare Channel Values/Images → Identify Source of Visual Defect
+7. Limits & Failure Modes: AOVs ครอบคลุม Deferred Path; Water, Particles และ Forward/Transparent Materials อาจแสดง Shading ปกติแทน Diagnostic Channel
+8. Verification: Expected: AOV Capture แสดงข้อมูลแยกตามชนิดที่ขอ; Actual: Tool Contract ยืนยันว่ารองรับ แต่รอบนี้ยังไม่ได้รัน Runtime AOV Capture เพราะ Browser Editor อยู่ในสถานะ Hidden และอาจคืนผลแบบข้อความแทนภาพ
+9. Disclosure Status: Public AOV Tooling Documented; Full Render Graph Undisclosed
+10. Research Gaps: Pass Dependency Graph, Resource Lifetime, GPU Barriers, Render-pass Profiling, GPU Capture Integration และ Fullscreen Compositing Order
+________________
+
+
+TRR-10 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	091
+	PBR Texture Baking
+	Documented + Experimentally Verified
+	092
+	Texture DSL Functions
+	Documented / Partially Verified
+	093
+	Mapping Modes
+	Documented
+	094
+	WGSL Shader Hooks
+	Documented / Shader Not Run
+	095
+	Rendering Pipeline
+	Partially Documented
+	096
+	Lighting & Shadows
+	Public Controls Documented
+	097
+	Transparency & PostFX
+	Documented
+	098
+	Runtime Material Parameters
+	Documented; Boundary Not Verified
+	099
+	WebGPU / Fallback
+	Partially Documented
+	100
+	Render Graph & AOV
+	AOV Documented; Graph Undisclosed
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse มี CPU-baked Procedural PBR Textures, WGSL Shader Hooks, Runtime Material Parameters, Lighting/Shadow/AO/SSR Controls, Render Profiles และ AOV Debug Views
+การทดลอง Texture Bake ในรอบนี้ผ่านจริง โดยใช้ 128×128 Texels และรายงานเวลา Bake 7 ms ไม่มี Warning และไม่มี Nonfinite Values
+สิ่งที่ยังไม่เปิดเผย
+Full Render Graph, G-buffer Layout, GPU Resource Scheduling, Graphics Backend Fallback Matrix, Shader Compilation Cache, Shadow Algorithms และรายละเอียด Memory Management ของ Renderer
+ข้อเสนอสำหรับ KHOSAN Studio
+จากผลวิจัยนี้ ผมเสนอให้ KHOSAN Rendering Architecture แยกเป็น Texture Compiler, Shader Compiler, Material System, Rendering Pipeline, Lighting/Post-processing และ Graphics Diagnostics พร้อมกำหนด Resource Contracts และ Shader Reflection/Validation อย่างชัดเจน
+ควรมี AOV Inspector ที่ตรวจ Albedo, Normal, Roughness, Metallic, AO และ Shadow โดยตรง พร้อม GPU Frame Profiler เพื่อแยกข้อบกพร่องด้าน Material, Geometry, Lighting และ Performance ได้อย่างตรวจสอบซ้ำ
+สถานะ TRR-10: Documentation Research Completed / PBR Texture Bake PASS / Runtime Rendering Tests Pending.
+ไม่มีการแก้ไขหรือ Publish Oriverse World ในรอบนี้ โดย Editor ยังคงอยู่บน Build 05Oct26-23:23 จึงควร Reload แท็บก่อนทดสอบ Shader และ Graphics Runtime อย่างจริงจัง
+หมวดถัดไปคือ 11 — Terrain, World Generation & Streaming (ข้อ 101–110) ซึ่งจะศึกษากระบวนการสร้าง Terrain, Biomes, Erosion, Road Networks, Streaming และการจัดการโลกขนาดใหญ่
+________________
+
+
