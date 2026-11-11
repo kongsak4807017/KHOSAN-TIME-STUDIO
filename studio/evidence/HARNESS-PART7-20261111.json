@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK-3D-HARNESS-V1-001",
+  "evidence_type": "source_code_review_and_local_unit_tests",
+  "date": "2026-11-11",
+  "source": {
+    "provider": "Google Docs",
+    "title": "AI 3D harness",
+    "document_id": "1Cm8CkZoRbtwB5U71IJY5B9R2_sI9zfR7dr77wv9SG5I",
+    "source_extracted_characters": 114348,
+    "part7_extracted_chars": 14171,
+    "repo_source_path": "knowledge/oriverse-research/harness-blueprint/AI-3D-HARNESS-SOURCE.txt",
+    "github_readback_match": true
+  },
+  "technical_review": {
+    "report_path": "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md",
+    "verdict": "SOURCE_PYTHON_NOT_PRODUCTION_SAFE",
+    "critical_findings": [
+      "default HMAC signing secret allows forgery",
+      "self-reported isolated reviewer not authenticated",
+      "unknown patch IDs silently ignored and arbitrary fields merged",
+      "no source revision binding or post patch independent lint verification",
+      "no authoritative tool dispatcher, file permissions or protected CI merged gate",
+      "non-finite numeric metrics can bypass naive > threshold comparisons"
+    ]
+  },
+  "implemented": {
+    "path": "tools/ugir-geometry-linter/hard_lock_enforcer.py",
+    "scope": "pure Python Z-up cm AABB repair policy and dynamic tool-call mask, no file writes or model calls",
+    "test_path": "scripts/test_part7_hard_locks.py"
+  },
+  "tests": {
+    "command": "python -m unittest discover -s scripts -p test_part7_hard_locks.py",
+    "environment": "isolated Linux Python runtime; not user's Windows DevSpace workspace",
+    "case_count": 20,
+    "pass": 20,
+    "fail": 0,
+    "result": "PASS",
+    "github_file_readback": "3/3 exact matches of uploaded implementation/test/review sources"
+  },
+  "release": {
+    "status": "VERIFY_NOT_ACCEPTED",
+    "merge_allowed_automatically": false,
+    "known_missing": [
+      "trusted Studio/DevSpace tool authorization integrated in actual runtime",
+      "signed independent linter and critic execution with protected service keys",
+      "real Blender/WebGPU/asset reference-to-3D end-to-end verification",
+      "GitHub protected required status checks",
+      "authenticated human acceptance and target Windows tests"
+    ]
+  }
+}
