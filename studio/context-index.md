@@ -32,6 +32,9 @@ Load docs/12-CREATIVE-INTELLIGENCE.md plus only the evidence domain needed for t
 
 Community and telemetry agents must not treat chat memory as evidence.
 
+### Trusted six-lock 3D command dispatcher (active architecture)
+Start with `docs/29-TRUSTED-6-HARD-LOCKS-GATEWAY.md` for the actual signed-role gateway and local IPC commands. Load `tools/harness-3d/repair-protocol.mjs` for permitted coordinate edits, `trusted-gateway.mjs` for server-verified state transitions, and `gateway-daemon.mjs`/`gateway-client.mjs` for the local DevSpace bridge. The server's `/api/projects/:id/harness/:taskId/status` is **read-only and opt-in**; no browser mutation or human approval button is exposed. The hard-lock mechanism is not a Windows sandbox until a protected service principal, external issuer private keys and ACLs are provisioned and tested.
+
 ### Reference-to-3D / native harness execution
 For 3D assets and reference scenes, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md`, the authored template review at `knowledge/oriverse-research/harness-blueprint/README.md`, then only relevant source sections from the preserved `AI-3D-HARNESS-SOURCE.txt`. The Google Doc includes demonstration code with a **fake independent-critic PASS** and must not be used verbatim as QA. Run native deterministic tests and `tools/harness-3d/cli.mjs` on actual project-scoped artifact/evidence files. Its supported linter is bounded boxes only. The LLM may plan, repair and request checks, but cannot declare acceptance without receipts and human governance.
 
