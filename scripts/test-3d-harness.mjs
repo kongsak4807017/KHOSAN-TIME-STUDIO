@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {createHash} from 'node:crypto';
+import {createHash,generateKeyPairSync,sign as signEd25519} from 'node:crypto';
 import {deflateSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {verify3DAcceptance,advanceStage,validateTechnical} from '../tools/harness-3d/gate.mjs';
+import {verify3DAcceptance,advanceStage,validateTechnical,reviewerReceiptPayload,humanApprovalPayload} from '../tools/harness-3d/gate.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));
 const digest=b=>createHash('sha256').update(b).digest('hex');
 function glb(){
@@ -33,23 +33,28 @@ async function fixture(){
  const objects={ugir_json:{path:'artifacts/house.ugir.json',buf:Buffer.from(JSON.stringify({ugir_version:'0.2.0',asset_id:'house-001',coordinate_system:{unit:'cm',up_axis:'+Z'},layout_nodes:[{instance_name:'Ground',placement_mode:'place_bounds_box',min_xyz_cm:[-500,-500,-20],max_xyz_cm:[500,500,0],is_ground:true},{instance_name:'Wall',placement_mode:'place_bounds_box',min_xyz_cm:[-50,-10,0],max_xyz_cm:[50,10,250]}],expected_adjacent_seams:[['Ground','Wall']]}))},glb:{path:'artifacts/house.glb',buf:glb()},contact_sheet_png:{path:'evidence/contact_sheet_4x4.png',buf:png4x4()},reference:{path:'references/reference.png',buf:png4x4()}};
  const artifacts={};for(const [role,entry] of Object.entries(objects)){await writeFile(path.join(root,entry.path),entry.buf);artifacts[role]={path:entry.path,sha256:digest(entry.buf)}}
  const evidence={schema:'khosan.3d.verification.v1',asset_id:'house-001',task_id:'TASK-3D-HOUSE-001',project_id:'game-001',source_revision:'sha-001',reference_mode:'reference',maker:{agent_id:'04-asset-synthesizer',session_id:'maker-01'},reviewer:{agent_id:'11-independent-reviewer',session_id:'critic-02',isolated_session:true,run_id:'critic-run-001',verdict:'ACCEPT',defects:[],reviewed_contact_sha256:artifacts.contact_sheet_png.sha256,reviewed_reference_sha256:artifacts.reference.sha256},technical:{source_revision:'sha-001',tool_id:'khosan-native-lint',run_id:'lint-run-002',compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:0,max_camera_blocked_frac:0.05,vertex_count:3},artifacts,human_approval:{approved:true,approval_reference:'HG-04-owner-001',approved_by:'executive-producer',asset_id:'house-001',approved_glb_sha256:artifacts.glb.sha256}};
- return {root,evidence,objects};
+ const reviewerKey=generateKeyPairSync('ed25519',{publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
+ const humanKey=generateKeyPairSync('ed25519',{publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
+ evidence.reviewer.signature_base64=signEd25519(null,Buffer.from(reviewerReceiptPayload(evidence),'utf8'),reviewerKey.privateKey).toString('base64');
+ evidence.human_approval.signature_base64=signEd25519(null,Buffer.from(humanApprovalPayload(evidence),'utf8'),humanKey.privateKey).toString('base64');
+ const trust={reviewer_public_key_pem:reviewerKey.publicKey,human_public_key_pem:humanKey.publicKey};
+ return {root,evidence,objects,trust};
 }
 async function withFixture(fn){const f=await fixture();try{await fn(f)}finally{await rm(f.root,{recursive:true,force:true})}}
 
-test('passing fixture: identity separation, artifact hashes, technical thresholds, human approval',()=>withFixture(async ({root,evidence})=>{const out=await verify3DAcceptance(root,evidence);assert.equal(out.ok,true,out.errors.join(' | '));assert.equal(out.checked_artifacts.length,4)}));
-test('maker cannot review own work',()=>withFixture(async ({root,evidence})=>{evidence.reviewer.agent_id=evidence.maker.agent_id;assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('critic cannot silently pass with TODO/stub response',()=>withFixture(async ({root,evidence})=>{evidence.reviewer.run_id='';evidence.reviewer.isolated_session=false;assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('must compare the exact current reference and contact sheet',()=>withFixture(async ({root,evidence})=>{evidence.reviewer.reviewed_contact_sha256='0'.repeat(64);assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('machine check fails for physical defect and numeric budget',()=>withFixture(async ({root,evidence})=>{evidence.technical.max_seam_gap_cm=.11;evidence.technical.floating_count=1;assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('missing human approval fails even if technical and independent checks pass',()=>withFixture(async ({root,evidence})=>{evidence.human_approval.approved=false;assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('asset mutation after review fails artifact hash verification',()=>withFixture(async ({root,evidence})=>{await writeFile(path.join(root,evidence.artifacts.glb.path),'modified bytes');assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
-test('path traversal and absolute outside project are prohibited',()=>withFixture(async ({root,evidence})=>{evidence.artifacts.glb.path='../elsewhere.glb';assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
+test('passing fixture: identity separation, artifact hashes, technical thresholds, human approval',()=>withFixture(async ({root,evidence,trust})=>{const out=await verify3DAcceptance(root,evidence,trust);assert.equal(out.ok,true,out.errors.join(' | '));assert.equal(out.checked_artifacts.length,4)}));
+test('maker cannot review own work',()=>withFixture(async ({root,evidence,trust})=>{evidence.reviewer.agent_id=evidence.maker.agent_id;assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('critic cannot silently pass with TODO/stub response',()=>withFixture(async ({root,evidence,trust})=>{evidence.reviewer.run_id='';evidence.reviewer.isolated_session=false;assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('must compare the exact current reference and contact sheet',()=>withFixture(async ({root,evidence,trust})=>{evidence.reviewer.reviewed_contact_sha256='0'.repeat(64);assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('machine check fails for physical defect and numeric budget',()=>withFixture(async ({root,evidence,trust})=>{evidence.technical.max_seam_gap_cm=.11;evidence.technical.floating_count=1;assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('missing human approval fails even if technical and independent checks pass',()=>withFixture(async ({root,evidence,trust})=>{evidence.human_approval.approved=false;assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('asset mutation after review fails artifact hash verification',()=>withFixture(async ({root,evidence,trust})=>{await writeFile(path.join(root,evidence.artifacts.glb.path),'modified bytes');assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
+test('path traversal and absolute outside project are prohibited',()=>withFixture(async ({root,evidence,trust})=>{evidence.artifacts.glb.path='../elsewhere.glb';assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
 test('locked technical thresholds reject NaN and negative values',()=>{assert.notEqual(validateTechnical({compile_exit_code:0,floating_count:0,piercing_count:0,max_seam_gap_cm:NaN,max_camera_blocked_frac:-1,vertex_count:1,tool_id:'lint',run_id:'run'}).length,0)});
 test('no skipping stages or self-approving final state',()=>{const s={stage:'specified',history:[]};assert.throws(()=>advanceStage(s,'geometry_verified',{}));assert.throws(()=>advanceStage(s,'reference_locked',{}));const t=advanceStage(s,'reference_locked',{reference_sha256:'a'.repeat(64)});assert.equal(t.stage,'reference_locked');assert.throws(()=>advanceStage({stage:'independent_reviewed'},'human_accepted',{}))});
 test('local CLI returns nonzero on rejected evidence',()=>withFixture(async ({root,evidence})=>{const file=path.join(root,'evidence','gate.json');evidence.human_approval.approved=false;await writeFile(file,JSON.stringify(evidence));const r=spawnSync(process.execPath,[path.resolve(dir,'../tools/harness-3d/cli.mjs'),'verify',root,file],{encoding:'utf8'});assert.equal(r.status,1);assert.match(r.stdout, /BLOCKED/)}));
 
-test('cannot fake measured seam gap by writing zero in evidence',()=>withFixture(async ({root,evidence})=>{const file=path.join(root,'artifacts','house.ugir.json');const data=JSON.parse(await (await import('node:fs/promises')).readFile(file,'utf8'));data.layout_nodes[1].min_xyz_cm[2]=5;await writeFile(file,JSON.stringify(data));evidence.artifacts.ugir_json.sha256=digest(Buffer.from(JSON.stringify(data)));assert.equal((await verify3DAcceptance(root,evidence)).ok,false)}));
+test('cannot fake measured seam gap by writing zero in evidence',()=>withFixture(async ({root,evidence,trust})=>{const file=path.join(root,'artifacts','house.ugir.json');const data=JSON.parse(await (await import('node:fs/promises')).readFile(file,'utf8'));data.layout_nodes[1].min_xyz_cm[2]=5;await writeFile(file,JSON.stringify(data));evidence.artifacts.ugir_json.sha256=digest(Buffer.from(JSON.stringify(data)));assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false)}));
 import {threeYUpMetersToKhosanZUpCm,khosanZUpCmToThreeYUpMeters,threeYUpSizeMetersToKhosanSizeCm} from '../tools/harness-3d/coordinates.mjs';
 test('three.js Y-up meters ↔ KHOSAN +Z-up centimeters explicit roundtrip',()=>{
  const v=[2.5,1.75,-3.4];const c=threeYUpMetersToKhosanZUpCm(v);
@@ -57,3 +62,19 @@ test('three.js Y-up meters ↔ KHOSAN +Z-up centimeters explicit roundtrip',()=>
  assert.deepEqual(threeYUpSizeMetersToKhosanSizeCm([4,3,5]),[400,500,300]);
 });
 test('coordinate converter rejects undefined or NaN dimensions',()=>{assert.throws(()=>threeYUpMetersToKhosanZUpCm([1,NaN,0]));assert.throws(()=>threeYUpSizeMetersToKhosanSizeCm([1,0,2]))});
+
+test('signed issuer receipts require configured trusted public keys',()=>withFixture(async ({root,evidence,trust})=>{
+ assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,true);
+ assert.equal((await verify3DAcceptance(root,evidence,{})).ok,false);
+ assert.equal((await verify3DAcceptance(root,evidence,{...trust,reviewer_public_key_pem:trust.human_public_key_pem})).ok,false);
+}));
+test('tampering with reviewer or human signed metadata blocks even when unsigned fields look PASS',()=>withFixture(async ({root,evidence,trust})=>{
+ evidence.reviewer.run_id='fake-run';assert.equal((await verify3DAcceptance(root,evidence,trust)).ok,false);
+}));
+test('CLI can verify with two separately provisioned public keys',()=>withFixture(async ({root,evidence,trust})=>{
+ const reviewerFile=path.join(root,'reviewer-public.pem'),humanFile=path.join(root,'human-public.pem'),file=path.join(root,'evidence','signed.json');
+ await writeFile(reviewerFile,trust.reviewer_public_key_pem);await writeFile(humanFile,trust.human_public_key_pem);await writeFile(file,JSON.stringify(evidence));
+ const r=spawnSync(process.execPath,[path.resolve(dir,'../tools/harness-3d/cli.mjs'),'verify',root,file],{encoding:'utf8',env:{...process.env,KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE:reviewerFile,KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE:humanFile}});
+ assert.equal(r.status,0,r.stdout+' '+r.stderr);
+ assert.match(r.stdout,/"verdict": "PASS"/);
+}));
