@@ -19,6 +19,9 @@
     "harness:3d-verify": "node tools/harness-3d/cli.mjs",
     "verify:part7": "python -m unittest discover -s scripts -p test_part7_hard_locks.py",
     "verify:gateway": "node --test scripts/test-3d-gateway.mjs",
-    "harness:gateway": "node tools/harness-3d/gateway-cli.mjs"
+    "harness:gateway": "node tools/harness-3d/gateway-cli.mjs",
+    "harness:daemon": "node tools/harness-3d/gateway-daemon.mjs",
+    "harness:client": "node tools/harness-3d/gateway-client.mjs",
+    "harness:sign": "node tools/harness-3d/gateway-sign.mjs"
   }
 }
