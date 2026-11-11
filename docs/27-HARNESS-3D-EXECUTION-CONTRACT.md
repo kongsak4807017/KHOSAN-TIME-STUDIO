@@ -42,6 +42,14 @@ KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE="<trusted-human-public.pem>" \
 node --test scripts/test-3d-harness.mjs
 ```
 
+Windows PowerShell (public keys must be provisioned by independent trusted issuers; never place private signing keys in the game repository):
+
+```powershell
+$env:KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE = 'C:\KHOSAN\trust\reviewer-public.pem'
+$env:KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE = 'C:\KHOSAN\trust\human-public.pem'
+node tools/harness-3d/cli.mjs verify 'D:\KHOSAN\Projects\MyGame' 'D:\KHOSAN\Projects\MyGame\.khosan\evidence\house.json'
+```
+
 The CLI exits nonzero and prints `BLOCKED` on missing evidence, unresolved paths, bad file hashes, deviations from machine budgets, invalid JSON/glTF/PNG headers, a self-review, absent visual assessment, or missing human-approval binding.
 
 Canonical dimensions for this contract: `cm`, `+Z` up; a Three.js `[x, y, z]` meter point converts to `[100x, -100z, 100y]` cm. This mapping is **explicit** and must not silently mutate older Y-up/meter assets. The current deterministic layout validator supports only `place_bounds_box` instances. Anchor/CSG/skin/rig/mesh-interpenetration tests are not silently accepted.
