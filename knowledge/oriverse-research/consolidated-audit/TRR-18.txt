@@ -1,0 +1,259 @@
+TRR-18 — Performance, Scaling & Platform
+Oriverse / Weave Technical Research Protocol | หมวด 18 | ข้อ 171–180 | 9 ตุลาคม 2569
+จากการตรวจคู่มือ Oriverse โดยตรง ได้แก่ render_profiles, render_settings, frame_and_scheduling_model, object_types, tile_pathfinding, procedural_generation_batches, mesh_dsl_usage, forest_dsl_usage และ scatter_dsl_usage พบว่า Oriverse เปิดเผยข้อจำกัดและแนวทางเพิ่มประสิทธิภาพหลายส่วนอย่างละเอียด แต่ยังไม่ได้เปิดเผย Hardware Compatibility Matrix, CPU/GPU Profiler API และ Memory Budget ครบทุกแพลตฟอร์ม
+ข้อค้นพบหลัก: Oriverse ออกแบบให้ปรับคุณภาพภาพตามอุปกรณ์ แยก Rendering FPS จาก Simulation/Networking Clock และรองรับการลดต้นทุนของเกมขนาดใหญ่ด้วย Instance Batching, Native Path Followers และ Centralized Script Scheduling
+อย่างไรก็ตาม ยังไม่มีผล Benchmark ใหม่ที่ยืนยัน FPS, Frame Time หรือ Memory บนอุปกรณ์จริงในหมวดนี้
+171 — Oriverse รองรับ OS, Browsers และ GPU รุ่นใดบ้าง?
+1. Direct Answer: เอกสารยืนยันว่ามี Web Editor/Runtime และ Native/Desktop Rendering Context รวมถึง Mobile Native/Browser และ Desktop GPU Classification แต่ยังไม่พบรายการ OS Version, Browser Version และ GPU Models ที่รับรองอย่างเป็นทางการครบถ้วน
+2. Architecture: ระบบแบ่งพฤติกรรมการเลือก Render Quality ตามประเภทอุปกรณ์ ได้แก่ Mobile, Integrated GPU, Discrete GPU, Unknown GPU และ CPU/Software Adapter โดยใช้ Device Detection ร่วมกับ Local User Preferences
+3. Source Evidence: weave_coding → render_settings, render_profiles; shader_dsl → Caveats
+4. API Contract:
+อุปกรณ์ที่คู่มือกล่าวถึง
+	Adaptive Quality ค่า auto
+	Mobile Native/Browser
+	เปิด
+	Desktop Integrated GPU
+	เปิด
+	Desktop Discrete GPU
+	ปิด
+	Desktop Unknown GPU
+	ปิด
+	CPU/Software Adapter
+	เปิด
+	การตั้งค่านี้บอก นโยบาย Adaptive Quality ไม่ใช่รายชื่อ GPU/Browser ที่ผ่านการรับรอง
+5. Working Example — Documented Configuration / Not Compiled:
+6. Execution Trace — ตามเอกสาร: ตรวจประเภท Client → เลือก Default Quality Policy → เริ่มที่ Full Quality → อนุญาตให้ลดคุณภาพเมื่อมี Rendering Pressure ต่อเนื่อง โดย Local Overrides ยังมีผล
+7. Limits & Failure Modes: WebGPU Feature Availability, Browser WGSL Validation, Driver Versions และ Software Adapter Performance อาจแตกต่างกัน แต่ไม่มีหลักฐานเพียงพอให้ระบุ Minimum Hardware Specifications
+8. Verification: Expected: Desktop/Mobile ใช้นโยบาย Adaptive Quality ตามประเภทที่ตรวจพบ; Actual: เชื่อมต่อ Editor ประเภท wasm_web ได้ แต่ยังไม่ได้ทดสอบ Compatibility Matrix จริง
+9. Disclosure Status: Device Classification Documented; Exact OS/Browser/GPU Support Undisclosed; Cross-platform Testing Not Verified
+10. Research Gaps: Windows/macOS/Linux Versions, Android/iOS Minimum Versions, Chrome/Safari/Firefox Support Matrix, WebGPU Feature Requirements, GPU Vendor/Driver Certification และ Fallback Rendering
+172 — มี Performance Budgets สำหรับ CPU, GPU และ Memory อย่างไร?
+1. Direct Answer: Oriverse มี Public Resource Limits สำหรับ Script Continuations, Instance Batches, Meshes, Forests, Scatter และ Lighting แต่ไม่พบ CPU Time Budget หรือ GPU Memory Budget แบบตายตัวที่รับรองครอบคลุมทุกอุปกรณ์
+2. Architecture: Resource Controls กระจายอยู่ในหลาย Subsystems ได้แก่ Script Runtime, Object Simulation, Rendering, Procedural Asset Baking และ Adaptive Quality ไม่ควรนำข้อจำกัดของระบบหนึ่งไปใช้แทนอีกระบบ
+3. Source Evidence: frame_and_scheduling_model, procedural_generation_batches, object_types, mesh_dsl, scatter_dsl_usage
+4. API Contract และ Resource Limits:
+Resource
+	ข้อจำกัด/คำแนะนำ
+	Script continuation slots
+	262,144 Global Slots
+	Live Instance Batches
+	128
+	Scatter Instances ต่อ Binding
+	16,384
+	Scatter Instances ต่อ World
+	65,536
+	Scatter Expanded Vertices ต่อ World
+	1,000,000
+	Mesh Collider Vertices
+	6,000 Hard Cap
+	Mesh Recommended Vertices
+	ไม่เกินประมาณ 50,000
+	Realtime Area Light Budget
+	0–1,024 เป็นช่วงค่าที่ตั้งได้ ไม่ใช่จำนวนแนะนำ
+	5. Working Example:
+ตัวอย่างนี้ยืนยัน Syntax จากคู่มือ แต่ยังไม่ได้ Compile ในรอบนี้
+6. Execution Trace — Expected: World Load → Validate Resource Settings → Allocate Runtime/Render Resources → Monitor Sustained Load → Adjust Eligible Visual Quality
+7. Limits & Failure Modes: การตั้ง target_fps = 60 ไม่รับประกันว่า GPU จะวาดได้ 60 FPS และการตั้ง Realtime Area Light Budget สูงขึ้นเพิ่มต้นทุน GPU ซึ่งคู่มือกำหนดให้ต้องได้รับการอนุมัติจากผู้ใช้ก่อนเพิ่มจำนวนไฟชนิดนี้
+8. Verification: Expected: Engine บังคับ Resource Caps และ Render Profiles; Actual: ตรวจพบข้อกำหนดในเอกสาร แต่ยังไม่มี Memory/Frame-time Measurements ใหม่
+9. Disclosure Status: Public Resource Caps Documented; Per-device CPU/GPU/Memory Budgets Undisclosed
+10. Research Gaps: CPU Milliseconds per Tick, GPU Frame Budgets, VRAM Allocation, Heap Size, Shader Cache Limits และ Allocation Telemetry
+173 — Scene Complexity ส่งผลต่อ Frame Time อย่างไร?
+1. Direct Answer: Scene Complexity ส่งผลหลายมิติ ไม่ใช่เพียงจำนวน Objects ได้แก่ Script Dispatch, Collision Pairs, Draw Calls, Particle Overdraw, Lighting Cost, Animation และ Rollback State
+2. Architecture: ใน Frame หนึ่ง Script/Event Dispatch เกิดก่อน Physics Step ส่วน Rendering มีการประมวลผลของ Client แยกจาก Simulation Clock
+3. Source Evidence: frame_and_scheduling_model, object_types, particle_vfx, procedural_generation_batches
+4. API Contract: Engine ระบุ Performance Guidance ว่าเมื่อมี Active Objects หลายร้อยตัว ควรลด Per-object forever Loops และใช้ Manager-driven Updates การสร้าง Object แต่ละตัวมีต้นทุนด้าน Simulation/Load State แตกต่างจากการใช้ InstanceBatch
+5. Working Example — Optimization Pattern:
+เป็นแผนออกแบบสำหรับ KHOSAN ไม่ใช่ Weave Source ที่ Compile แล้ว
+6. Execution Trace — Expected: เพิ่ม NPC/Objects → Script/Physics/Rendering Workload เพิ่ม → บาง Subsystems กลายเป็น Bottleneck → P95/P99 Frame Time สูงขึ้นหากเกิน Hardware Budget
+7. Limits & Failure Modes: คู่มือระบุว่าเมื่อใช้ Per-object forever จำนวนมาก Continuation Pressure อาจสูง และ Regular Colliders ประมาณ 500 ตัวเริ่มมีความเสี่ยงด้าน Collision Pairs ทั้งนี้ไม่ใช่ Hard Maximum ของ Objects ทั้ง World
+8. Verification: Expected: การเพิ่ม Scene Complexity ทำให้ต้นทุนบางส่วนเพิ่ม และ Optimization ลดต้นทุนที่เกี่ยวข้องได้; Actual: Not Run สำหรับ Scaling Curve ใหม่
+9. Disclosure Status: Scaling Guidance Documented; Exact Cost Curves Not Verified
+10. Research Gaps: Script Time Breakdown, Physics Broadphase Cost, Draw-call Metrics, Particle Fill-rate, Lighting GPU Cost และ Per-object Memory
+174 — รองรับ Instancing, Batching, Culling และ LOD อย่างไร?
+1. Direct Answer: Oriverse รองรับ Static InstanceBatch, Automatic Instanced Rendering สำหรับ Static Meshes ที่เหมือนกัน, Forest/Scatter Placement และ Mesh LOD Variants โดยมีข้อจำกัดที่แตกต่างกันตามชนิด Asset
+2. Architecture: Static InstanceBatch ลด Per-object Simulation/Load/Rollback State แต่ไม่ได้หมายความว่าจะลด Draw Calls เพิ่มเติมเสมอ เพราะ Identical Static Meshes มี Instanced Rendering อยู่แล้วตามคู่มือ
+3. Source Evidence: procedural_generation_batches, mesh_dsl → far_display_variants, forest_dsl_usage, scatter_dsl_usage
+4. API Contract:
+ตัวอย่างการใช้งานจากคู่มือ:
+Mesh LOD ใช้:
+รองรับ LOD0–LOD3 ตามข้อกำหนด Mesh DSL
+5. Working Example — จาก Documentation Pattern:
+6. Execution Trace — Expected: Create Batch → Add Static Instances → Renderer Processes Instances → Instances Remain Visual-only Without Separate Gameplay/Physics
+7. Limits & Failure Modes: InstanceBatch ไม่รองรับ Collision, Logic หรือ Picking ราย Instance และมีเพดาน 128 Live Batches ส่วนรายละเอียด Frustum/Occlusion Culling Algorithms และ Draw-call Breakdown ยังไม่เปิดเผย
+8. Verification: Expected: สร้าง Decorative Copies ได้โดยไม่เพิ่ม Gameplay Objects ต่อชิ้น; Actual: Documented, ไม่ได้รัน Batch Benchmark ใหม่
+9. Disclosure Status: Instancing/Batching/LOD Documented; Culling Algorithms Undisclosed
+10. Research Gaps: Frustum Culling, Occlusion Culling, GPU-driven Indirect Drawing, LOD Hysteresis, Draw-call Count และ Instance Buffer Capacity
+175 — Active Scripts และ Continuations มีข้อจำกัดอย่างไร?
+1. Direct Answer: คู่มือ Oriverse ระบุ Global Continuation Capacity 262,144 Slots และเตือนว่าการใช้ forever/Wait() ใน Objects จำนวนมากจะกิน Continuation Storage โดยเฉพาะเมื่อมี Local Variables และ Call Scratch มาก
+2. Architecture: Event Handler ที่ Yield ต้องเก็บ Execution Continuation ระหว่าง Frames ส่วน event Update ที่ทำงานเสร็จและ Return ในแต่ละ Frame ไม่มี Continuation ที่ค้างแบบเดียวกัน
+3. Source Evidence: weave_coding → frame_and_scheduling_model
+4. API Contract: event Update ถูกเรียกตาม Frame Scheduling; Wait()/WaitNextFrame() ใช้ใน Event Bodies ตาม Weave2 Restrictions และ forever มีการพักระหว่าง Iterations ตาม Runtime Contract
+5. Working Example — เปรียบเทียบรูปแบบ:
+แตกต่างจาก Event ที่เริ่ม forever แล้วคง Continuation ตลอดอายุ Object
+6. Execution Trace — Expected: Spawn 600 NPCs → Per-object Loops เก็บ Continuations จำนวนมาก → Continuation Capacity ใช้เพิ่ม → อาจเกิด continuation slot capacity exceeded
+7. Limits & Failure Modes: คู่มือกล่าวว่า Manager Loop ที่เรียก Member Functions สำหรับ NPC 600 ตัวสามารถลดต้นทุนได้ประมาณ 8 เท่าเมื่อเทียบกับ Per-object forever รูปแบบหนึ่ง แต่ตัวเลขนี้เป็นข้อมูลอ้างอิงจากคู่มือ ไม่ใช่ค่ารับรองสำหรับทุกเกม
+8. Verification: Expected: Manager-driven Scheduling ลด Continuation Pressure; Actual: Not Run สำหรับ 600-NPC Comparison ในรอบนี้
+9. Disclosure Status: Continuation Capacity/Scheduling Guidance Documented; Exact Per-script Slot Formula Undisclosed
+10. Research Gaps: Continuation Allocation Formula, Script Profiling, Scheduler Fairness, Work Budget per Frame, Yield Cost และ Recursion/Stack Limits
+176 — Physics และ Crowd Scaling มี Bottlenecks อะไร?
+1. Direct Answer: ข้อจำกัดสำคัญคือ Collision Pair Congestion, Dense Spawning, Per-agent Navigation Queries และ Crowd Avoidance ที่ต้องประมวลผลการหลบหลีก ส่วน Climbing Crowd ออกแบบมาสำหรับฝูงจำนวนมากโดยใช้ Simulation Step ที่เบากว่า Regular Colliding Objects
+2. Architecture: การเคลื่อนที่ของ Crowd ใช้ Preferred Velocity และ Avoidance Steering ในระนาบ XY ส่วน Global Navigation มาจาก Tile Paths หรือ Flow Fields
+3. Source Evidence: object_types, tile_pathfinding, frame_and_scheduling_model
+4. API Contract:
+และ Native Stepped Followers:
+ข้อกำหนดสำคัญคือ Shared Grid/Flow Field ควรสร้างครั้งเดียวแล้วใช้ร่วมกัน ไม่สร้างใหม่ในทุก NPC
+5. Working Example — Performance Architecture:
+เป็นแนวทางออกแบบ ไม่ใช่ Complete Compiled Weave Program
+6. Execution Trace — Expected: NPC Spawn → Route Assignment → Native Follow → Arrival Event → Manager Reassigns Job
+7. Limits & Failure Modes: Crowd Avoidance เป็น XY-only และไม่ใช่ Pathfinding; Blocker ตรงหน้าสามารถทำให้ Crowd หยุดได้ ต้องใช้ Tile Navigation อ้อมสิ่งกีดขวาง
+คู่มือแนะนำให้เว้นระยะ Spawn/Idle อย่างน้อยสองเท่าของ Agent Diameter และ Dense Collision Piles เพิ่มต้นทุน Simulation
+8. Verification: Expected: Shared Navigation ลด Redundant Pathfinding Work; Actual: Not Run สำหรับ Crowd Stress Test ใหม่
+9. Disclosure Status: Bottleneck Guidance Documented; Solver Scaling Curve Undisclosed
+10. Research Gaps: Broadphase Complexity, Pair Counts, Avoidance Solver Cost, Physics Substeps, Crowd Density Metrics และ CPU Saturation Thresholds
+177 — Dynamic Quality Scaling และ Mobile Render Profiles ทำงานอย่างไร?
+1. Direct Answer: Oriverse มี Adaptive Render Quality แบบ Client-local และ #render_profile สำหรับกำหนด Target FPS, Fallback FPS, Internal Render Resolution, Texture Resolution Cap และ Effect Priorities
+2. Architecture: แต่ละ Client เริ่มจาก Full Quality แล้ว Adaptive System สามารถลด Effects ชั่วคราวเมื่อ Rendering Pressure ต่อเนื่อง โดยไม่เปลี่ยน Simulation/Networking Clocks
+3. Source Evidence: render_settings, render_profiles
+4. API Contract:
+target_fps รองรับ 30/60/90/120 ส่วน texture_max_resolution รับช่วง 128–16,384 Texels ตามข้อกำหนด และ priority ใช้ Bias ในการลดคุณภาพ ไม่ได้เปิด Effect โดยอัตโนมัติ
+5. Working Example: Source ด้านบนมาจากคู่มือโดยตรง แต่ยังไม่ได้ Compile/ทดสอบ Mobile Render Profile ใหม่
+6. Execution Trace — Expected: Device Classification → Apply Profile → Start Full Quality → Sustained Render Pressure → Temporary Quality Reduction → Preserve Simulation Timing
+7. Limits & Failure Modes: Local Settings และ Device Limits มีลำดับความสำคัญเหนือ Authored Policy ในบางกรณี และ fallback_fps ไม่ใช่การรับรองว่าเครื่องจะทำงานถึงเป้าหมายนั้น
+8. Verification: Expected: Mobile Profile ใช้ Internal Resolution/Texture Caps และปรับคุณภาพตามภาระจริง; Actual: Not Run สำหรับ Mobile Device Benchmark
+9. Disclosure Status: Adaptive Quality/Profile Contract Documented; Internal Scaling Algorithm Undisclosed
+10. Research Gaps: Hysteresis, Pressure Threshold, GPU Timing Source, Per-effect Adaptation Strategy, Mobile Thermal Response และ Quality-state Telemetry
+178 — มี Profiling Tools สำหรับ CPU/GPU แยกกันหรือไม่?
+1. Direct Answer: คู่มือ Oriverse กล่าวถึงเครื่องมือ profile_world สำหรับวัดประสิทธิภาพของ World และตรวจ Render Quality ที่ใช้งานจริง แต่ เครื่องมือนี้ไม่ปรากฏในรายการ MCP Tools ที่เปิดให้เรียกในเซสชันปัจจุบัน
+ผมตรวจชื่อ API GetFrameRate, GetFrameTime, GetMemoryUsage และ GetDrawCallCount ผ่าน read_skill แล้ว ไม่พบ Declaration ของชื่อเหล่านี้ จึงไม่สามารถยืนยันว่าผู้เขียน Weave อ่าน CPU/GPU Metrics ผ่าน API ดังกล่าวได้
+2. Architecture: เครื่องมือที่เข้าถึงได้เน้น Compilation, Gameplay Simulation, UI Inspection และ Rendered Captures ส่วน CPU/GPU Profiling แบบแยก Pass หรือ Thread ยังไม่มีสัญญาที่ตรวจสอบได้ในเซสชันนี้
+3. Source Evidence: weave_coding → render_profiles กล่าวถึง profile_world; ผลการตรวจรายการเครื่องมือ Oriverse และ Built-in Symbol Lookups
+4. API Contract: คู่มือแนะนำการเรียก profile_world พร้อม budget_sec = 60 เพื่อวัดเส้นทางที่เป็นตัวแทนของเกม แต่ ไม่สามารถยืนยัน Exact Input/Output Schema ได้ เพราะไม่มี Callable Tool Definition ให้ตรวจสอบ
+5. Working Example: ไม่มีตัวอย่าง Weave Profiler ที่ผ่านการ Compile และไม่มีการสร้างชื่อ Profiling API เพิ่มเติมโดยคาดเดา
+6. Execution Trace — Observed: อ่าน render_profiles → พบคำแนะนำ profile_world → ตรวจ Tool Registry → ไม่พบเครื่องมือ → ค้นชื่อ Metric APIs สี่รายการ → ไม่พบ Declarations
+7. Limits & Failure Modes: การจับภาพด้วย playtest ไม่เท่ากับการวัด GPU Frame Time และเวลาที่เครื่องมือใช้ประมวลผลทั้งคำขอไม่ใช่ CPU Simulation Time ต่อ Frame
+8. Verification: Expected: หากมี Profiling Tool ควรคืน CPU/GPU Timings พร้อม Source Revision, Device และ Sampling Window; Actual: Profiling Tool Not Available ในเซสชันนี้ จึงไม่มีค่าเวลาที่วัดจริง
+9. Disclosure Status: profile_world ถูกกล่าวถึงในคู่มือ — Documented Reference; Callable API — Not Available; CPU/GPU Profiling — Not Verified
+10. Research Gaps: Profiler Tool Access, Per-pass GPU Timings, CPU Thread Breakdown, Memory Telemetry, Draw-call Statistics และ Trace Export
+179 — Scene Loading และ Asset Streaming ใช้เวลาและ Bandwidth อย่างไร?
+1. Direct Answer: Oriverse รองรับการโหลด World ที่มี Procedural Assets, Marketplace Assets, Texture Baking, Mesh Baking และ Scene Objects แต่ยังไม่มีเอกสารที่ตรวจพบซึ่งกำหนดค่า Load Time, Download Bandwidth, Streaming Throughput หรือ Asset Cache Hit Rate แบบมาตรฐาน
+2. Architecture: จาก Public Contracts สามารถแยกภาระการโหลดเป็น World Source/Dependencies, Procedural Asset Preparation, Runtime Object Initialization และ Rendering Resource Preparation แต่ลำดับการจัดสรร Buffer, Network Requests และ Background Workers ภายในยังไม่เปิดเผย
+3. Source Evidence: mesh_dsl_usage, procedural_generation_batches, render_profiles, forest_dsl_usage, scatter_dsl_usage
+4. API Contract: #mesh สร้าง CPU-baked Procedural Mesh; #texture Bake Material Maps; texture_max_resolution จำกัด Long-edge Resolution ของ Ordinary 3D Textures ที่ Load/Stage Boundary และ get_load_status(request_id) ใช้ติดตาม Background/Load Operations ที่คืน Request ID
+5. Working Example — Proposed Measurement Configuration:
+ตัวอย่างนี้เป็นแผนทดลอง ไม่ใช่ Weave Source ที่ Compile แล้ว
+6. Execution Trace — Expected: Start World Load → Resolve Dependencies → Prepare Assets → Initialize Simulation → First Playable Frame → Continue Loading Deferred Resources หากระบบใช้การโหลดแบบทยอยโหลด
+ขั้น Deferred Loading เป็นสมมติฐานสำหรับทดสอบ ไม่ใช่พฤติกรรมที่ยืนยันของ Oriverse
+7. Limits & Failure Modes: จำนวน Assets มากไม่ได้แปลว่า Download Bandwidth เพิ่มตามสัดส่วนเสมอ เพราะการใช้ Asset ร่วมกันและ Cache อาจเปลี่ยนผลลัพธ์ ขณะเดียวกัน Procedural Asset Baking อาจเพิ่ม CPU Load แม้ Download Bytes ต่ำ
+8. Verification: Expected: ได้ Cold/Warm Load Times, Download Bytes และ Resource Peaks; Actual: Not Measured
+9. Disclosure Status: Asset Authoring/Load Controls Documented; Streaming Algorithms/Bandwidth Guarantees Undisclosed
+10. Research Gaps: Asset Manifest, Download Scheduling, Streaming Priority, Compression, Cache Eviction, Cold/Warm Load Profiles และ Offline Behavior
+180 — Benchmark Protocol สำหรับ FPS, Frame Time และ Memory ที่ทำซ้ำได้
+1. Direct Answer: ผมเสนอ Benchmark Protocol ที่ล็อก Source Revision, Hardware, Graphics Settings, Test Route, Sampling Window และ Metrics ก่อนเริ่มทดสอบ เพื่อให้สามารถเปรียบเทียบผลระหว่าง Build ได้อย่างมีความหมาย
+ยังไม่ได้รัน Performance Benchmark จริง จึงไม่มีผล FPS/Frame Time/Memory ที่รายงานเป็น Actual Values
+2. Architecture: Benchmark ควรแยก Simulation, Rendering และ Asset Loading Tests เนื่องจาก FPS อย่างเดียวไม่สามารถระบุว่า Bottleneck อยู่ที่ CPU Script, Physics, GPU, Memory หรือ Network
+3. Source Evidence: render_profiles, frame_and_scheduling_model, object_types, procedural_generation_batches และ playtest Tool Contract
+4. API Contract: Oriverse รองรับ #render_profile เพื่อควบคุมเป้าหมาย Rendering และ playtest สำหรับ Deterministic Input Scenarios แต่ไม่มี CPU/GPU Profiler ที่เข้าถึงได้ในเซสชันนี้ จึงจำเป็นต้องใช้ External Hardware Telemetry สำหรับผล Performance ที่ครบถ้วน
+5. Working Example — Repeatable Benchmark Specification
+นี่เป็น KHOSAN Benchmark Specification ไม่ใช่ Config File ที่ Oriverse รองรับโดยตรง และค่า Object/NPC Counts เป็นระดับภาระที่ต้องทดสอบ ไม่ใช่ Capacity ที่รับรองแล้ว
+6. Execution Trace — Expected: Lock Revision → Record Hardware/Driver → Set Graphics Policy → Warm Up → Replay Fixed Camera/Player Route → Collect Metrics → Repeat Five Runs → Aggregate Results → Compare Against Baseline
+7. Limits & Failure Modes: Browser Hidden/Background Throttling อาจทำให้ FPS ผิดจากการใช้งานจริง ต้องทดสอบเมื่อหน้าต่างแสดงผลทำงานปกติ และต้องแยก Thermal Throttling, Background Processes, GPU Power Policy และ Shader Compilation Stutters ออกจากค่า Steady-state Frame Time
+8. Verification — Acceptance Matrix:
+Test ID
+	ตัวชี้วัด
+	Target ที่เสนอ
+	Actual
+	PERF-01
+	Median FPS
+	≥ 60 FPS Desktop
+	Not Measured
+	PERF-02
+	P95 Frame Time
+	≤ 20 ms Desktop
+	Not Measured
+	PERF-03
+	P99 Frame Time
+	≤ 33.3 ms Desktop
+	Not Measured
+	PERF-04
+	Mobile FPS
+	≥ 30 FPS
+	Not Measured
+	PERF-05
+	Peak RAM
+	ไม่เกิน Device-specific Budget
+	Not Measured
+	PERF-06
+	GPU Memory
+	ไม่เกิน Hardware Budget
+	Not Measured
+	PERF-07
+	Load Time
+	กำหนดจาก Product Requirement
+	Not Measured
+	PERF-08
+	500 NPC Scaling
+	No Runtime Fault
+	Not Run
+	PERF-09
+	1,000 NPC Stress
+	Report Saturation Point
+	Not Run
+	PERF-10
+	Warm vs Cold Load
+	Record Both
+	Not Run
+	Targets เป็น ข้อเสนอสำหรับ KHOSAN ไม่ใช่มาตรฐานประสิทธิภาพที่ Oriverse รับรอง
+9. Disclosure Status: Benchmark Methodology Proposed; Runtime Measurement Not Verified
+10. Research Gaps: Automated Profiler Access, Frame Capture Timing, OS-level Telemetry, GPU Counters, Cold-cache Control, Thermal Monitoring และ Performance Regression CI
+________________
+
+
+TRR-18 — Consolidated Technical Research Record
+ข้อ
+	ประเด็น
+	Disclosure Status
+	171
+	OS/Browser/GPU Compatibility
+	Device Policy Documented; Exact Matrix Undisclosed
+	172
+	CPU/GPU/Memory Budgets
+	Public Resource Limits Documented
+	173
+	Scene Complexity Scaling
+	Guidance Documented; Cost Curves Not Verified
+	174
+	Instancing/Batching/Culling/LOD
+	Instancing/LOD Documented; Culling Internals Undisclosed
+	175
+	Scripts/Continuations
+	262,144-slot Capacity Documented
+	176
+	Physics/Crowd Bottlenecks
+	Guidance Documented
+	177
+	Adaptive Quality/Mobile
+	Documented
+	178
+	CPU/GPU Profiling
+	Referenced Tool Unavailable; Not Verified
+	179
+	Loading/Streaming/Bandwidth
+	Partially Documented; Metrics Undisclosed
+	180
+	Repeatable Benchmark
+	Protocol Designed; Not Run
+	ข้อเท็จจริงจาก Oriverse
+Oriverse รองรับ Client-local Adaptive Render Quality, Mobile Render Profiles, CPU-baked Procedural Meshes, Static Instance Batching, Native Navigation Followers, Crowd Simulation และการจัดการ Script Continuations โดยมี Resource Limits บางส่วนที่เอกสารกำหนดแน่นอน
+ข้อจำกัดสำคัญที่ยืนยันได้ ได้แก่ Global Continuation Budget 262,144 Slots, Live InstanceBatch Cap 128 และ Scatter Budget สูงสุด 65,536 Instances ต่อ World
+คู่มือมีข้อมูล Performance Optimization สำหรับหลายร้อย NPC แต่ไม่ได้ให้ Hardware-independent FPS Guarantees
+สิ่งที่ยังไม่เปิดเผย
+Exact Hardware Compatibility Matrix, Internal CPU/GPU Profilers, GPU Memory Accounting, Rendering Pass Timing, Asset Streaming Scheduler, Bandwidth Costs, Cache Eviction และ Memory Budget แยกตามอุปกรณ์
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN Studio
+ผมเสนอให้ KHOSAN จัดทำ Performance & Scalability Framework ที่ครอบคลุม Render Profiles, CPU/GPU Telemetry, Asset Load Profiler, NPC/Physics Scaling Tests, Memory Budgets และ CI Performance Regression Gates โดยใช้ Source Revision และ Hardware Metadata เป็นส่วนหนึ่งของทุก Benchmark Receipt
+หลักการสำคัญคือแยก Engine Limits, Documented Guidance, Proposed Performance Targets และ Measured Results ไม่ให้ปะปนกัน
+สถานะ TRR-18: Documentation Research Completed / Public Resource Limits Verified / Profiling API Availability Checked / Performance Benchmarks Not Executed.
+ไม่มีการ Stage, Patch, Submit หรือ Publish World ในรอบนี้ โดย Editor ที่เชื่อมต่อยังรายงาน Build 05Oct26-23:23 และ Browser Tab Hidden จึงไม่เหมาะใช้เป็นหลักฐาน GPU Performance จนกว่าจะเปิด Editor และกำหนด Hardware/Measurement Environment ให้คงที่
+หมวดถัดไปคือ 19 — Deployment, Publishing & Operations (ข้อ 181–190) สำหรับศึกษาการเผยแพร่เกม การจัดการเวอร์ชัน Multiplayer Session Operations และระบบ Monitoring หลังเปิดให้บริการ
+________________
+
+
