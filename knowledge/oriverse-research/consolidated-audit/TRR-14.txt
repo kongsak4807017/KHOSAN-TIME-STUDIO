@@ -1,0 +1,368 @@
+TRR-14 — AI Tools, MCP & Orchestration
+Oriverse / Weave Technical Research Protocol | หมวด 14 | คำถาม 131–140 | 9 ตุลาคม 2569
+ผมตรวจสอบรายการเครื่องมือที่ระบบเปิดให้เรียกใช้งาน และตรวจสอบ Editor Session เดิมของ KHOSAN–Oriverse แล้ว โดยไม่เปลี่ยนแปลง World หรือ Pending Draft
+ผลการตรวจสอบรอบนี้
+MCP Tools
+53
+รายการที่ตรวจนับได้
+Editor
+Web
+wasm_web
+Build
+05 Oct
+05Oct26-23:23
+________________
+
+
+Editor ยังมีรายการอยู่และส่ง Heartbeat แต่ยังไม่ได้ตรวจยืนยันความสามารถด้าน Rendering หรือการทำรายการเขียนในรอบนี้
+หลักฐานที่ใช้มีสองระดับ คือ Tool Contract (Signature, Parameter Schema และคำอธิบายพฤติกรรมที่ระบบเปิดเผย) กับ Observed Result (ผลจากการเรียกเครื่องมือจริง) การพบชื่อเครื่องมือไม่ได้แปลว่าได้ทดสอบทุก Error Path หรือรับรองประสิทธิภาพของเครื่องมือนั้นแล้ว
+131 — Oriverse เปิด MCP Tools ทั้งหมดกี่รายการ และแบ่งกลุ่มอย่างไร?
+1. Direct Answer: ตรวจนับได้ 53 รายการ ใน Namespace Oriverse สำหรับการเชื่อมต่อครั้งนี้ ไม่ใช่การรับรองว่าระบบ Oriverse ทุกเวอร์ชัน ทุกบัญชี หรือทุก Deployment มีจำนวนเท่ากัน
+2. Architecture: เป็นชุดความสามารถที่ AI Agent เรียกใช้เพื่ออ่านคู่มือ จัดการ World Source ตรวจผลจำลอง ค้นหาและสร้าง Assets ประสานงานกับ Editor และส่งมอบเกม
+3. Source Evidence: รายการ Tool Definitions ของ Oriverse ที่เปิดให้ใช้งานจริงในเซสชันนี้
+4. API Contract: แบ่งตามหน้าที่ได้ดังนี้ โดยแต่ละเครื่องมือถูกนับเพียงกลุ่มเดียว
+กลุ่ม
+	จำนวน
+	เครื่องมือ
+	Documentation
+	1
+	read_skill
+	World authoring / inspection
+	6
+	stage_new_world, sync_pending_world_from_current, patch_and_run_pending_world, pending_world_search_context, pending_world_read_sections, pending_world_list_objects
+	Validation / QA / runtime status
+	7
+	run_pending_world, playtest, get_load_status, ui_inspect, terrain_inspect, sample_ground, preview_terrain
+	Terrain editing
+	1
+	terrain_edit
+	Asset library / import / review
+	11
+	find_assets, mesh_library_search, material_library_search, import_material_asset, use_mesh_asset, save_mesh_asset, save_clip_asset, save_material_asset, clip_library_search, rate_asset, import_clip_asset
+	Asset inspection / modeling
+	11
+	inspect_mesh, preview_mesh, trace_silhouette, fit_reference_camera, reference_points_to_3d, preview_texture, preview_drawing, inspect_drawing, patch_drawing, inspect_model, inspect_rig
+	Animation inspection
+	1
+	inspect_clip
+	Images / references
+	5
+	generate_image, import_image, list_project_images, library_capture_status, attach_reference_image
+	Delivery / editor proposals
+	7
+	request_project_save, submit_pending_world, propose_adjust_values, propose_adjust_deltas, share_game, show_game, show_preview
+	Publishing
+	1
+	publish_game
+	Editor routing
+	2
+	list_editors, select_editor
+	รวม
+	53
+	
+
+	การแบ่งกลุ่มเป็นการจัดหมวดสำหรับงานวิจัย ไม่ใช่ Taxonomy อย่างเป็นทางการของ Oriverse
+5. Working Example — Verified Tool Call:
+ตัวอย่างเป็นโครงสร้างการเรียกผ่าน Client SDK ไม่ใช่ภาษา Weave ซึ่งเหมาะสมกับคำถามเรื่อง MCP Tooling มากกว่า
+6. Execution Trace — Observed: Enumerate Available Tool Definitions → Filter Namespace Oriverse → Count 53 → Inspect Editor Session → Receive Session/Editor Metadata
+7. Limits & Failure Modes: จำนวน Tools อาจเปลี่ยนตามการอัปเดต และการมี Definition ไม่ยืนยันว่า Editor Online, มีสิทธิ์เขียน หรือมี Render Host พร้อมใช้งาน
+8. Verification: Expected: ได้รายชื่อและจำนวนเครื่องมือ; Actual: 53 Tools — PASS สำหรับการตรวจนับ ส่วน Tool Execution Coverage ทั้งชุดยังไม่ได้ทดสอบ
+9. Disclosure Status: Tool Inventory Experimentally Verified; Global MCP Catalogue Across Deployments Undisclosed
+10. Research Gaps: Tool Versioning, Capability Negotiation, Deprecated Tools, Per-account Entitlements และ Server-wide Registry
+132 — แต่ละ Tool มี Input/Output Schema และ Error Codes อย่างไร?
+1. Direct Answer: Tool Definitions เปิดเผยชื่อ Parameter, Types, Required Fields, Enumerations, Bounds และคำอธิบายบาง Failure Modes แต่ยังไม่พบ Error Taxonomy กลางที่รับรองว่าเครื่องมือทั้ง 53 รายการใช้ Error Codes ชุดเดียวกัน
+2. Architecture: เครื่องมือรับ Structured Arguments แล้วคืนผลที่อาจประกอบด้วย Text, Structured Content, Status, Validation Diagnostics, Asset IDs, Revision/Snapshot Identifiers หรือ Request IDs ขึ้นกับ Operation
+3. Source Evidence: Oriverse Tool Definitions ของทั้ง 53 รายการ และ weave_compile_errors สำหรับ Compiler Diagnostics
+4. API Contract — Representative Schemas:
+Tool
+	Required Input
+	Output ที่สัญญาไว้
+	Failure Path
+	read_skill
+	name, agent
+	Guide/Section/API Declarations
+	Unknown guide/section
+	stage_new_world
+	world_description, agent
+	Compile/Simulation Result
+	Syntax/Runtime Error
+	patch_and_run_pending_world
+	patches หรือ patches_file, agent
+	Patch Status + Validation
+	Stale Revision / Context Mismatch
+	playtest
+	agent
+	Timeline/Images/Logs
+	Input Error / Runtime Failure
+	inspect_mesh
+	name หรือ source, agent
+	Geometry Metadata
+	Invalid Mesh Source
+	use_mesh_asset
+	asset_id, word, expected_snapshot, agent
+	Imported Names/Status
+	Stale Snapshot
+	get_load_status
+	agent, optional request_id
+	Pending/Complete/Failed Status
+	Unknown Request
+	publish_game
+	project_name, world_text
+	Permanent Project URL
+	Validation/Access Failure
+	Weave Compiler Codes เช่น W2C0107 หรือ W2C0614 ไม่ควรถูกนำไปใช้แทน MCP Transport Errors
+5. Working Example — Schema Validation:
+6. Execution Trace — Expected: Validate Arguments → Execute Tool → Return Structured/Text Result หรือ Validation Error
+7. Limits & Failure Modes: ข้อมูล Error อาจมีข้อความเฉพาะสถานการณ์ ต้องอ่านทั้ง Message และ Recovery Guidance ไม่อาศัย Error Code เพียงอย่างเดียว
+8. Verification: Expected: Required Fields และ Type Constraints ตรวจได้จาก Schema; Actual: ตรวจ Definitions ได้จริง แต่ไม่ได้ Inject Invalid Inputs เพื่อพิสูจน์ Error Codes ทุกประเภท
+9. Disclosure Status: Tool Input Schemas Documented; Unified Output/Error Schema Partially Documented / Undisclosed
+10. Research Gaps: Canonical Error Catalogue, Retryability Flags, Standard Error Envelope, Schema Version และ Cross-tool Error Correlation
+133 — read_skill ใช้ค้นเอกสารและ API References อย่างไร?
+1. Direct Answer: read_skill เป็นเครื่องมืออ่านเอกสารอ้างอิงของ Oriverse รองรับการอ่านทั้งคู่มือ เฉพาะ Section และค้นหา Built-in API ด้วยชื่อฟังก์ชันที่ตรงกัน โดยไม่ต้องโหลดเอกสารทั้งหมดทุกครั้ง
+2. Architecture: การค้นหาเริ่มจากคู่มือหลัก weave_coding เพื่อดูโครงสร้างและสารบัญ จากนั้นใช้ section เพื่อเปิดเนื้อหาเฉพาะหัวข้อ หรือ symbol เพื่อตรวจ Signature และข้อความอ้างอิงจากหลาย Section
+3. Source Evidence: Tool Contract mcp__Oriverse__read_skill และคู่มือ weave_coding
+4. API Contract:
+name เลือกจากรายการคู่มือที่รองรับ, part เริ่มที่ 1, symbol ค้นชื่อ Built-in แบบ Exact Match และรองรับ Name* สำหรับค้น Signature ที่ขึ้นต้นด้วยชื่อนั้น ส่วน force:true ใช้เรียกเอกสารเดิมซ้ำเมื่อผลเก่าไม่อยู่ในบริบทแล้ว
+5. Working Example — ตรวจสอบจริง:
+ผลที่ได้รับจริงมี Declaration:
+พร้อมข้อความอ้างอิงจากหัวข้อ multiplayer_guidance, html_ui และ example_html_inventory
+6. Execution Trace — Observed: ส่งชื่อคู่มือและ Symbol → ระบบค้น built_in_function_list → คืน Declaration → คืน Mentions จากคู่มือที่เกี่ยวข้อง
+7. Limits & Failure Modes: การค้น Symbol ไม่ได้ทดสอบว่า API ทำงานใน World จริง การใช้ section ผิดอาจไม่ได้เนื้อหาที่ต้องการ และเอกสารขนาดใหญ่ต้องติดตามหน้าต่อเนื่องตาม Response Tail
+8. Verification: Expected: ได้ Signature ของ SpawnCanvas; Actual: PASS ได้ Signature และ Mentions ที่สัมพันธ์กันจริง
+9. Disclosure Status: Documented + Experimentally Verified
+10. Research Gaps: Documentation Version Hash, API Deprecation Metadata, Machine-readable Cross-reference Graph และ Documentation Coverage Metrics
+134 — stage_new_world, Patch และ Submit มี Lifecycle อย่างไร?
+1. Direct Answer: Oriverse แบ่งการสร้างและส่งมอบ World เป็นสามขั้นสำคัญ ได้แก่สร้าง Pending Draft, แก้ไขและตรวจสอบ Draft แล้วจึงเสนอ Snapshot ให้ Editor โหลด
+2. Architecture: stage_new_world รับ World Source ทั้งฉบับและแทนที่ Staged Draft; patch_and_run_pending_world แก้ไขเฉพาะ Hunk แล้ว Compile/Simulate; submit_pending_world ตรวจขั้นสุดท้ายและเสนอ World ให้ Editor ผ่านการกด Load
+เป็น Lifecycle ที่เครื่องมือเปิดเผย ไม่ใช่โครงสร้างฐานข้อมูลภายใน
+3. Source Evidence: Tool Contracts ของ stage_new_world, patch_and_run_pending_world, run_pending_world, playtest, submit_pending_world, get_load_status
+4. API Contract:
+5. Working Example: รูปแบบการแก้เฉพาะ Target:
+เป็นตัวอย่าง Diff Format เพื่ออธิบายกลไก ไม่ใช่ Patch ที่ส่งเข้า World จริง
+6. Execution Trace — Expected: Stage Source → Compile/Simulate ประมาณ 60 Frames → Patch → Validate → Playtest → Submit Snapshot → Await Editor Load
+7. Limits & Failure Modes: หาก Stage แล้ว Compile ล้มเหลว Draft ยังอยู่เพื่อแก้ด้วย Patch ไม่ควร Stage ใหม่ซ้ำโดยไม่จำเป็น การ Submit ไม่เท่ากับ Loaded หรือ Human Accepted และการใช้ full_replace อาจทำให้ Clauses เดิมถูกลบ/ย้อนกลับ จึงมีการแจ้งผลกระทบก่อนยืนยัน
+8. Verification: Expected: World ถูกสร้างและส่งถึง Editor ผ่าน Load Flow; Actual: ตรวจ Tool Contracts ได้ แต่ไม่ได้ดำเนินการ Stage/Patch/Submit ในรอบนี้
+9. Disclosure Status: Lifecycle Contract Documented; Current End-to-end Submission Not Verified
+10. Research Gaps: Draft Storage Backend, Submit Transaction Internals, Cross-session Recovery และ Load Rollback Guarantees
+135 — Draft Revision, Snapshot และ Optimistic Validation ทำงานอย่างไร?
+1. Direct Answer: Oriverse เปิดเผยกลไกตรวจ Revision และ Snapshot ก่อนแก้ไข โดยใช้ expected_revision, expected_snapshot หรือ source_hash ตามประเภท Tool เพื่อป้องกันการแก้ Source ที่เปลี่ยนไปแล้ว
+2. Architecture: Client อ่าน Baseline → รับ Revision/Snapshot → ส่งการเปลี่ยนแปลงพร้อม Expected Value → ระบบตรวจว่าข้อมูลยังตรงกัน → ยอมรับหรือปฏิเสธ Operation
+นี่เป็นรูปแบบ Optimistic Validation ที่สังเกตได้จาก API Contract แต่ไม่ได้เปิดเผยว่า Backend ใช้ Database CAS, Lock หรือ Transaction Algorithm ใด
+3. Source Evidence: Tool Contracts ของ patch_and_run_pending_world, terrain_edit, patch_drawing, import_material_asset, use_mesh_asset
+4. API Contract:
+เครื่องมือ
+	Validation Token
+	patch_and_run_pending_world
+	expected_revision?: integer
+	terrain_edit
+	expected_revision, expected_source_md5
+	patch_drawing
+	expected_revision, source_hash
+	import_material_asset
+	expected_snapshot
+	use_mesh_asset
+	expected_snapshot
+	import_clip_asset
+	expected_snapshot
+	5. Working Example:
+Revision 12 และ Diff นี้เป็นค่าเพื่ออธิบาย Schema เท่านั้น ไม่ใช่ Revision ของ World ปัจจุบัน
+6. Execution Trace — Expected: Read Rev N → Another Edit Produces Rev N+1 → Submit Patch Expecting N → Reject Stale Revision → Refresh Context → Rebuild Patch Against N+1
+7. Limits & Failure Modes: ห้ามใช้ Revision หรือ Snapshot Token ที่คาดเดาเอง และเมื่อเกิด Stale Error ต้องอ่าน Source ใหม่ก่อน Retry ไม่ใช่ส่ง Patch เดิมซ้ำแบบไม่ตรวจความเปลี่ยนแปลง
+8. Verification: Expected: Stale Revision ป้องกันการแก้ Draft โดยไม่ตั้งใจ; Actual: Documented, ยังไม่ได้สร้าง Conflict Experiment ในรอบนี้
+9. Disclosure Status: Optimistic Validation Contract Documented; Internal Concurrency Control Undisclosed
+10. Research Gaps: Revision Scope, Snapshot Canonicalization, Atomic Commit Boundaries, Merge Policy และ Concurrent Editor Session Semantics
+136 — Tool Calls มี Concurrency, Retry และ Idempotency Guarantees อย่างไร?
+1. Direct Answer: Oriverse เปิดเผยกลไกบางส่วนสำหรับการป้องกันการแก้ไขชนกัน การนำงานกลับมาทำต่อ และการเรียกงานซ้ำ แต่ ยังไม่มีหลักฐานยืนยันว่าทั้ง 53 เครื่องมือมี Concurrency, Retry และ Idempotency Guarantees แบบเดียวกัน
+จึงต้องพิจารณาเป็นราย Operation ไม่สามารถสรุปว่า MCP Tools ทั้งหมดเป็น Exactly-once Operations ได้
+2. Architecture: จาก Tool Contracts สามารถแยกการทำงานเป็นสามประเภท ได้แก่ Read-only Operations, Revision-validated Mutations และ Background Operations ซึ่งมีวิธีติดตามผลแตกต่างกัน
+3. Source Evidence: patch_and_run_pending_world, get_load_status, generate_image, import_material_asset, use_mesh_asset, library_capture_status
+4. API Contract:
+กลไก
+	Contract ที่พบ
+	Patch concurrency
+	expected_revision ป้องกันการใช้ Baseline เก่า
+	Asset import
+	expected_snapshot ป้องกัน Import ลง Draft ที่เปลี่ยนแล้ว
+	Patch batch
+	Elements ประมวลผลตามลำดับ แก้กลับได้เป็นราย Element
+	Image generation retry
+	ใช้ generation_id เดิมเพื่อ Recovery
+	Background status
+	get_load_status(request_id)
+	Library retry
+	รายงาน queued, retry_not_before_ms และ Failure Reason
+	Publication
+	ไม่มี General Idempotency Key ที่ยืนยันได้สำหรับทุก Publication Tool
+	5. Working Example — Recovery Pattern ที่มีเอกสารรองรับ:
+ในกรณี generate_image ต้องใช้ Generation ID เดิมในการกู้คืนผล ไม่สร้าง ID ใหม่ทุกครั้งที่ Poll หรือ Retry
+6. Execution Trace — Expected:
+7. Limits & Failure Modes: การส่ง Mutable Request ซ้ำโดยไม่มี Idempotency Contract อาจเกิดงานซ้ำ การ Retry Patch หลัง Stale Revision ต้องอ่าน Context ใหม่ และการสร้าง Generation ID ใหม่หลัง Timeout อาจทำให้เสีย Credits ซ้ำ
+8. Verification: Expected: Recovery ด้วย Identity เดิมไม่สร้างผลลัพธ์ซ้ำในกรณีที่ Contract รองรับ; Actual: ตรวจ Tool Definitions แล้ว แต่ไม่ได้ Inject Timeout หรือ Concurrent Writes
+9. Disclosure Status: Operation-specific Retry/Revision Rules Documented; Universal Exactly-once Guarantee Undisclosed
+10. Research Gaps: MCP Concurrency Model, Transaction Isolation, Retry Backoff, Request Deduplication Window, Side-effect Atomicity และ Distributed Locking
+137 — Asset Generation แบบ Asynchronous ติดตามสถานะอย่างไร?
+1. Direct Answer: Oriverse มีการติดตามงานเบื้องหลังผ่าน Request IDs และ Library Capture Batches โดยแยกสถานะของการสร้าง Asset ออกจากการจัดเก็บใน Shared Library
+ผมได้เรียก library_capture_status จริงในรอบนี้ และพบ Batch ที่เก็บ Asset สำเร็จแล้ว
+2. Architecture: มีการติดตามระดับ Operation Request และระดับ Library Capture ซึ่งเป็นคนละขอบเขตกัน
+3. Source Evidence: Tool Contracts ของ generate_image, get_load_status, library_capture_status, save_mesh_asset, save_material_asset
+4. API Contract:
+Library Capture รายงานข้อมูล เช่น batch_id, counts, completed_roots, total_roots, storage_state, reason และ Retry Metadata
+5. Working Example — ตรวจสอบจริง:
+6. Execution Trace — Observed:
+Existing Asset Capture Batch (Completed)
+Completed roots
+2 / 2
+Shared assets
+2
+________________
+
+
+VillageHouse
+Mesh asset — shared
+ClayWall
+Material asset — shared
+ผลลัพธ์นี้แสดงว่า Capture Batch ที่มีอยู่ถูกบันทึกใน Shared Storage สำเร็จแล้ว ไม่ได้แปลว่า Assets ผ่าน Visual Review หรือถูกอนุมัติให้ใช้ในเกมทุกประเภท
+7. Limits & Failure Modes: queued ไม่ใช่ stored; session-only ไม่ใช่ shared และ Asset ที่ Save แล้วไม่ได้หมายความว่าได้รับการ Review/Approve แล้ว
+8. Verification: Expected: Library Status แสดง Completion และ Storage State; Actual: PASS — ตรวจพบสอง Assets ในสถานะ shared, ไม่มีรายการค้างใน Batch ที่รายงาน
+9. Disclosure Status: Library Capture Status Documented + Experimentally Verified; Image Generation Recovery Documented / Not Run
+10. Research Gaps: Queue Scheduling, Worker Architecture, Retry SLA, Failure Retention, Duplicate Upload Semantics และ Asset Approval Workflow
+138 — Tool Permissions และ Approval Boundaries มีอะไรบ้าง?
+1. Direct Answer: เครื่องมือ Oriverse แยกการตรวจสอบ การแก้ Draft และการส่งผลถึงผู้ใช้ออกจากกัน โดยบาง Operations ต้องอาศัย Editor ที่เชื่อมต่อและสิทธิ์ของเจ้าของ Project ส่วนบาง Operations ต้องให้ผู้ใช้กดอนุมัติใน Editor
+2. Architecture: Authorization Boundaries ที่เห็นได้จาก Tool Contracts ประกอบด้วย Editor Connection, Authenticated Project Ownership, Draft Revision Validation และ User-controlled Load/Save/Apply Actions
+3. Source Evidence: generate_image, import_image, request_project_save, submit_pending_world, propose_adjust_values, publish_game
+4. API Contract และ Boundary Matrix:
+Operation
+	Boundary ที่เปิดเผย
+	Read guides / preview assets
+	ไม่ต้องแก้ World
+	Stage/Patch Draft
+	แก้ Pending Draft และ Validate
+	Import project image
+	ต้องมี Signed-in Editor และ Project Write Access
+	Generate image
+	ต้องมี Project/Owner Context; ใช้ Account Credits
+	Submit World
+	สร้างข้อเสนอให้ Editor กด Load
+	Save project
+	ผู้ใช้กด Save เพื่อเปิด Name Dialog และบันทึก
+	Locked Adjuster Values
+	ผู้ใช้กด Apply Values
+	Share game
+	ต้องมี Successful Playtest ของ Source ปัจจุบัน
+	Publish game
+	เขียน Public Playable Project ตาม Project Name
+	5. Working Example: ในกรณีผู้ใช้ต้องการปรับแสงที่มี User Lock AI ควรเรียก propose_adjust_values ไม่แก้ Locked #adjuster โดย Patch ตรง เพราะ Tool Contract ระบุว่าการ Patch ตรงจะถูกปฏิเสธ
+6. Execution Trace — Expected: AI Proposes Change → Tool Validates Scope/Permissions → User Clicks Apply/Load/Save เมื่อจำเป็น → Operation Completes → Poll Status
+7. Limits & Failure Modes: การได้รับ Success จาก Submit ไม่ได้ยืนยันว่าผู้ใช้กด Load แล้ว และการสร้างหรือ Import Images อาจล้มเหลวเมื่อไม่มีสิทธิ์ Project Owner หรือ Editor ไม่พร้อมใช้งาน
+8. Verification: Expected: Operations ที่ต้องรับการยืนยันจากผู้ใช้ไม่เปลี่ยน Live State ก่อนมีการกดอนุมัติ; Actual: Tool Contracts รองรับ แต่ไม่ได้ทดสอบ Unauthorized Operation หรือ User Approval Flow ในรอบนี้
+9. Disclosure Status: Public Approval Boundaries Documented; Internal Authorization Model Undisclosed
+10. Research Gaps: Role-based Access Control, Permission Scopes, OAuth/Session Tokens, Audit Logs, Workspace Isolation และ Multi-user Authorization
+139 — Export Tool Schemas และ Documentation แบบ Machine-readable ได้หรือไม่?
+1. Direct Answer: สามารถอ่าน Tool Schemas ในรูปแบบ Structured Definitions จาก Client/Connector Runtime ที่เปิดเผยอยู่ และคู่มือ read_skill คืนเนื้อหาเอกสารเป็น Text ที่นำไปประมวลผลต่อได้
+แต่ยังไม่พบ Oriverse Tool ที่มี Contract สำหรับ Export ชุด MCP Tool Schemas ทั้งหมดเป็น Versioned JSON Schema/OpenAPI Bundle โดยตรง
+2. Architecture: Machine-readable Metadata อยู่ที่ Tool Discovery/Definitions ส่วน Reference Documentation อยู่ผ่าน read_skill ซึ่งแยกเป็น Guides, Sections และ Symbol Lookups
+3. Source Evidence: Tool Definitions ของ Namespace Oriverse และ read_skill
+4. API Contract: ข้อมูล Schema ที่ระบบเปิดเผยครอบคลุม Property Types, Required Fields, Enums, Min/Max, Description และ Nested Structures แต่ไม่ยืนยันว่ามี Schema Export Endpoint แบบสาธารณะ
+5. Working Example — Schema Inventory Extraction:
+6. Execution Trace — Observed: Tool Metadata Discovery → Filter Namespace → Extract Names/Descriptions → Serialize as JSON
+ในการตรวจรอบนี้วิธีดังกล่าวทำให้ตรวจนับ 53 Tools ได้จริง แต่ยังไม่ได้สร้าง Artifact Export ที่รวม Full Parameter Schemas ทั้งหมด
+7. Limits & Failure Modes: ชื่อและ Description ไม่เท่ากับ Complete JSON Schema เพราะอาจขาด Nested Types หรือ Constraints หากต้องการ Machine-readable Schema สมบูรณ์ ต้องดึง Definition ที่มีข้อมูลครบ ไม่ใช่แค่ Summary
+8. Verification: Expected: Export Name/Description Inventory ได้; Actual: PASS สำหรับ Inventory Extraction; Full Schema Bundle Not Exported
+9. Disclosure Status: Runtime Tool Metadata Experimentally Verified; Official Versioned Schema Export Undisclosed
+10. Research Gaps: JSON Schema Bundle, Tool API Versioning, Documentation Generator, Compatibility Diff และ Schema Registry
+140 — Orchestration Trace รวม Tool Calls, Errors และ Recovery
+1. Direct Answer: สามารถจัดทำ Orchestration Trace แบบตรวจสอบได้โดยบันทึก Tool Call, Arguments, Result, Revision, Request Identity, Failure และ Recovery Decision ทุกขั้น โดยไม่ต้องทราบ Implementation ภายในของ MCP Server
+ในรอบนี้มี Actual Trace แบบ Read-only ได้แก่การตรวจนับ Tools, ตรวจ Editor Routing, ค้น Built-in API, อ่าน World Preview และตรวจสถานะ Library Capture แต่ไม่ได้ Inject Errors หรือทดสอบ Recovery ด้วยการแก้ไข World
+2. Architecture: Tool Orchestration ควรมี State Machine ระดับ Workflow เพื่อบังคับลำดับ Read → Validate → Mutate → Verify → Deliver และหยุดเมื่อพบ Error ที่ยังไม่ได้แก้ไข
+3. Source Evidence: list_editors, read_skill, sync_pending_world_from_current, library_capture_status, patch_and_run_pending_world, get_load_status
+4. API Contract: ใช้ Output Identity/Revision ตามแต่ละเครื่องมือ เช่น agent, expected_revision, expected_snapshot, source_hash, request_id, batch_id
+5. Working Example — Proposed Orchestrator:
+โค้ดนี้เป็น Pseudocode สำหรับ KHOSAN Orchestrator ไม่ใช่ Oriverse Tool Response Schema จริง โดย has_stale_revision และ compile_failed เป็น Fields สมมติของ Adapter ที่ KHOSAN ต้องออกแบบเอง
+6. Execution Trace — Actual (Read-only):
+Step
+	Tool / Operation
+	Observed Result
+	1
+	Tool Discovery
+	พบ Oriverse 53 Tools
+	2
+	list_editors
+	พบ Pinned Web Editor 1 รายการ
+	3
+	read_skill — API Lookup
+	ได้ Signature SpawnCanvas
+	4
+	sync_pending_world_from_current — Preview
+	Live World 181 Lines, Draft ไม่ถูกแก้
+	5
+	library_capture_status
+	Completed 2/2, Shared 2 Assets
+	6
+	Error Injection
+	Not Run
+	7
+	Recovery Test
+	Not Run
+	8
+	Submit/Publish
+	Not Run
+	7. Limits & Failure Modes: Tool Output อาจถูกตัดทอนเมื่อข้อมูลยาว ระบบจึงควรใช้ Pagination และ Context Search; Operation ที่มี Side Effects ไม่ควรถูก Retry โดยไม่มี Identity/Idempotency Control; และทุก Recovery ต้องอ้าง Error จริง ไม่อนุมานว่าเกิด Stale Revision หรือ Timeout โดยไม่มีหลักฐาน
+8. Verification: Expected: Orchestrator สามารถจำแนก Success/Failure/Recovery แล้วทำงานต่ออย่างปลอดภัย; Actual: PASS สำหรับ Read-only Trace, ส่วน Error/Recovery Path ยัง Not Verified
+9. Disclosure Status: Tool Observability Experimentally Verified; Error Recovery Orchestration Proposed / Not Verified
+10. Research Gaps: Central Trace IDs, Structured Error Events, Span Correlation, Execution Budget, Automatic Recovery Policy, Immutable Logs และ Audit Retention
+________________
+
+
+TRR-14 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะ
+	131
+	MCP Inventory
+	53 Tools Verified
+	132
+	Schemas / Error Codes
+	Schemas Documented; Unified Errors Undisclosed
+	133
+	read_skill
+	Documented + Verified
+	134
+	Stage/Patch/Submit Lifecycle
+	Documented
+	135
+	Revision/Snapshot Validation
+	Documented; Internals Undisclosed
+	136
+	Concurrency/Retry/Idempotency
+	Partially Documented
+	137
+	Async Asset Tracking
+	Documented + Verified
+	138
+	Permissions/Approval
+	Partially Documented
+	139
+	Machine-readable Schemas
+	Metadata Available; Full Export Not Verified
+	140
+	Tool Orchestration Trace
+	Read-only Trace Verified; Recovery Not Run
+	ข้อเท็จจริงที่ได้รับการยืนยัน
+Oriverse เปิดให้เรียกใช้ 53 Tools ในเซสชันที่ตรวจสอบ มีเครื่องมืออ่านเอกสาร สร้าง/แก้ Draft, Validate/Playtest, ตรวจ Assets, ติดตาม Background Operations และส่งมอบ World ไปยัง Editor
+กลไกป้องกันการแก้ไขชนกันที่เปิดเผย ได้แก่ Revision/Snapshot Validation และการใช้ Identity เดิมในการกู้คืนงานบางประเภท แต่ไม่ควรตีความว่าเป็น Universal Transaction หรือ Exactly-once Guarantee
+สิ่งที่ยังไม่เปิดเผย
+Internal MCP Server Architecture, Unified Error Codes, Scheduler, Tool Execution Concurrency, Distributed Idempotency, Authentication Implementation และ Full Tool Schema Export API
+ข้อเสนอเชิงวิศวกรรมสำหรับ KHOSAN AI Game Studio
+จากงานวิจัยหมวดนี้ ผมเสนอให้ KHOSAN สร้าง Tool Orchestration Gateway โดยมีองค์ประกอบต่อไปนี้:
+1. Tool Registry — เก็บชื่อ Schema, Version, Side-effect Classification และ Required Permissions
+2. Workflow Planner — กำหนด Dependency และ Execution Order
+3. Revision/Snapshot Guard — ป้องกัน Stale Updates
+4. Retry & Idempotency Manager — กู้คืนจาก Failure โดยไม่ทำ Side Effects ซ้ำ
+5. Approval Gateway — แยก Read, Write, Publish และ Paid Operations
+6. Execution Trace & Evidence Store — บันทึก Tool Calls, Outputs, Diagnostics, Recovery และ Acceptance Results
+ทั้งหมดนี้เป็นข้อเสนอสำหรับ KHOSAN Studio ไม่ใช่การกล่าวอ้างว่า Oriverse ใช้ Components เหล่านี้ภายในทั้งหมด
+สถานะ TRR-14: Documentation Research Completed / 53-Tool Inventory Verified / API Lookup PASS / Library Capture Status PASS / Read-only Orchestration Trace PASS / Error Recovery Not Tested.
+ไม่มีการ Stage, Patch, Submit หรือ Publish World ในรอบนี้ และ Editor ที่เชื่อมต่อยังใช้ Build 05Oct26-23:23 ซึ่งควร Reload ก่อนดำเนินการทดสอบ Mutation/Recovery ในขั้นถัดไป
+________________
+
+
