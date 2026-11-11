@@ -16,6 +16,7 @@
     "doctor:image-blaster": "node tools/adapters/image-blaster/doctor.mjs",
     "image-blaster": "node tools/adapters/image-blaster/run.mjs",
     "verify:3d-harness": "node --test scripts/test-3d-harness.mjs",
-    "harness:3d-verify": "node tools/harness-3d/cli.mjs"
+    "harness:3d-verify": "node tools/harness-3d/cli.mjs",
+    "verify:part7": "python -m unittest discover -s scripts -p test_part7_hard_locks.py"
   }
 }
