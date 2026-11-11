@@ -1,6 +1,6 @@
 # KHOSAN native 3D harness — executable acceptance contract (initial slice)
 
-**Status:** implemented *verification slice* with 14 local Node.js tests; not complete autonomous reconstruction. Source: [AI 3D harness user blueprint](../knowledge/oriverse-research/harness-blueprint/README.md). This is a KHOSAN-native design; no Oriverse runtime or Weave dependency.
+**Status:** implemented *verification slice* with 17 local Node.js tests; not complete autonomous reconstruction. Source: [AI 3D harness user blueprint](../knowledge/oriverse-research/harness-blueprint/README.md). This is a KHOSAN-native design; no Oriverse runtime or Weave dependency.
 
 ## How ChatGPT / DevSpace must actually follow the harness
 
@@ -27,7 +27,7 @@ Human Executive Producer approves via trusted interface
 - **06 Technical Architect:** declares coordinate system, UG-IR schema, compiler target, geometry budget, domain limits. Breaking IR changes require HG-02.
 - **04 Maker:** writes new code/assets under its allowed project root and preserves locked invariants. No self-approval.
 - **08 Rendering Engineer:** independent rendered camera, lighting and exposure metrics (currently external adapter required).
-- **10 QA:** executes deterministic tests and creates receipts. A `PASS` string written by an LLM is not a test.
+- **10 QA:** executes deterministic tests and creates receipts. A `PASS` string written by an LLM is not a test. Separately provisioned Ed25519 reviewer and human-approval signing services must issue receipts; the maker must not possess those private keys.
 - **11 Independent Reviewer:** runs in a separate actual session; must inspect the current reference and rendered artifact and report defects with region IDs. A mocked VLM must produce **BLOCKED**.
 - **Human:** approves final art/identity; HG-01 for vision/constitution, HG-02 for incompatible architecture, HG-03 for destructive operations, HG-04 for release/external side effects.
 
@@ -36,7 +36,9 @@ Human Executive Producer approves via trusted interface
 The gate expects project-relative paths in a JSON evidence record conforming to `studio/contracts/3d-verification-evidence.schema.json`. It must be run from a trusted local CLI, never exposed as arbitrary HTTP filesystem access:
 
 ```bash
-node tools/harness-3d/cli.mjs verify "<absolute-game-project-root>" "<path-to-evidence-json>"
+KHOSAN_3D_REVIEWER_PUBLIC_KEY_FILE="<trusted-reviewer-public.pem>" \
+KHOSAN_3D_HUMAN_PUBLIC_KEY_FILE="<trusted-human-public.pem>" \
+  node tools/harness-3d/cli.mjs verify "<absolute-game-project-root>" "<path-to-evidence-json>"
 node --test scripts/test-3d-harness.mjs
 ```
 
@@ -46,9 +48,9 @@ Canonical dimensions for this contract: `cm`, `+Z` up; a Three.js `[x, y, z]` me
 
 ### Immutable evidence and real-world authority
 
-The sample source used `passed: True` in a TODO stub. This implementation **has no stub critic**. The caller must supply a distinct reviewer receipt and actual binary files, which are validated and hashed. SHA-256 binds artifacts, review and approval to the same bytes. The gate recomputes AABB floating, overlap, seam gaps from UG-IR, and reads the GLB POSITION accessor counts; it does **not** infer that a renderer or a human actually ran merely from metadata.
+The sample source used `passed: True` in a TODO stub. This implementation **has no stub critic**. The caller must supply a distinct reviewer receipt and actual binary files, which are validated and hashed. SHA-256 binds artifacts, review and approval to the same bytes. The gate recomputes AABB floating, overlap, seam gaps from UG-IR, and reads the GLB POSITION accessor counts. It verifies Ed25519 signatures from independently provisioned public trust anchors; a signed fixture does **not** prove that a renderer, actual independent VLM, or authenticated human UI ran. The issuer services must keep private keys inaccessible to Maker/LLM and only sign after actual review.
 
-Before full autonomous acceptance, the Studio must issue and verify authenticated worker run receipts (identity, provider, job ID, source revision, executable/tool digest, signed outputs), run the real independent VLM on isolated context, validate camera rays against the scene, validate actual GLB geometry rather than only metadata, and require an authenticated human approval UI. Until then, passing the local gate means **fixture-level evidence consistency**, not independent proof of cinematic quality or ownership approval.
+Before full autonomous acceptance, the Studio must operate trusted independent signing services with actual worker run receipts (identity, provider, job ID, source revision, executable/tool digest, signed outputs), run the real independent VLM on isolated context, validate camera rays against the scene, validate actual GLB geometry rather than only metadata, and provide the authenticated human approval UI. Until then, passing the local gate means **fixture-level evidence consistency**, not independent proof of cinematic quality or ownership approval.
 
 ### Iteration and scope safety
 
@@ -58,7 +60,7 @@ No user request should cause the Studio API to run unrestricted shell, open an a
 
 ## Verification that exists now
 
-`node --test scripts/test-3d-harness.mjs`: 14 local tests passed in a clean Node.js validation directory on 11 Nov 2026. This suite checks a sample native UG-IR box layout, glTF 2.0 triangle GLB, PNG with valid chunks, hashes, role separation, unauthorized stage advancement, and intentional failures. It is **not** a render benchmark or user-PC GPU acceptance. Run it again after checkout and capture a CI receipt.
+`node --test scripts/test-3d-harness.mjs`: 17 local tests passed in a clean Node.js validation directory on 11 Nov 2026. This suite checks a sample native UG-IR box layout, glTF 2.0 triangle GLB, PNG with valid chunks, hashes, role separation, unauthorized stage advancement, and intentional failures. It is **not** a render benchmark or user-PC GPU acceptance. Run it again after checkout and capture a CI receipt.
 
 ## Next milestones (not claimed done)
 
