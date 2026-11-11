@@ -32,6 +32,9 @@ Load docs/12-CREATIVE-INTELLIGENCE.md plus only the evidence domain needed for t
 
 Community and telemetry agents must not treat chat memory as evidence.
 
+### Reference-to-3D / native harness execution
+For 3D assets and reference scenes, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md`, the authored template review at `knowledge/oriverse-research/harness-blueprint/README.md`, then only relevant source sections from the preserved `AI-3D-HARNESS-SOURCE.txt`. The Google Doc includes demonstration code with a **fake independent-critic PASS** and must not be used verbatim as QA. Run native deterministic tests and `tools/harness-3d/cli.mjs` on actual project-scoped artifact/evidence files. Its supported linter is bounded boxes only. The LLM may plan, repair and request checks, but cannot declare acceptance without receipts and human governance.
+
 ### Asset Synthesizer
 Asset pipeline, 2D/generic-3D/character tool docs, `docs/20-CHARACTER-FACTORY.md` for character work, material/animation/wearable constraints.
 
