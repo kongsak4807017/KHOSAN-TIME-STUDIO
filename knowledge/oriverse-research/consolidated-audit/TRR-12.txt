@@ -1,0 +1,290 @@
+Oriverse / Weave Technical Research Record — TRR-12
+หมวด 12: UI, HTML Binding & Input | ข้อ 111–120 | ตรวจสอบจากคู่มือ Oriverse โดยตรง
+ผมตรวจสอบเอกสาร ui_patterns, weave_coding → html_ui, inventory, inputs, example_html_shop, example_html_inventory และตรวจ Signature ของ API ที่เกี่ยวข้องจาก Built-in Function Reference
+ข้อค้นพบหลัก: ระบบ UI ของ Oriverse ไม่ใช่ Web Browser DOM ทั่วไป แต่เป็น HTML/CSS Subset ที่มี Typed Binding กับ Weave Object State รองรับ HUD, World-space UI, Inventory Templates, Repeated Lists, Modal Dialogs, Responsive Layout และ Multiplayer UI Ownership โดยไม่ต้องเขียน JavaScript
+อย่างไรก็ตาม ยังไม่พบเอกสารเปิดเผยรายละเอียดภายในของ UI Layout Engine, Binding Dependency Graph, DOM Diffing Algorithm หรือ Event Dispatch Queue ครบถ้วน
+UI Architecture — ตามความสามารถที่เอกสารรับรอง
+<svg viewBox="0 0 340 278" width="100%" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="324" height="46" rx="8" fill="#64748b" fill-opacity=".12" stroke="currentColor" stroke-opacity=".2" /><text x="20" y="27" font-size="12" font-weight="700" fill="currentColor">WEAVE CONTROLLER STATE</text><text x="20" y="43" font-size="10.5" fill="currentColor">Fields / Lists / Inventory / Player ownership</text><path d="M170 54v22m-4 -5 4 5 4 -5" stroke="currentColor" stroke-opacity=".6" fill="none" /><rect x="8" y="80" width="324" height="51" rx="8" fill="#2563eb" fill-opacity=".14" stroke="currentColor" stroke-opacity=".2" /><text x="20" y="99" font-size="12" font-weight="700" fill="currentColor">#html TYPED BINDING</text><text x="20" y="117" font-size="10.5" fill="currentColor">data-text / data-show / data-repeat / data-inventory</text><path d="M170 131v19m-4 -5 4 5 4 -5" stroke="currentColor" stroke-opacity=".6" fill="none" /><rect x="8" y="154" width="154" height="55" rx="8" fill="#0d9488" fill-opacity=".11" stroke="currentColor" stroke-opacity=".2" /><text x="19" y="175" font-size="11.5" font-weight="700" fill="currentColor">screenCanvas</text><text x="19" y="193" font-size="10.5" fill="currentColor">HUD / Menus / Modal</text><rect x="178" y="154" width="154" height="55" rx="8" fill="#0d9488" fill-opacity=".11" stroke="currentColor" stroke-opacity=".2" /><text x="189" y="175" font-size="11.5" font-weight="700" fill="currentColor">worldCanvas</text><text x="189" y="193" font-size="10.5" fill="currentColor">World-anchored panels</text><path d="M86 209v19h84m85 -19v19h-85v10" stroke="currentColor" fill="none" stroke-opacity=".6" /><rect x="8" y="239" width="324" height="32" rx="8" fill="#64748b" fill-opacity=".1" stroke="currentColor" stroke-opacity=".2" /><text x="20" y="259" font-size="11.2" font-weight="700" fill="currentColor">User Input → UiAction → Controller Validation</text></svg>
+เป็นสถาปัตยกรรมเชิงหน้าที่จากคู่มือ ไม่ใช่ Internal UI Engine Implementation
+111 — #html รองรับ HTML/CSS Subset ใดบ้าง?
+1. Direct Answer: #html Name ... #end รองรับ HTML Tags และ CSS Properties ชุดจำกัดที่ Engine กำหนด ไม่รองรับ Browser DOM, JavaScript หรือ CSS ทั้งมาตรฐาน
+2. Architecture: UI Definition อยู่ใน Weave Source เดียวกับ World/Classes โดย Canvas อ้าง html="Name" และ Binding อ่านค่า Controller Instance ที่ผูกกับ Canvas
+3. Source Evidence: weave_coding → html_ui → Supported tags / CSS properties / Selectors
+4. API Contract:
+กลุ่ม
+	รายการที่รองรับ
+	Text/containers
+	div, section, p, h1–h6, span, strong, em, br
+	Lists
+	ul, li
+	Controls
+	button, dialog, progress, textarea เฉพาะระบบ Chat
+	Images
+	img
+	Binding templates
+	template
+	Styling
+	<style>
+	Layout
+	Flex, Grid, Block, Inline, Relative/Absolute
+	Responsive
+	@media แบบ min-width / max-width
+	Selectors
+	Type, Class, ID, Descendant/Child และ Pseudo-states บางชนิด
+	5. Working Example — ย่อจากรูปแบบ Official Shop Example:
+6. Execution Trace: Parse #html → Validate Tags/CSS → Bind Controller Fields → Layout Canvas → Render UI
+7. Limits & Failure Modes: Unsupported HTML Tags, Selectors และ CSS Syntax เป็น Validation Error ไม่รองรับ JavaScript, External Stylesheets, Forms ทั่วไป, CSS Transforms/Animations, Pseudo-elements และ calc()/clamp()
+8. Verification: Expected: HTML/CSS ที่รองรับสร้าง UI ได้; Actual: ตัวอย่าง Official Guide มีหลักฐานรองรับ แต่ยังไม่ได้ Compile ตัวอย่างย่อแยกในรอบนี้
+9. Disclosure Status: HTML/CSS Subset Documented; Internal Parser/Layout Engine Undisclosed
+10. Research Gaps: Layout Algorithm, Text Shaping Internals, DOM Representation, Style Recalculation และ Rendering Backend
+112 — screenCanvas และ worldCanvas แตกต่างกันอย่างไร?
+1. Direct Answer: screenCanvas ใช้ Viewport เป็นพื้นที่ Layout สำหรับ HUD, Menus และ Modal Dialogs ส่วน worldCanvas ยึดกับ World Position แต่แสดงด้วยขนาด CSS Pixels ที่คงที่บนหน้าจอ
+2. Architecture: ทั้งสองใช้ #html และ Controller Binding แบบเดียวกัน ต่างกันที่ระบบกำหนดตำแหน่งและ Viewport Reference
+3. Source Evidence: weave_coding → html_ui, ui_patterns
+4. API Contract:
+worldCanvas ต้องมี size ซึ่งแต่ละแกนอยู่ในช่วง 1–8,192 CSS Pixels
+5. Working Example:
+6. Execution Trace: World Object Position → Camera Projection → Screen-space Placement → HTML Layout → Render
+7. Limits & Failure Modes: worldCanvas ที่อยู่หลังกล้อง นอกจอ หรือ Hidden จะรับ Input ไม่ได้ World Canvas ไม่มี Depth Occlusion และจะแสดงใต้ Screen Canvases
+8. Verification: Expected: World Canvas เคลื่อนตำแหน่งตามจุดยึดในโลก โดยขนาด CSS บนจอคงที่; Actual: Documented, ไม่ได้ตรวจ Camera Movement แยกในรอบนี้
+9. Disclosure Status: Documented
+10. Research Gaps: Projection Precision, Overlap Sorting, Occlusion Policy และ Screen-edge Clamping
+113 — Data Binding จาก Class State ไป UI อัปเดตเมื่อใด?
+1. Direct Answer: Oriverse รองรับ Typed Data Binding โดย HTML Elements อ่านค่า Fields จาก Controller และเมื่อ Gameplay State เปลี่ยน UI จะอัปเดตตามค่าใหม่
+แต่เอกสารไม่ได้เปิดเผยว่าภายในใช้ Dirty Flags, Dependency Graph, Polling หรือ Batched Diffing และไม่ได้ระบุ Refresh Latency แบบ Guaranteed ในหน่วยมิลลิวินาที
+2. Architecture: Weave Controller State → Typed Binding Paths → HTML Elements โดย Binding อาจอ้าง Class References ที่มีชนิดถูกต้อง
+3. Source Evidence: html_ui → Typed paths / Update gameplay fields to update the view
+4. API Contract:
+Binding
+	Data Type
+	data-text
+	Number / Text
+	data-value, data-max
+	Number
+	data-show
+	Bool
+	data-enabled
+	Bool
+	data-class-NAME
+	Bool
+	data-src
+	ImageAsset Object
+	5. Working Example:
+6. Execution Trace — Expected: Initial Money 20 → User Click Earn → UiAction → Money 25 → Bound Text Displays 25
+7. Limits & Failure Modes: Bound Text ถูกแสดงเป็น Literal UTF-8 ไม่ตีความเป็น HTML ข้อมูล Dynamic Text ต่อ Viewer มีเพดาน 1 MiB และต่อ Node/Inline Flow 8 KiB
+8. Verification: Expected: Text เปลี่ยนจาก 20 เป็น 25; Actual: คู่มือยืนยัน Binding Behavior แต่ Fixture นี้ยังไม่ได้รัน
+9. Disclosure Status: Binding Contract Documented; Internal Update Mechanism Undisclosed
+10. Research Gaps: Binding Latency, Change Detection, Batch Updates, Render Frame Synchronization และ Large-list Refresh Costs
+114 — UiAction และ Event.Presser ส่งข้อมูลอย่างไร?
+1. Direct Answer: เมื่อผู้เล่นกด Button ที่มี data-action="ActionName" ระบบเรียก event UiAction[ActionName] บน Controller ของ Canvas โดย Event.Presser ระบุ PlayerObject ที่เป็นผู้กระทำ
+2. Architecture: UI Event → Canvas Controller → Handler → Permission/State Validation → Game State Mutation
+3. Source Evidence: html_ui → UI actions; example_html_shop, example_html_inventory
+4. API Contract:
+สำหรับ Repeated Rows มี Event.Row; สำหรับ Inventory มี Event.Inventory, Event.Slot, Event.Item; สำหรับ Targeted Actions มี Event.Target
+5. Working Example — จาก Official Inventory Pattern:
+6. Execution Trace: Click Button → Resolve Action/Row/Slot → Populate Event Context → Execute Handler → Validate Current State → Apply Operation
+7. Limits & Failure Modes: ห้ามเชื่อเพียงว่า Button ถูก Disable หรือซ่อนอยู่ ต้องตรวจสิทธิ์และสถานะจริงอีกครั้งใน Handler โดยเฉพาะ Price, Stock, Access และ Item Ownership
+8. Verification: Expected: ผู้เล่นที่ไม่มีสิทธิ์ไม่สามารถทำ Inventory Operation ได้; Actual: Documented, ยังไม่ได้ทำ Negative Authorization Test
+9. Disclosure Status: Event Context Documented; Internal Dispatch Implementation Undisclosed
+10. Research Gaps: Event Ordering, Duplicate-click Handling, Replay Prevention, Rate Limiting และ Server Trust Boundary
+115 — Inventory Template และ Drag & Drop ทำงานอย่างไร?
+1. Direct Answer: Oriverse มี Native Inventory Container ที่สามารถแสดงผ่าน template data-inventory="Bag" โดย UI สร้าง Slot Rows จากข้อมูล Inventory จริง ไม่ต้องเขียน Slot Widgets เองทีละช่อง ระบบรองรับการลากเพื่อสลับหรือรวม Stack และส่ง Events ที่เกี่ยวข้องกับการลาก/วาง
+2. Architecture: Inventory Handle → data-inventory → Slot Elements → Pointer Drag/Drop → Inventory Operation/Event Handler → Inventory State Update → UI Refresh
+3. Source Evidence: weave_coding → inventory, html_ui, example_html_inventory; สัญญาเครื่องมือ playtest → drag
+4. API Contract:
+CreateInventory จำกัด 1–128 Slots โดย Inventory Handle เป็น Object Handle ที่ไม่ใช่ Scene Object ส่วน MoveSlot รองรับการ Swap และการ Merge Stack โดยอาจย้ายได้เพียงบางส่วนเมื่อปลายทางเต็ม
+5. Working Example — จาก Official Inventory Guide:
+ตัวอย่างย่อนี้ต้องมี item apple, item pear และ Canvas Declaration เพิ่มเติมจึงจะใช้งานเป็น World สมบูรณ์
+6. Execution Trace — Expected: Inventory Spawn → Create 12 Slots → Add Apples/Pears → Render Slots → User Selects/Drags → Engine Emits Action/Drop → Controller Validates → Update Inventory
+7. Limits & Failure Modes: Drag ต้องเริ่มบน Draggable Slot จริง หากมี UI Layer ที่ pointer-events:auto ทับอยู่ อาจทำให้ Input ไม่ถึง Slot และการย้ายข้าม Inventory ต้องตรวจ Owner/Permission ใน Gameplay Logic
+8. Verification: Expected: Slot Selection ถูกต้อง และการ Drag/Drop สามารถ Swap/Merge Items ได้; Actual: Not Run สำหรับ Drag/Drop Test ในรอบนี้
+9. Disclosure Status: Inventory Binding/Operations Documented; UI Drag/Drop Internals Undisclosed; Runtime Behavior Not Verified
+10. Research Gaps: Drag Event Ordering, Concurrent Inventory Mutation, Multi-touch Drag, Transaction Atomicity และ Drag Preview Rendering
+116 — UI Ownership และ Visibility สำหรับ Multiplayer
+1. Direct Answer: screenCanvas ที่ประกาศใน Scene โดยตรงแสดงต่อผู้เล่นทุกคนเป็นค่าเริ่มต้น ส่วน UI เฉพาะผู้เล่นใช้ SpawnCanvas() แล้วกำหนด SetPlayerOwnerIndex(GetPlayerIndex())
+2. Architecture: Gameplay Simulation ยังคงเป็น Shared Deterministic State แต่ระบบ Rendering/Hit-testing เลือกแสดง Canvas ตาม Owner ของ Viewer
+3. Source Evidence: multiplayer_guidance → Per-player UI, html_ui, example_html_inventory
+4. API Contract:
+การใช้ SetPlayerOwnerIndex(-1) ทำให้ Canvas กลับมาเป็น Public UI
+5. Working Example — จาก Official Inventory Guide:
+6. Execution Trace: Player A Joins → Spawn Canvas A → Set Owner A → Player B Joins → Spawn Canvas B → Set Owner B → Each Viewer Sees/Clicks Only Owned Canvas
+7. Limits & Failure Modes: UI Visibility ไม่ใช่ Data Security Boundary เพราะ Gameplay State ยังถูกจำลองร่วมกัน การซ่อน Canvas จาก Player B ไม่ได้ทำให้ข้อมูลใน Shared Simulation เป็นความลับ
+8. Verification: Expected: Player A ไม่เห็นหรือกด Canvas B; Actual: Documented, ยังไม่ได้รัน Multi-seat UI Inspection ในรอบนี้
+9. Disclosure Status: UI Ownership Documented; Security Isolation Unsupported หากอ้างจาก Visibility เพียงอย่างเดียว
+10. Research Gaps: Owner Change Timing, Input Routing Under Rollback, Shared Canvas Access Control และ UI Security Test Matrix
+117 — Responsive Layout และ Mobile Touch
+1. Direct Answer: Oriverse รองรับ Responsive Layout ผ่าน CSS Flex/Grid, Percentages, Viewport Units และ @media (min-width/max-width) รวมถึง Mobile Touch Buttons ที่เชื่อมกับ Shared Actions
+2. Architecture: UI Layout ปรับตาม Canvas Viewport ขณะที่ Gameplay Input สามารถใช้ Action Abstraction เดียวกันระหว่าง Desktop Keyboard/Mouse และ Mobile Touch
+3. Source Evidence: html_ui → CSS / Responsive; inputs → Shared Actions / Mobile
+4. API Contract: รองรับ px, %, em, rem, vw, vh, vmin, vmax, fr, minmax() และ repeat() สำหรับ Grid
+Custom Action:
+รองรับ Custom Actions สูงสุด 27 รายการต่อ World
+5. Working Example:
+6. Execution Trace — Expected: Desktop 420px Canvas → 3 Columns; Narrow 320px Viewport → 2 Columns; Mobile Action Button → Shared Gameplay Action
+7. Limits & Failure Modes: Custom Actions ที่ Binding Keys ซ้ำกันทำให้ Load Error และ Raw Keyboard Events ไม่ทำงานบน Mobile/Bots เทียบเท่ากับ Shared Actions
+8. Verification: Expected: Layout ยุบเป็น 2 Columns เมื่อ Viewport แคบ และ Mobile Touch ส่ง Action เดียวกับ Desktop; Actual: Not Run สำหรับ Responsive/Mobile Matrix
+9. Disclosure Status: Documented; Cross-device Visual Results Not Verified
+10. Research Gaps: DPI Scaling, Safe-area Behavior บนอุปกรณ์จริง, Touch Hit Target Accuracy, IME Input และ Accessibility Support
+118 — Focus, Keyboard Capture และ Modal Dialog
+1. Direct Answer: UI รองรับ Local Modal Dialog ผ่าน HTML <dialog> พร้อม commandfor และ command="show-modal"/"close" เมื่อ Modal เปิด ระบบจับ Input และปล่อย Held World Controls ส่วน Escape/Close คืน Focus ตามที่คู่มือกำหนด
+2. Architecture: Dialog State, Focus และ Scroll เป็น Viewer-local UI State ไม่ใช่ Shared Gameplay State
+3. Source Evidence: html_ui → Local menus; example_html_menu; inputs
+4. API Contract:
+และ SetCursorUiMode(true) ใช้ปล่อย Mouse-look พร้อมแสดง Cursor
+5. Working Example — จาก Official Menu Example:
+6. Execution Trace: Click Help → Show Modal → Capture Input/Release Held World Controls → User Presses Escape or Close → Restore Focus
+7. Limits & Failure Modes: pointer-events:none ทำให้ UI Wrapper ส่ง Mouse/Touch ผ่านได้ แต่ไม่ควรตีความว่าเป็นการปิด Keyboard Focus และ Canvas ที่ซ้อนทับอาจ Block World Input หากตั้ง Pointer Events ไม่เหมาะสม
+8. Verification: Expected: เปิด Modal แล้วไม่ทำให้ Player Movement ค้าง และ Escape ปิด Modal ได้; Actual: Not Run
+9. Disclosure Status: Modal/Focus Semantics Documented; Internal Focus Manager Undisclosed
+10. Research Gaps: Nested Modal Priority, Gamepad Focus, IME Edge Cases, Focus Restoration Under Canvas Destroy และ Accessibility Navigation
+119 — ข้อจำกัด Canvas, Nodes และ Dynamic Text
+1. Direct Answer: เอกสาร html_ui ระบุ Hard Limits ของ HTML Canvas, Template Expansion และ Dynamic Text อย่างชัดเจน
+2. Architecture: ระบบแยกจำนวน Source Nodes ออกจาก Expanded Nodes ซึ่งเพิ่มขึ้นจาก data-repeat และ data-inventory
+3. Source Evidence: weave_coding → html_ui → Templates / Limits
+4. API Contract และ Constraints:
+Resource
+	Limit
+	Retained HTML Canvases
+	128 ต่อ Viewer รวม screen/world
+	Source Nodes
+	512 ต่อ Canvas
+	Expanded Nodes
+	1,024 ต่อ Canvas
+	Template Rows
+	128
+	Repeat Nesting
+	1 ระดับ
+	WorldCanvas Width/Height
+	1–8,192 CSS Pixels ต่อแกน
+	Dynamic Text
+	8 KiB ต่อ Node/Inline Flow
+	Dynamic Text per Viewer
+	1 MiB รวม Repeated Copies
+	5. Working Example: Inventory ขนาด 128 Slots ที่มี 5 Expanded Nodes ต่อ Slot จะใช้ประมาณ 640 Nodes จาก Template Expansion ซึ่งยังอยู่ภายในเพดาน 1,024 Nodes แต่ต้องนับ Static Nodes อื่นด้วย
+ตัวเลข 640 ในที่นี้เป็นการคำนวณเชิงออกแบบ ไม่ใช่ผล Runtime Inspector
+6. Execution Trace: Parse HTML → Count Source Nodes → Expand Templates → Check Expanded Node Budget → Render/Bind UI
+7. Limits & Failure Modes: หาก Template Expansion ทำให้จำนวน Nodes เกินเพดาน ระบบอาจไม่ยอมรับ UI ตาม Validation Constraints และการสร้าง Canvas ใหม่จำนวนมากโดยไม่ Destroy อาจชน Retained Canvas Budget
+8. Verification: Expected: Canvas ที่อยู่ใน Limits ผ่าน Validation; Actual: Hard Limits มีเอกสารรองรับ แต่ยังไม่ได้รัน Boundary Tests เช่น 128/129 Canvases หรือ 1,024/1,025 Nodes
+9. Disclosure Status: Limits Documented; Boundary Behavior Not Verified
+10. Research Gaps: Layout Memory per Node, Incremental Binding Cost, Canvas Pooling, Text Atlas Limits และ UI GPU Batching
+120 — UI Interaction Tests พร้อมตัวอย่าง Shop และ Inventory
+1. Direct Answer: Oriverse มีตัวอย่างทางการสำหรับ Shop, Inventory และ Inventory Transfer ที่ใช้ Typed HTML Bindings ร่วมกับ UiAction และ Native Inventory ได้
+นอกจากนี้ World ปัจจุบันของ KHOSAN–Oriverse Benchmark ยังมี Shop และ HUD ที่ผูกกับผู้เล่นจริง ผมตรวจ Source แบบ Read-only แล้ว พบฟังก์ชัน BuyTea(), ToggleDoor(), Inventory 8 Slots และ BenchmarkHud ที่กำหนด Player Ownership ไว้
+2. Architecture: สำหรับ Shop/Inventory ที่ปลอดภัย ควรแยกการทำงานดังนี้
+3. Source Evidence: example_html_shop, example_html_inventory, example_inventory_transfer, html_ui และ Source ของ KHOSAN–Oriverse Benchmark ที่ตรวจแบบ Read-only
+4. API Contract:
+AddItem คืนจำนวนที่ใส่ไม่สำเร็จ ส่วน RemoveItem เป็น Exact-or-nothing
+5. Working Example — Source ที่มีอยู่จริงใน Benchmark:
+ตัวอย่างนี้มาจาก World Source ที่ตรวจพบจริง ไม่ใช่โค้ดที่แต่งขึ้นใหม่ แต่ ยังไม่ได้รันทดสอบการซื้อในรอบนี้
+6. Execution Trace — Expected:
+7. Limits & Failure Modes: ผู้เล่นอยู่นอกรัศมี 500 cm, เงินไม่พอ หรือ Inventory เต็ม ต้องไม่ถูกหักเงินและไม่ได้รับ Item การกดซื้อซ้ำจะต้องตรวจสถานะใหม่ในทุกครั้ง
+8. Verification — Proposed UI Acceptance Matrix
+Test ID
+	Scenario
+	Expected
+	Actual
+	UI-01
+	เปิด Shop
+	เห็นรายการสินค้า
+	Not Run
+	UI-02
+	ซื้อ Tea 1 ครั้ง
+	Coins 40 → 30; Tea +1
+	Not Run
+	UI-03
+	ซื้อ Tea ซ้ำ
+	Coins ลดครั้งละ 10
+	Not Run
+	UI-04
+	เงินไม่พอ
+	Reject โดยไม่เพิ่ม Item
+	Not Run
+	UI-05
+	อยู่ไกลร้าน
+	Reject โดยไม่หัก Coins
+	Not Run
+	UI-06
+	Inventory เต็ม
+	Reject โดยไม่หัก Coins
+	Not Run
+	UI-07
+	Inventory Slot Selection
+	Selected Index เปลี่ยนถูกต้อง
+	Not Run
+	UI-08
+	Drag/Drop
+	Swap/Merge ตาม Stack Rules
+	Not Run
+	UI-09
+	Modal Open/Close
+	Focus และ Controls ไม่ค้าง
+	Not Run
+	UI-10
+	Multiplayer Owner A/B
+	ไม่เห็นหรือกด HUD ของอีกฝ่าย
+	Not Run
+	UI-11
+	320px Responsive
+	Grid ยุบเป็น 2 Columns
+	Not Run
+	UI-12
+	Mobile Touch Action
+	ส่ง Shared Action ได้ถูกต้อง
+	Not Run
+	Actual Result: Not Run ทั้ง 12 กรณีในชุดทดสอบนี้
+ในการศึกษารอบนี้ ผมไม่ได้ Stage, Patch, Compile หรือ Playtest World ใหม่ และไม่ได้เปลี่ยน World ที่เปิดอยู่
+9. Disclosure Status: UI/Inventory Contracts Documented; Existing KHOSAN Benchmark Source Inspected; Current Test Matrix Not Verified
+10. Research Gaps: UI Latency Benchmark, Multi-seat Privacy Validation, Inventory Drag Atomicity, Touch Gesture Accuracy, Modal Focus Regression และ Accessibility Tests
+________________
+
+
+TRR-12 — Consolidated Research Findings
+ข้อ
+	หัวข้อ
+	สถานะหลักฐาน
+	111
+	HTML/CSS Subset
+	Documented
+	112
+	Screen/World Canvas
+	Documented
+	113
+	Typed Data Binding
+	Documented; Internals Undisclosed
+	114
+	UiAction/Event Context
+	Documented
+	115
+	Inventory/Drag & Drop
+	Documented; Runtime Not Verified
+	116
+	Multiplayer UI Ownership
+	Documented
+	117
+	Responsive/Mobile
+	Documented; Device Tests Pending
+	118
+	Focus/Modal
+	Documented; Runtime Tests Pending
+	119
+	Canvas/Node/Text Limits
+	Documented
+	120
+	Shop/Inventory QA
+	Source Inspected; Test Matrix Not Run
+	ข้อเท็จจริงที่ยืนยันจาก Oriverse
+Oriverse มี HTML/CSS Subset ที่ผูกกับ Weave Controller Fields ได้ รองรับ screenCanvas, worldCanvas, UiAction, Repeated Lists, Native Inventory, Modal Dialogs และ Responsive Layout
+ระบบรองรับ Canvas Ownership สำหรับ Multiplayer โดย Viewer เห็นและกดเฉพาะ UI ของตนเองได้ แต่ UI Visibility ไม่ใช่ Security Boundary ของ Shared Simulation
+ข้อจำกัดที่สำคัญ ได้แก่ 128 Retained Canvases ต่อ Viewer, 512 Source Nodes ต่อ Canvas และ 1,024 Expanded Nodes ต่อ Canvas
+สิ่งที่ยังไม่เปิดเผย
+Internal DOM/Layout Representation, Binding Diff Algorithm, Frame-level UI Refresh Contract, Input Dispatch Internals, Drag/Drop Atomicity, UI Render Batching และ Performance Cost ต่อ Canvas/Node
+ข้อเสนอทางวิศวกรรมสำหรับ KHOSAN Studio
+สำหรับ KHOSAN AI Game Studio ควรพัฒนา Declarative UI System ที่แบ่งออกเป็น HTML-like Layout Compiler, Typed Data Binding, UI Ownership Layer, Input Router, Inventory Widgets และ UI Test Harness
+ควรแยก UI Presentation ออกจาก Gameplay Authorization เสมอ โดยเฉพาะ Shop, Inventory และ Multiplayer Economy และกำหนดชุดทดสอบอัตโนมัติที่ครอบคลุม Responsive Layout, Drag & Drop, Input Focus, Duplicate Actions และ Cross-player UI Isolation
+ข้อเสนอเหล่านี้เป็นสถาปัตยกรรมที่แนะนำสำหรับ KHOSAN Studio ไม่ใช่การยืนยันว่า Oriverse มีโครงสร้างภายในเหมือนกันทุกส่วน
+สถานะ TRR-12: Documentation Research Completed / Existing UI Source Inspected Read-only / UI Interaction Acceptance Suite Not Executed.
+Editor ที่เชื่อมต่อยังรายงาน Build 05Oct26-23:23 ซึ่งควร Reload ก่อนการทดสอบ UI Runtime รอบถัดไป เพื่อให้ผลทดสอบอ้างอิง Build ปัจจุบันได้
+หมวดต่อไปคือ 13 — AI, Agents & Autonomous Game Logic (ข้อ 121–130) เพื่อศึกษา AI Player, Action APIs, Agent Control, NPC Behaviors และข้อจำกัดในการเชื่อม AI กับ Gameplay Runtime
+________________
+
+
