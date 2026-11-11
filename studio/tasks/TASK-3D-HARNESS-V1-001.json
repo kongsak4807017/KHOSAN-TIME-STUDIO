@@ -17,7 +17,9 @@
     "docs/27-HARNESS-3D-EXECUTION-CONTRACT.md",
     "studio/contracts/3d-verification-evidence.schema.json",
     "tools/harness-3d/gate.mjs",
-    "studio/evidence/HARNESS-3D-20261111.json"
+    "studio/evidence/HARNESS-3D-20261111.json",
+    "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md",
+    "tools/ugir-geometry-linter/hard_lock_enforcer.py"
   ],
   "allowed_paths": [
     "knowledge/oriverse-research/harness-blueprint/**",
@@ -25,7 +27,10 @@
     "studio/contracts/3d-verification-evidence.schema.json",
     "docs/27-HARNESS-3D-EXECUTION-CONTRACT.md",
     "scripts/test-3d-harness.mjs",
-    "studio/evidence/**"
+    "studio/evidence/**",
+    "tools/ugir-geometry-linter/hard_lock_enforcer.py",
+    "scripts/test_part7_hard_locks.py",
+    "docs/28-PART7-HARD-LOCKS-SECURITY-REVIEW.md"
   ],
   "forbidden_paths": [
     "projects/*/builds/**",
@@ -39,13 +44,16 @@
     "Document inherited research claims and identify fake independent critic PASS stub as BLOCKED.",
     "Implement a bounded native verifier for real filesystem artifact hashes, structural checks, separate maker/reviewer session labels and final human approval binding.",
     "Run local test fixtures including negative cases and record exact results.",
-    "Next task: integrate trusted Blender worker/actual 16-view renderer, isolated signed visual reviewer and authenticated human approval; do not claim complete until independently tested."
+    "Next task: integrate trusted Blender worker/actual 16-view renderer, isolated signed visual reviewer and authenticated human approval; do not claim complete until independently tested.",
+    "Archive the latest 114,348-character Google Doc text including Part 7; inspect all six claimed hard locks and identify unsafe Python defaults.",
+    "Provide deterministic source revision-bound atomic coordinate repair policy and negative tests for unknown/frozen nodes, stale hashes, invalid axes, NaN and geometry regressions."
   ],
   "verification": [
     "node --test scripts/test-3d-harness.mjs",
     "node --check tools/harness-3d/gate.mjs",
     "node tools/harness-3d/cli.mjs verify <project-root> <evidence-file> (real project acceptance pending)",
-    "Human review of this draft PR and source provenance"
+    "Human review of this draft PR and source provenance",
+    "python -m unittest discover -s scripts -p test_part7_hard_locks.py (20 isolated local tests PASS; target PC CI pending)"
   ],
   "human_gates": [
     "HG-02 for breaking IR changes",
@@ -61,7 +69,9 @@
     "Its Python IsolatedVisualCritic returns passed=True from a TODO and is not real QA.",
     "AABB linter supports only bounded box primitives and could produce false positives for intentional overlaps.",
     "Reviewer and human identities in local JSON are metadata and not authenticated session or signature.",
-    "DevSpace target repo folder was empty when last inspected, so GitHub is current source of truth; no target Windows runner acceptance in this task."
+    "DevSpace target repo folder was empty when last inspected, so GitHub is current source of truth; no target Windows runner acceptance in this task.",
+    "Part 7 supplied HMAC gate uses a known default signing secret and does not authenticate actual independent critic execution.",
+    "Part 7 Python strict tool mask alone does not enforce server authorization; untrusted makers with direct file write access can bypass its policy."
   ],
-  "notes": "This foundation has 17/17 isolated Node unit tests passing; Ed25519 signed receipt verification is implemented, but trusted issuer services and actual human/VLM execution remain unverified; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration."
+  "notes": "This foundation has 17/17 isolated Node unit tests passing; Ed25519 signed receipt verification is implemented, but trusted issuer services and actual human/VLM execution remain unverified; does not mean any real generated 3D asset or video has passed independent visual/physics review. Keep work item in verify until human/independent QA and real integration. Part 7 review completed in draft branch; bounded Python differential repair tests 20/20 PASS in local isolated Python environment, not end-to-end DevSpace/Studio enforcement."
 }
