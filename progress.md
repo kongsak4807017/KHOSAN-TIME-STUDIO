@@ -4,7 +4,7 @@
 - Preserved the complete 100,175-character extracted text of the user Google Doc `AI 3D harness` as supplemental reference research.
 - Found an actual QA defect in illustrative Python: `IsolatedVisualCritic` has TODO then returns `passed: True`; this must never be adopted as a passing independent critique.
 - Added KHOSAN-native bounded Z-up/cm layout linter, evidence/sha256 gate, CLI, explicit Y-up meter conversion, separate maker/checker and human approval metadata checks.
-- Ran 14 Node tests in isolated local container: PASS 14/14. Source file readback from GitHub matched all 9 generated files; browser/Blender/VLM/GPU acceptance is pending.
+- Ran 17 Node tests in isolated local container: PASS 17/17, including Ed25519 review/approval signature checks. Source file readback from GitHub matched all 9 generated files; browser/Blender/VLM/GPU acceptance is pending.
 - Draft PR #22 holds the archival/harness foundation; not merged. Work item TASK-3D-HARNESS-V1-001 remains verify.
 
 
