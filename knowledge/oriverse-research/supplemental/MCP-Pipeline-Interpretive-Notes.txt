@@ -1,0 +1,1297 @@
+message_reaction👍ได้ครับ ถ้ามองให้ถูกระดับ **Oriverse ไม่ใช่ “AI ตัวเดียวรับ prompt แล้วเสกเกมออกมา”** แต่เป็นระบบหลายชั้นที่เอา **LLM + MCP + text-based game language + asset tools + game engine + verification loop** มาต่อกัน
+
+และแนวคิดนี้ตรงกับ KHOSAN Studio ที่เราวางไว้มาก: ตัว LLM เป็น “สมอง/agent”, tools เป็นเครื่องมือ, และ Studio/Harness เป็นตัวควบคุม workflow ไม่ใช่ให้ LLM ทำทุกอย่างเอง. fileciteturn0file2L3-L12
+
+## ภาพรวมสั้นที่สุด
+
+```text id="1pve9x"
+USER
+│
+│ Prompt + References
+▼
+ChatGPT / LLM
+│
+│ เข้าใจความต้องการ
+│ วาง architecture
+│ แตกงาน
+▼
+MCP
+│
+│ Typed commands / Tool calls
+▼
+ORIVERSE AUTHORING TOOLS
+│
+├── World / Scene
+├── Mesh
+├── Material / Texture
+├── Terrain
+├── Animation
+├── UI
+├── Gameplay
+├── Reference analysis
+└── QA / Playtest
+│
+▼
+WEAVE SOURCE CODE
+│
+│ text-based source of truth
+▼
+Compiler + Oriverse Runtime
+│
+▼
+Playable Multiplayer 3D Game
+│
+▼
+Playtest / Visual QA / Debug
+│
+├── FAIL → LLM แก้ text / asset / parameters
+│
+└── PASS
+     ↓
+ Publish / Share / Export
+```
+
+สิ่งสำคัญคือ **เกมทั้งเกมยังสามารถมี representation เป็น text ได้** ไม่ใช่ว่าสร้างเสร็จแล้วกลายเป็น black box binary ที่ AI แก้ต่อไม่ได้
+
+---
+
+# 1. MCP คืออะไรในระบบนี้
+
+MCP หรือ **Model Context Protocol** ไม่ใช่ AI model และไม่ใช่ game engine
+
+มันเป็นเหมือน **มาตรฐานสายสื่อสารระหว่าง AI กับ software/tool**
+
+สมมติผมพูดกับ Oriverse ว่า:
+
+> “สร้างบ้านไม้ชนบทตามภาพนี้ไว้ด้านซ้ายของถนน”
+
+ตัว LLM ไม่ได้เอามือไปขยับ object ใน editor โดยตรง
+
+มันเปลี่ยนความตั้งใจนั้นเป็นการเรียกเครื่องมือ เช่นแนวคิดประมาณ:
+
+```text id="wqytf7"
+LLM
+ ↓
+
+MCP request
+
+tool = attach_reference_image(...)
+tool = find_assets(...)
+tool = patch_and_run_pending_world(...)
+tool = playtest(...)
+
+ ↓
+
+Oriverse Editor
+```
+
+MCP ทำหน้าที่หลักประมาณนี้:
+
+```text id="esvc0o"
+WHO
+  agent/session ไหน
+
+WHERE
+  editor ไหน
+
+WHAT
+  tool ไหน
+
+INPUT
+  parameters อะไร
+
+OUTPUT
+  result / error / evidence / revision
+```
+
+ตัว connector ที่ผมตรวจในแชตนี้มี **Oriverse editor session จริง** และมี agent/session ถูก pin เข้ากับ editor โดยตรง
+
+ดังนั้นมันใกล้กับ:
+
+> AI → API/RPC → Editor
+
+มากกว่า:
+
+> AI → กด mouse มั่ว ๆ บนหน้าจอ
+
+---
+
+# 2. Model ที่กำลังคิดงานคืออะไร
+
+ในแชตนี้ model ฝั่ง ChatGPT คือ
+
+**GPT-5.6 Sol**
+
+หน้าที่ของมันคือส่วนที่ “ฉลาดแต่ probabilistic” เช่น:
+
+```text id="6uce55"
+อ่านข้อความ
+ตีความเจตนา
+ดู reference
+วิเคราะห์ composition
+คิด gameplay
+ออกแบบ architecture
+เลือก tools
+เขียน Weave
+อ่าน error
+วิเคราะห์ QA
+ตัดสินใจแก้ไข
+```
+
+เช่น prompt:
+
+> “สร้างหมู่บ้านชนบทโลกที่สาม บรรยากาศอีสานแล้ง บ้านไม้เก่า มีร้านค้า NPC เดินได้ เข้าอาคารได้”
+
+LLM อาจแตก concept ออกเป็น:
+
+```text id="re4ld8"
+World
+├─ Terrain
+├─ Dirt road
+├─ Village cluster
+├─ Houses
+├─ Vegetation
+├─ Lighting
+└─ Atmosphere
+
+Gameplay
+├─ Player controller
+├─ Interaction
+├─ NPC
+├─ Shop
+├─ Door
+└─ Building interior
+
+Assets
+├─ Wooden house
+├─ Utility pole
+├─ Plastic chair
+├─ Cart
+├─ Trees
+├─ Signs
+└─ Props
+```
+
+ตรงนี้เป็นงาน reasoning ของ LLM
+
+---
+
+# 3. แต่ไม่ใช่ทุกขั้นตอนใช้ AI model
+
+นี่เป็นประเด็นสำคัญมาก
+
+Oriverse pipeline เป็น **Hybrid Pipeline**
+
+บางขั้นใช้ AI:
+
+```text id="dg8010"
+Prompt understanding
+Reference interpretation
+World design
+Code generation
+Repair decisions
+Image generation
+```
+
+แต่หลายขั้น **ไม่ควรใช้ AI**
+
+เช่น:
+
+```text id="labvjt"
+Compile
+Geometry evaluation
+Collision
+Terrain sampling
+Runtime simulation
+UI layout inspection
+Animation playback
+Performance
+Multiplayer simulation
+Image comparison
+Revision tracking
+```
+
+พวกนี้ควร deterministic
+
+ดังนั้น architecture จริงเป็นประมาณ:
+
+| Layer | ทำโดย | ลักษณะ |
+|---|---|---|
+| Intent | GPT-5.6 Sol | Generative |
+| Planning | GPT-5.6 Sol | Generative |
+| MCP | Protocol | Deterministic |
+| Weave | Text DSL | Deterministic |
+| Mesh DSL | Geometry program | Deterministic |
+| Terrain | Procedural engine | Deterministic |
+| Texture DSL | Material program | Deterministic |
+| Asset search | Library retrieval | Retrieval |
+| Image generation | Generative model | Generative |
+| Compiler | Oriverse | Deterministic |
+| Runtime | Oriverse engine | Deterministic |
+| Playtest | Runtime simulation | Deterministic |
+| Repair decision | LLM | Generative |
+
+นี่คือเหตุผลที่ระบบแบบนี้แข็งแรงกว่า “ให้ AI generate เกมทั้งก้อน”
+
+---
+
+# 4. หัวใจของ Oriverse คือ Weave
+
+ส่วนที่น่าสนใจที่สุดคือ **Weave**
+
+มันทำหน้าที่ประมาณ:
+
+> Game source language ของ Oriverse
+
+แทนที่จะต้องสร้าง:
+
+```text id="4ci1ca"
+scene.unity
+prefab
+binary terrain
+serialized editor state
+```
+
+โลกสามารถถูกอธิบายเป็น text source
+
+แนวคิดประมาณ:
+
+```text id="zkqhnr"
+World
+│
+├─ objects
+├─ classes
+├─ gameplay logic
+├─ UI
+├─ meshes
+├─ materials
+├─ terrain
+├─ particles
+├─ shaders
+└─ interactions
+```
+
+และเครื่องมือ MCP ที่มีอยู่สามารถอ่าน/แก้เฉพาะส่วน เช่น:
+
+```text id="mpyk5w"
+#class Player
+#class Enemy
+#mesh WoodenHouse
+#texture OldWood
+object Market
+object NPC
+```
+
+ดังนั้นเวลาแก้
+
+> “บ้านหลังนี้สูงขึ้น 20%”
+
+ไม่จำเป็นต้อง regenerate เกม
+
+สามารถทำประมาณ:
+
+```text id="qz0yz5"
+CURRENT SOURCE
+       ↓
+find WoodenHouse
+       ↓
+patch parameter
+       ↓
+compile
+       ↓
+simulate
+       ↓
+preview
+```
+
+นี่คือแนวเดียวกับ architecture ที่เราวางใน KHOSAN ว่า asset ควรเป็น procedural representation ก่อน แล้วจึงแปลงไป backend ต่าง ๆ แทนการเก็บ Three.js เป็นศูนย์กลาง. fileciteturn0file0L114-L132
+
+---
+
+# 5. Pipeline จริงเมื่อพี่ให้ Prompt + Reference
+
+สมมติพี่ให้ภาพนี้:
+
+```text id="rs4gmc"
+[ภาพหมู่บ้าน]
+```
+
+แล้วเขียน:
+
+> “สร้างฉากนี้เป็น 3D realistic เดินสำรวจได้ ให้ภูมิประเทศ บ้าน ถนน ต้นไม้ และบรรยากาศเหมือน reference”
+
+ขั้นตอนที่เหมาะสมจะเป็นดังนี้
+
+```text id="uf1vqk"
+PROMPT
++
+REFERENCE IMAGE
+       │
+       ▼
+1. INTENT ANALYSIS
+       │
+       ▼
+2. REFERENCE REGISTRATION
+       │
+       ▼
+3. SCENE DECOMPOSITION
+       │
+       ▼
+4. WORLD PLAN
+       │
+       ├─ Terrain
+       ├─ Buildings
+       ├─ Props
+       ├─ Vegetation
+       ├─ Lighting
+       └─ Gameplay
+       │
+       ▼
+5. ASSET RESOLUTION
+       │
+       ├─ library asset
+       ├─ procedural mesh
+       ├─ generated image
+       ├─ procedural material
+       └─ custom geometry
+       │
+       ▼
+6. WEAVE GENERATION
+       │
+       ▼
+7. COMPILE
+       │
+       ▼
+8. SIMULATE
+       │
+       ▼
+9. VISUAL QA
+       │
+       ▼
+10. REFERENCE COMPARISON
+       │
+    ┌──┴───┐
+   FAIL   PASS
+    │       │
+ repair    ▼
+    └──→ GAME
+```
+
+---
+
+# 6. Reference ไม่ได้มีไว้แค่ “ให้ AI ดู”
+
+Oriverse มี workflow สำหรับ reference ค่อนข้างลึก
+
+เช่นสามารถเก็บ reference เข้า authoring session ก่อน:
+
+```text id="on6tx1"
+attach_reference_image
+```
+
+แล้วใช้ reference นั้นกับกระบวนการต่าง ๆ
+
+ตัวอย่างเช่น
+
+```text id="63bgng"
+Reference photo
+      ↓
+trace_silhouette
+      ↓
+2D contour
+      ↓
+#mesh construction
+```
+
+หรือแบบแม่นขึ้น:
+
+```text id="ybsyyk"
+Reference Image
+       ↓
+landmark points
+       ↓
+fit_reference_camera
+       ↓
+Camera solution
+       ↓
+reference_points_to_3d
+       ↓
+3D points
+       ↓
+Mesh
+```
+
+นี่ต่างจากการบอก AI ว่า
+
+> “ดูรูปนี้แล้วเดาเอา”
+
+เพราะเริ่มมี geometry constraint จริง
+
+---
+
+# 7. ตัวอย่างสร้างบ้านจาก Reference
+
+สมมติภาพมีบ้านไม้
+
+pipeline สามารถเป็น:
+
+```text id="zrtgyo"
+REFERENCE
+   │
+   ├─ roof outline
+   ├─ door
+   ├─ windows
+   ├─ columns
+   └─ building proportions
+   │
+   ▼
+Silhouette / landmarks
+   │
+   ▼
+Perspective Camera Fit
+   │
+   ▼
+3D reconstruction assumptions
+   │
+   ▼
+#mesh WoodenHouse
+   │
+   ├─ walls
+   ├─ roof
+   ├─ columns
+   ├─ stairs
+   └─ openings
+```
+
+จากนั้น:
+
+```text id="w2mxry"
+#texture OldWood
+#texture RustedRoof
+```
+
+แล้วประกอบ:
+
+```text id="e5z0m9"
+WoodenHouse
++
+OldWood
++
+RustedRoof
++
+Door collider
++
+Interior portal
+```
+
+จนกลายเป็น **game asset**
+
+ไม่ใช่เพียง visual mesh
+
+---
+
+# 8. Assets มีหลายวิธีเกิดขึ้น
+
+Oriverse ไม่ได้บังคับว่า asset ทุกชิ้นต้อง AI generate
+
+จริง ๆ แล้วมีอย่างน้อย 4 สาย
+
+```text id="iwwk6p"
+                    ASSET REQUEST
+                         │
+          ┌──────────────┼───────────────┐
+          ▼              ▼               ▼
+      LIBRARY        PROCEDURAL       GENERATED
+          │              │               │
+     existing mesh      #mesh          image
+     material           DSL             generation
+          │              │               │
+          └──────────────┼───────────────┘
+                         ▼
+                   GAME ASSET
+```
+
+### A. Library
+
+เช่น:
+
+```text id="bdo188"
+find_assets
+mesh_library_search
+material_library_search
+clip_library_search
+```
+
+หา asset ที่มีอยู่ก่อน
+
+ข้อดี:
+
+```text id="ejbzf1"
+เร็ว
+consistent
+ตรวจ topology ได้
+reuse ได้
+```
+
+---
+
+### B. Procedural Mesh
+
+LLM เขียน geometry เป็น text
+
+เช่น:
+
+```text id="eqtgf5"
+#mesh Hut
+...
+```
+
+ตัว geometry ถูกสร้างจาก source
+
+นี่เหมาะมากกับ:
+
+```text id="8xit2p"
+บ้าน
+สะพาน
+รั้ว
+ถนน
+เครื่องจักร
+อาคาร
+props
+```
+
+---
+
+### C. Procedural Materials
+
+เช่น:
+
+```text id="3uyuf6"
+#texture OldWood
+#texture DirtRoad
+#texture RustMetal
+```
+
+อาจมี:
+
+```text id="k0we3f"
+base color
+roughness
+normal
+AO
+metallic
+height
+```
+
+แล้ว preview แยก channel ได้
+
+---
+
+### D. Generated Image
+
+มี `generate_image`
+
+เหมาะกับ:
+
+```text id="8ocic4"
+sign
+poster
+painting
+UI artwork
+decals
+texture concept
+cards
+billboard
+```
+
+ตรงนี้เป็นส่วนที่เป็น **image-generation model**
+
+แต่จาก MCP interface ที่เปิดให้ผมตอนนี้ **ไม่ได้เปิดเผยชื่อ foundation model ภายในของ image generator** ดังนั้นผมจะไม่เดาว่าเป็น DALL-E, GPT Image หรือ model ใดโดยไม่มีหลักฐาน
+
+---
+
+# 9. แล้ว Character ล่ะ
+
+ตรงนี้ควรแยกออกจาก generic mesh
+
+จาก architecture KHOSAN ที่เราศึกษามา character ควรมี:
+
+```text id="nbqep4"
+Character
+│
+├─ Geometry
+├─ Skeleton
+├─ Skin
+├─ Animation
+├─ Materials
+├─ Hair
+├─ Clothes
+├─ Equipment
+├─ Physics
+└─ Semantic metadata
+```
+
+เพราะ humanoid character ไม่ควรถูก treat เหมือนบ้าน/ดาบทั่วไป เราวางไว้แล้วว่า character ควรมี canonical skeleton + Human DNA + wearable + animation/physics แล้วจึง derive ไปเป็น 3D/2.5D/sprite. fileciteturn0file5L219-L266
+
+ดังนั้นใน KHOSAN + Oriverse ผมจะมองว่า:
+
+```text id="uwzmmw"
+Oriverse
+    = World/Runtime backend
+
+KHOSAN Character Factory
+    = specialized character production
+
+KHOSAN Asset IR
+    = shared semantic format
+```
+
+---
+
+# 10. Gameplay System เกิดอย่างไรจาก Prompt
+
+ตัวอย่างพี่สั่ง:
+
+> “ให้ NPC ร้านค้าขายของ พอเดินเข้าใกล้กด E จะเปิดร้าน ซื้อของแล้วเงินลด”
+
+LLM จะไม่ควรสร้างแค่ NPC model
+
+มันต้องแตกเป็น **system**
+
+```text id="k98ij8"
+Shop NPC
+│
+├─ NPC entity
+├─ interaction radius
+├─ input E
+├─ inventory
+├─ prices
+├─ money state
+├─ transaction rules
+├─ shop UI
+└─ multiplayer authority
+```
+
+แล้วแปลงเป็น Weave classes/state/functions
+
+conceptually:
+
+```text id="84t31d"
+Player
+   ↓
+enters interaction range
+   ↓
+Press E
+   ↓
+Shop.Open()
+   ↓
+UI
+   ↓
+Purchase request
+   ↓
+Validate
+   ↓
+deduct money
+   ↓
+give item
+```
+
+LLM สร้าง logic
+
+แต่ runtime เป็นผู้ execute
+
+---
+
+# 11. Multiplayer ก็อยู่ใน pipeline นี้
+
+Oriverse ถูกออกแบบเป็น **multiplayer game runtime**
+
+ตัว playtest MCP สามารถจำลองได้ถึงหลาย player/seat
+
+และทดสอบ:
+
+```text id="mujde4"
+join
+leave
+rejoin
+disconnect
+```
+
+ได้
+
+เพราะฉะนั้นระบบอย่าง
+
+```text id="nvs8rj"
+Player A opens door
+
+Player B sees door open
+```
+
+หรือ:
+
+```text id="g9xp7u"
+Player A buys item
+
+Player B cannot buy stock already sold
+```
+
+ควรทดสอบที่ runtime
+
+ไม่ใช่แค่ถาม LLM ว่า:
+
+> “คิดว่า multiplayer ใช้งานได้ไหม”
+
+---
+
+# 12. UI ก็เป็นข้อมูลที่ตรวจได้ ไม่ใช่รูปเฉย ๆ
+
+Oriverse มี `ui_inspect`
+
+ดังนั้นหลัง LLM สร้าง UI:
+
+```text id="p7v7ez"
+HUD
+Inventory
+Shop
+Quest
+Dialogue
+```
+
+สามารถตรวจ tree จริงได้
+
+เช่น:
+
+```text id="qnu8il"
+element
+position
+size
+text
+hidden
+interactable
+offscreen
+zero-size
+```
+
+และสามารถ synthetic click ได้
+
+ดังนั้น:
+
+```text id="r6i21b"
+Prompt
+ ↓
+UI code
+ ↓
+Runtime
+ ↓
+inspect
+ ↓
+click
+ ↓
+observe state
+```
+
+เป็น verification จริง
+
+---
+
+# 13. การ QA ภาพก็ละเอียดกว่าการ screenshot ดูเฉย ๆ
+
+Playtest รองรับ diagnostic views เช่น:
+
+```text id="50diuw"
+Albedo
+Normal
+AO
+SSAO
+AO Combined
+Direct Light
+Ambient
+Shadow
+Roughness
+Metallic
+Emissive
+Local lights
+```
+
+ดังนั้นถ้าบ้านดูดำผิดปกติ เราไม่ต้องเดาว่า:
+
+> texture ผิด?
+> shadow ผิด?
+> AO ผิด?
+> lighting ผิด?
+
+สามารถแยกดู
+
+```text id="96nkam"
+Rendered frame
+ ↓
+AOV Debug
+ ↓
+
+albedo OK
+normal OK
+AO = 0  ← problem
+```
+
+แล้วแก้ตรงต้นเหตุ
+
+นี่คือ **agentic graphics debugging** ที่สำคัญมาก
+
+---
+
+# 14. Terrain ก็ไม่ได้ให้ LLM เดาอย่างเดียว
+
+Terrain สามารถ:
+
+```text id="w06izf"
+inspect
+sample
+edit
+preview
+```
+
+ได้
+
+เช่นต้องการถนนจากจุด A → B
+
+ระบบสามารถวัด ground:
+
+```text id="bk21l4"
+x,y
+ ↓
+height
+ ↓
+grade %
+```
+
+และตรวจ:
+
+```text id="ugubca"
+max slope
+height delta
+clearance
+```
+
+ก่อนผ่าน QA
+
+ดังนั้น prompt:
+
+> “ทำทางเดินขึ้นเขาที่เดินได้จริง”
+
+ไม่ใช่:
+
+> “ทำอะไรที่ดูเหมือนทางเดิน”
+
+แต่สามารถกลายเป็น numerical constraint
+
+---
+
+# 15. จุดสำคัญที่สุด: ระบบนี้แก้ต่อเป็น Text ได้
+
+ตรงคำถามของพี่เลยครับ
+
+**ได้ และนี่เป็นข้อได้เปรียบหลัก**
+
+สมมติเรามีเกมแล้ว:
+
+```text id="72kz2y"
+Revision 40
+```
+
+พี่กลับมาอีกวันแล้วพูด:
+
+> “บ้านทางเหนือเอาหลังคาเตี้ยลง และให้ NPC ออกมานั่งหน้าบ้านตอน 18:00”
+
+เราไม่ต้อง regenerate game
+
+workflow เป็น:
+
+```text id="7wlr71"
+Current Game
+    ↓
+sync_pending_world_from_current
+    ↓
+Weave text
+    ↓
+search
+    ↓
+WoodHouseNorth
+NPCGrandma
+    ↓
+patch
+    ↓
+compile
+    ↓
+simulate
+    ↓
+playtest
+```
+
+เครื่องมือ Oriverse มีตรงนี้โดยตรง:
+
+```text id="bdr9fg"
+pending_world_list_objects
+pending_world_search_context
+pending_world_read_sections
+patch_and_run_pending_world
+```
+
+คือ AI สามารถหาเฉพาะ:
+
+```text id="f8g9t8"
+#class NPCGrandma
+```
+
+แล้ว patch เฉพาะ class
+
+ไม่ต้องอ่าน/เขียนโลกทั้งเกมใหม่
+
+---
+
+# 16. นี่ทำให้ “New Chat แล้วทำต่อ” ได้ด้วย
+
+เรื่องนี้สำคัญมากสำหรับ KHOSAN
+
+Source of truth **ไม่ควรเป็นความจำของ ChatGPT**
+
+ควรเป็น:
+
+```text id="9cmn76"
+world_description.weave
++
+project state
++
+asset registry
++
+spec
++
+tasks
++
+evidence
+```
+
+ดังนั้นเปิด chat ใหม่:
+
+```text id="op3lgh"
+New Chat
+   ↓
+Orchestrator
+   ↓
+connect MCP
+   ↓
+sync current world
+   ↓
+read current source
+   ↓
+continue
+```
+
+ไม่ต้องหวังว่า model จะจำรายละเอียดทั้งหมด
+
+นี่เป็นหลักเดียวกับ Harness ที่เราออกแบบไว้ว่า Agent คนใหม่ไม่ต้อง “จำ” แต่ต้องอ่าน state/task/role/evidence ที่ถูกเก็บไว้. fileciteturn0file2L294-L331
+
+---
+
+# 17. และสามารถแก้แบบ Diff ได้
+
+ตัวอย่างโลกมี source 20,000 บรรทัด
+
+พี่บอก:
+> “เปลี่ยนประตูบ้าน A ให้กว้าง 20 cm”
+
+ระบบไม่ควรทำ:
+
+```text id="fr2rbs"
+regenerate 20,000 lines
+```
+
+แต่:
+
+```diff id="oci3rd"
+@@ #mesh HouseA
+
+- door_width = 90
++ door_width = 110
+```
+
+จากนั้น compile
+
+ถ้า fail:
+
+```text id="n6a7a0"
+patch remains staged
+ ↓
+inspect error
+ ↓
+repair
+```
+
+แบบเดียวกับ software engineering
+
+---
+
+# 18. World ใหญ่มากก็ไม่จำเป็นต้อง generate ครั้งเดียว
+
+Oriverse MCP ออกแบบไว้ว่าถ้า world ใหญ่ ควรสร้าง skeleton ก่อน
+
+เช่น:
+
+```text id="ggxbjz"
+SCENE
+CANVAS
+CLASS
+ANCHORS
+```
+
+ก่อน
+
+```text id="hiyqna"
+// ANCHOR TERRAIN
+
+// ANCHOR BUILDINGS
+
+// ANCHOR NPC
+
+// ANCHOR QUESTS
+
+// ANCHOR UI
+```
+
+แล้วค่อย patch ทีละ subsystem
+
+```text id="s010mt"
+Base World
+ ↓
+Terrain
+ ↓ compile
+
+Buildings
+ ↓ compile
+
+NPC
+ ↓ compile
+
+Gameplay
+ ↓ compile
+
+UI
+ ↓ compile
+```
+
+จึงได้:
+
+> **incremental game construction**
+
+แทน big-bang generation
+
+นี่สำคัญมากสำหรับเกมจริง
+
+---
+
+# 19. Pipeline เต็มสำหรับ KHOSAN + Oriverse ที่ผมแนะนำ
+
+ถ้าเราเอาแนวทางนี้เข้า KHOSAN Studio ผมจะวางแบบนี้
+
+```text id="g0kpw8"
+                         USER
+                           │
+                  Prompt + References
+                           │
+                           ▼
+                  STUDIO ORCHESTRATOR
+                    GPT-5.6 Sol
+                           │
+          ┌────────────────┼─────────────────┐
+          ▼                ▼                 ▼
+       DESIGN            ASSET             SYSTEM
+       AGENTS            AGENTS            AGENTS
+          │                │                 │
+          └────────────────┼─────────────────┘
+                           ▼
+                     GAME PROJECT GRAPH
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+           WORLD         ASSETS        SYSTEMS
+             │             │             │
+             └─────────────┼─────────────┘
+                           ▼
+                        UG-IR
+                           │
+                  ┌────────┴─────────┐
+                  ▼                  ▼
+              ORIVERSE           KHOSAN
+               Adapter            Native
+                  │
+                  ▼
+                 MCP
+                  │
+                  ▼
+                WEAVE
+                  │
+          ┌───────┼────────┐
+          ▼       ▼        ▼
+       #mesh   #texture  #class
+       terrain    UI     gameplay
+          │       │        │
+          └───────┼────────┘
+                  ▼
+              COMPILER
+                  │
+                  ▼
+             GAME RUNTIME
+                  │
+                  ▼
+               PLAYTEST
+                  │
+          ┌───────┴───────┐
+          ▼               ▼
+        FAIL             PASS
+          │               │
+     Repair Agent         ▼
+          │            Human Gate
+          └──────→        │
+                          ▼
+                   PUBLISH / SHARE
+```
+
+นี่สอดคล้องกับ model ของ KHOSAN ที่วางไว้ว่า **Orchestrator → Agents + Tools + Knowledge → UG-IR → Assets/System/World → Playable Game**. fileciteturn0file1L524-L553
+
+---
+
+# 20. แล้ว Reference Assets ทั้งหมดจะไหลอย่างไร
+
+ผมจะไม่ให้ reference กลายเป็น file ที่ถูกโยนทิ้งหลัง generate
+
+ควรเก็บ lineage
+
+```text id="xkjih7"
+asset:
+    village_house_001
+
+source:
+    reference:
+        thai_house_front.jpg
+        thai_house_left.jpg
+
+generation:
+    method:
+        reference_mesh
+
+confidence:
+    front: 0.96
+    left: 0.91
+    back: 0.42
+
+geometry:
+    mesh: House01
+
+materials:
+    wall: OldWood
+    roof: RustMetal
+
+gameplay:
+    door:
+        interactive: true
+
+qa:
+    visual_match: PASS
+    collider: PASS
+    portal: PASS
+```
+
+นี่คือแนวเดียวกับ KHOSAN Asset IR ที่เราวางไว้ คือ asset ไม่ใช่แค่ geometry แต่ต้องเก็บ hierarchy, pivots, sockets, colliders, animation hooks, LOD และ source reference ด้วย. fileciteturn0file0L134-L151
+
+---
+
+# 21. สุดท้ายเกมที่ได้จึงมี 3 ชั้นพร้อมกัน
+
+นี่เป็น concept ที่ผมคิดว่าสำคัญที่สุด
+
+### ชั้นที่ 1 — Human language
+
+```text id="eu5vz8"
+"เพิ่มร้านกาแฟข้างวัด"
+```
+
+### ชั้นที่ 2 — Semantic game representation
+
+```text id="ugfbtr"
+Building: CoffeeShop
+Type: Merchant
+Location: TempleEast
+Interaction: Shop
+Inventory: Drinks
+```
+
+### ชั้นที่ 3 — Executable source
+
+```text id="mtx0wq"
+Weave
+#mesh
+#texture
+#class
+objects
+UI
+```
+
+แล้ว compile เป็น runtime
+
+ดังนั้นวงจรเป็น:
+
+```text id="nxsh0a"
+TEXT INTENT
+     ↓
+SEMANTIC MODEL
+     ↓
+TEXT GAME SOURCE
+     ↓
+RUNTIME
+     ↓
+GAMEPLAY EVIDENCE
+     ↓
+TEXT PATCH
+     ↓
+RUNTIME
+```
+
+จึงสามารถพัฒนาเกมด้วยภาษาธรรมดา **ต่อเนื่องไปเรื่อย ๆ ได้จริง**
+
+---
+
+## จุดที่ต้องแยกให้ชัดเรื่อง “AI สร้างเกม”
+
+ผมจะสรุปเป็นสมการนี้:
+
+> **LLM ไม่ใช่ Game Engine**  
+> **MCP ไม่ใช่ AI**  
+> **Weave ไม่ใช่ Model**  
+> **Oriverse Runtime ไม่ได้คิดแทน LLM**
+
+แต่เมื่อเอามารวมกัน:
+
+```text id="40cy0u"
+LLM
+  = คิด
+
+MCP
+  = สั่งงาน
+
+Weave
+  = อธิบายเกม
+
+Tools
+  = ผลิต/ตรวจงาน
+
+Runtime
+  = เล่นเกมจริง
+
+QA
+  = พิสูจน์ผล
+```
+
+จึงกลายเป็น **Text-to-Playable-Game Production System**
+
+และนี่คือจุดที่ผมเห็นว่า Oriverse เหมาะกับ KHOSAN มาก: เราไม่ควรเอา Oriverse มาแทน KHOSAN ทั้งหมด แต่ควรทำให้มันเป็น **หนึ่งใน World/Runtime/Prototype backends ของ KHOSAN Studio** ขณะที่ KHOSAN ถือ game semantics, Asset IR, Character IR, agent orchestration และ production history เป็น source of truth ระดับสูงกว่า
+
+หมายเหตุทางเทคนิคจากการเชื่อมต่อครั้งนี้: editor Oriverse ของพี่เชื่อมอยู่จริง แต่ build ปัจจุบันแจ้งว่าต้องอัปเดตก่อนจึงจะอ่าน authoring guide รุ่นล่าสุดผ่าน MCP ได้ ดังนั้นคำอธิบายด้านบนอ้างอิงจาก **tool contract/MCP capabilities ที่ connector เปิดเผยอยู่จริง**; ผมไม่ได้สมมติชื่อ internal generation model ที่ Oriverse ไม่ได้เปิดเผยครับ.
