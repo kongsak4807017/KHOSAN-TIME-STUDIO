@@ -75,7 +75,7 @@ For 3D production tasks, load `docs/27-HARNESS-3D-EXECUTION-CONTRACT.md` and the
 - **No fabricated QA:** do not copy historical sample code that returns `passed: True` while the independent VLM call is a TODO. Unsupported adapters, unrendered images, and unexecuted checks must be `BLOCKED` or `NOT VERIFIED`.
 - Distinct QA and independent reviewer identities/sessions are required; their receipts must bind hashes of the actual current reference and render output. A checkbox does not authenticate identity.
 - Before claiming a 3D asset accepted, invoke the project-scoped local verifier `node tools/harness-3d/cli.mjs verify <project-root> <evidence-json>` and store its result. An LLM's verdict is not a substitute for measurement or a binary-file check.
-- Final artistic acceptance, release and publishing still require the **authenticated human approval** defined by the project governance. The current CLI only verifies consistency of submitted approval metadata, not an authenticated human signature.
+- Final artistic acceptance, release and publishing still require the **authenticated human approval** defined by the project governance. The current CLI verifies Ed25519 reviewer and human-approval receipt signatures against independently provisioned public trust keys; only a trusted Studio approval/checker service holding protected private keys can issue genuine receipts. It does not prove the actual VLM/human action occurred unless the issuer performed that work.
 - Do not assume all geometry types are validated: the initial native layout linter supports **only bounded Z-up/cm boxes** and fails closed on unsupported anchors/CSG/rigging. Do not claim full production support from its unit tests.
 
 ## Definition of Done
