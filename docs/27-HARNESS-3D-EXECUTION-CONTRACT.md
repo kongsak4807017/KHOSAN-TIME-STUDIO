@@ -2,6 +2,12 @@
 
 **Status:** implemented *verification slice* with 17 local Node.js tests; not complete autonomous reconstruction. Source: [AI 3D harness user blueprint](../knowledge/oriverse-research/harness-blueprint/README.md). This is a KHOSAN-native design; no Oriverse runtime or Weave dependency.
 
+## Part 7 update: the six hard locks are not automatically active
+
+The Google Doc now includes **Part 7: six hard locks, Python Differential Patch Lock and HMAC Gatekeeper**. See [targeted security analysis](28-PART7-HARD-LOCKS-SECURITY-REVIEW.md). Its original Python code was archived unmodified, but it is **not safe for direct production use**: non-authenticated lint failures, arbitrary patch fields, unknown targets, no revision binding, known fallback HMAC secret, and a merely asserted independent reviewer.
+
+The repository adds [bounded Python source-revision/coordinate-axis patch enforcement](../tools/ugir-geometry-linter/hard_lock_enforcer.py), testable with `npm run verify:part7`. The existing [Ed25519 evidence gate](../tools/harness-3d/gate.mjs) remains the separately verified local acceptance component. **No central Studio/DevSpace trusted dispatcher yet forces all edits through that patch policy**; do not state that a model is 100% constrained by these tools until OS permissions, trusted issuer services, CI protections and real end-to-end verification are in place.
+
 ## How ChatGPT / DevSpace must actually follow the harness
 
 ```
