@@ -30,6 +30,9 @@ jobs:
           node --check tools/harness-3d/repair-protocol.mjs
           node --check tools/harness-3d/trusted-gateway.mjs
           node --check tools/harness-3d/gateway-cli.mjs
+          node --check tools/harness-3d/gateway-daemon.mjs
+          node --check tools/harness-3d/gateway-client.mjs
+          node --check tools/harness-3d/gateway-sign.mjs
           node --check apps/studio-server/server.mjs
           node --check apps/studio-web/public/app.js
       - name: Run signed gateway regression and attack fixtures
